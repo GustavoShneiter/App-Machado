@@ -1,0 +1,7 @@
+android/
+releases/
+node_modules/
+.git/
+docs/
+supabase/
+*.apk
