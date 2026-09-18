@@ -1,7 +1,7 @@
 export type StatusAgendamento = 'Agendado' | 'Confirmado' | 'Cliente chegou' | 'Em atendimento' | 'Concluído' | 'Cancelado' | 'Não compareceu'
 
 export type Servico = { id: string; nome: string; descricao: string; preco: number; duracao: number; cor: string; ativo: boolean }
-export type Profissional = { id: string; nome: string; iniciais: string; telefone: string; especialidades: string; comissao: number; cor: string; ativo: boolean }
+export type Profissional = { id: string; nome: string; iniciais: string; telefone: string; especialidades: string; comissao: number; cor: string; ativo: boolean; foto_url?: string | null }
 export type Cliente = { id: string; nome: string; telefone: string; visitas: number; total: number; ultimoAtendimento: string }
 export type Agendamento = { id: string; cliente: string; telefone: string; profissionalId: string; servicoId: string; data: string; horario: string; duracao: number; preco: number; status: StatusAgendamento; origem: string; observacoes?: string }
 

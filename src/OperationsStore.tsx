@@ -41,7 +41,11 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
     try {
       const result = action === 'reset_operational_data'
         ? await supabase.rpc('reset_operational_data', { confirmation: String(payload.confirmation ?? '') })
-        : await supabase.rpc('office_action', { action, payload })
+        : action === 'save_product_profile'
+          ? await supabase.rpc('save_product_profile', { payload })
+          : action === 'delete_customer'
+            ? await supabase.rpc('delete_customer_record', { customer_id: String(payload.id ?? '') })
+            : await supabase.rpc('office_action', { action, payload })
       if (result.error) throw result.error
       await refresh()
       return true

@@ -7,12 +7,12 @@ type Catalog = {
   updateService: (id: string, update: Partial<Servico>) => Promise<string | null>;
   addService: (update: Partial<Servico>) => Promise<string | null>;
   updateProfessional: (id: string, update: Partial<Profissional>) => Promise<string | null>;
-  addProfessional: (professional: Pick<Profissional, 'nome' | 'telefone' | 'especialidades'>) => Promise<string | null>;
+  addProfessional: (professional: Partial<Profissional>) => Promise<string | null>;
   deleteProfessional: (id: string) => Promise<string | null>;
 }
 const CatalogContext = createContext<Catalog | null>(null)
 const mapService = (row: Record<string, unknown>): Servico => ({ id: String(row.id), nome: String(row.name), descricao: String(row.description ?? ''), preco: Number(row.price_cents) / 100, duracao: Number(row.duration_minutes), cor: String(row.color ?? '#203F20'), ativo: Boolean(row.active) })
-const mapProfessional = (row: Record<string, unknown>): Profissional => ({ id: String(row.id), nome: String(row.name), iniciais: String(row.name).split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase(), telefone: String(row.phone ?? ''), especialidades: String(row.specialties ?? ''), comissao: Number(row.default_commission_percent ?? 40), cor: '#203F20', ativo: Boolean(row.active) })
+const mapProfessional = (row: Record<string, unknown>): Profissional => ({ id: String(row.id), nome: String(row.name), iniciais: String(row.name).split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase(), telefone: String(row.phone ?? ''), especialidades: String(row.specialties ?? ''), comissao: Number(row.default_commission_percent ?? 40), cor: '#203F20', ativo: Boolean(row.active), foto_url: typeof row.photo_url === 'string' ? row.photo_url : null })
 export function CatalogProvider({ children }: { children: ReactNode }) {
   const [services, setServices] = useState<Servico[]>([])
   const [professionals, setProfessionals] = useState<Profissional[]>([])
@@ -36,7 +36,9 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const save = async (action:string,payload:Record<string,unknown>) => {
     if(!supabase) return 'Conexão indisponível.'
     try {
-      const result=await supabase.rpc('office_action',{action,payload})
+      const result = action === 'save_professional_profile'
+        ? await supabase.rpc('save_professional_profile',{ payload })
+        : await supabase.rpc('office_action',{action,payload})
       if(result.error) return result.error.message
       await load(); return null
     } catch { return 'Não foi possível salvar. Confira sua conexão e tente novamente.' }
@@ -47,7 +49,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   }
   const updateProfessional = (id:string,update:Partial<Profissional>) => {
     const p={...professionals.find(p => p.id===id),...update}
-    return save('save_professional',{id:id||null,name:p.nome,phone:p.telefone,specialties:p.especialidades,active:p.ativo})
+    return save('save_professional_profile',{id:id||null,name:p.nome,phone:p.telefone,specialties:p.especialidades,commission:p.comissao,photo_url:p.foto_url ?? null,active:p.ativo})
   }
   return <CatalogContext.Provider value={{services,professionals,loading,error,updateService,addService:s=>updateService('',s),updateProfessional,addProfessional:p=>updateProfessional('',{...p,ativo:true}),deleteProfessional:id=>updateProfessional(id,{ativo:false})}}>{children}</CatalogContext.Provider>
 }

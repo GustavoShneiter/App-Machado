@@ -6,7 +6,7 @@ export type Payment = { id: string; command_id: string; method: string; amount_c
 export type Commission = { id: string; command_item_id: string; professional_id: string; gross_cents: number; commission_cents: number; status: string; paid_at: string | null; created_at: string }
 export type CashSession = { id: string; opened_at: string; opening_balance_cents: number; closed_at: string | null; declared_balance_cents: number | null; notes: string | null }
 export type Movement = { id: string; session_id: string; type: string; amount_cents: number; payment_method: string; notes: string; created_at: string; command_id: string | null; commission_entry_id: string | null }
-export type Product = { id: string; name: string; category: string; quantity: number; minimum_quantity: number; sale_price_cents: number; cost_cents: number; active: boolean }
+export type Product = { id: string; name: string; category: string; quantity: number; minimum_quantity: number; sale_price_cents: number; cost_cents: number; active: boolean; photo_url?: string | null }
 export type Operations = { appointments: Appointment[]; customers: Customer[]; commands: Command[]; items: Item[]; payments: Payment[]; commissions: Commission[]; sessions: CashSession[]; movements: Movement[]; products: Product[] }
 export const emptyOperations: Operations = { appointments: [], customers: [], commands: [], items: [], payments: [], commissions: [], sessions: [], movements: [], products: [] }
 export const money = (cents: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100)
