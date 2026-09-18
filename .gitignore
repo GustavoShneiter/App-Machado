@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env.local
+
+.vercel
+.env*
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
+.idea/
