@@ -50,7 +50,8 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
       await refresh()
       return true
     } catch (e) {
-      const message = typeof e === 'object' && e && 'message' in e ? String(e.message) : 'Não foi possível salvar. Tente novamente.'
+      const rawMessage = typeof e === 'object' && e && 'message' in e ? String(e.message) : 'Não foi possível salvar. Tente novamente.'
+      const message = /atendimento nesse horário|slot_not_available|exclusion/i.test(rawMessage) ? 'Esse profissional já possui um atendimento nesse horário. Escolha outro horário disponível.' : rawMessage
       setError(message); return false
     } finally { saving.current = false; setBusy(false) }
   }

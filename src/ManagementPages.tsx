@@ -1,7 +1,8 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useOperations } from './OperationsStore'
 import { useCatalog } from './CatalogStore'
+import { supabase } from './supabaseClient'
 import { cashBalance, commandTotal, dateTime, dayKey, exportCsv, labels, methods, money, summarize, type Appointment, type Customer, type Product } from './operations'
 import { uploadCatalogPhoto } from './media'
 
@@ -31,13 +32,14 @@ export function Dashboard() {
 export function AppointmentModal({ close }: { close: () => void }) {
   const { services, professionals } = useCatalog(); const { run, busy, error } = useOperations()
   const [name, setName] = useState(''); const [phone, setPhone] = useState(''); const [service, setService] = useState(services.find(s => s.ativo)?.id ?? ''); const [professional, setProfessional] = useState(professionals.find(p => p.ativo)?.id ?? '')
-  const [date, setDate] = useState(dayKey()); const [time, setTime] = useState('09:00'); const [price, setPrice] = useState(String(services.find(s => s.id === service)?.preco ?? 0))
+  const [date, setDate] = useState(dayKey()); const [time, setTime] = useState(''); const [price, setPrice] = useState(String(services.find(s => s.id === service)?.preco ?? 0)); const [slots,setSlots]=useState<string[]>([]); const [loadingSlots,setLoadingSlots]=useState(false)
+  useEffect(()=>{ let alive=true; setTime(''); if(!supabase||!service||!professional){setSlots([]);return} setLoadingSlots(true); void supabase.rpc('public_available_slots',{chosen_service:service,booking_day:date,preferred_professional:professional}).then(({data,error:slotError})=>{if(!alive)return;const found=(data??[]) as Array<{slot_time:string}>;setSlots(slotError ? [] : [...new Set(found.map(slot => String(slot.slot_time).slice(0,5)))]);setLoadingSlots(false)});return()=>{alive=false}},[service,professional,date])
   return <Modal title="Novo agendamento" close={close}><form onSubmit={async e => { e.preventDefault(); if (await run('create_appointment', { name, phone, professional_id: professional, service_id: service, starts_at: `${date}T${time}:00-03:00`, amount: Math.round(Number(price) * 100) })) close() }}><div className="form-grid">
     <label className="field"><span>Cliente</span><input required minLength={2} value={name} onChange={e => setName(e.target.value)} /></label><label className="field"><span>WhatsApp</span><input required type="tel" minLength={10} value={phone} onChange={e => setPhone(e.target.value)} /></label>
     <label className="field"><span>Profissional</span><select required value={professional} onChange={e => setProfessional(e.target.value)}><option value="">Selecione</option>{professionals.filter(p => p.ativo).map(p => <option value={p.id} key={p.id}>{p.nome}</option>)}</select></label>
     <label className="field"><span>Serviço</span><select required value={service} onChange={e => { setService(e.target.value); setPrice(String(services.find(s => s.id === e.target.value)?.preco ?? 0)) }}><option value="">Selecione</option>{services.filter(s => s.ativo).map(s => <option value={s.id} key={s.id}>{s.nome}</option>)}</select></label>
-    <label className="field"><span>Data</span><input type="date" required value={date} onChange={e => setDate(e.target.value)} /></label><label className="field"><span>Hora</span><input type="time" required value={time} onChange={e => setTime(e.target.value)} /></label><label className="field"><span>Valor (R$)</span><input required type="number" min="0" step="0.01" value={price} onChange={e => setPrice(e.target.value)} /></label></div>
-    {error && <p role="alert" className="form-error">{error}</p>}<button disabled={busy} className="primary">{busy ? 'Salvando…' : 'Salvar agendamento'}</button></form></Modal>
+    <label className="field"><span>Data</span><input type="date" required min={dayKey()} value={date} onChange={e => setDate(e.target.value)} /></label><label className="field"><span>Horário disponível</span><select required disabled={loadingSlots || !slots.length} value={time} onChange={e => setTime(e.target.value)}><option value="">{loadingSlots?'Buscando horários…':slots.length?'Selecione':'Sem horários'}</option>{slots.map(slot=><option key={slot} value={slot}>{slot}</option>)}</select></label><label className="field"><span>Valor (R$)</span><input required type="number" min="0" step="0.01" value={price} onChange={e => setPrice(e.target.value)} /></label></div>
+    {!loadingSlots&&professional&&service&&!slots.length&&<p className="form-hint">Não há horário livre para esse profissional e serviço nesta data.</p>}{error && <p role="alert" className="form-error">{error}</p>}<button disabled={busy || !time} className="primary">{busy ? 'Salvando…' : 'Salvar agendamento'}</button></form></Modal>
 }
 
 export function Agenda({ onNew }: { onNew: () => void }) {
