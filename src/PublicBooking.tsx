@@ -11,7 +11,7 @@ const weekDay = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' })
 const dayNumber = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' })
 
 function Shell({ children }: { children: React.ReactNode }) {
-  return <main className="public-shell"><header className="public-header"><a href="/agendar" className="booking-logo" aria-label="Barbearia Machado — agendamento"><img src="/logo-machado.png" alt="Machado" /></a></header>{children}<footer>© 2026 Barbearia Machado · <a href="/privacidade">Privacidade</a></footer></main>
+  return <main className="public-shell"><header className="public-header"><a href="/" className="booking-logo" aria-label="Barbearia Machado — início"><img src="/logo-machado.png" alt="Machado" /></a></header>{children}<footer>© 2026 Barbearia Machado · <a href="/privacidade">Privacidade</a></footer></main>
 }
 
 export function PublicBookingV2() {

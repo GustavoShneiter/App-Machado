@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
-import { CalendarDays, LayoutDashboard, Menu, Package, Scissors, Users, WalletCards, Settings, X } from 'lucide-react'
+import { ArrowRight, CalendarDays, LayoutDashboard, Menu, MessageCircle, Package, Scissors, Users, WalletCards, Settings, X } from 'lucide-react'
 import { CatalogProvider } from './CatalogStore'
 import { ServicesV2, ProfessionalsV2 } from './OperationalPages'
 import { PublicBookingV2 } from './PublicBooking'
@@ -21,6 +21,35 @@ const navItems = [
   { to: '/admin/profissionais', label: 'Profissionais', icon: Users },
   { to: '/admin/configuracoes', label: 'Configurações', icon: Settings },
 ]
+
+// Troque pelo número da Barbearia Machado, somente com DDI e DDD.
+// Exemplo: https://wa.me/5511999999999
+const machadoWhatsAppUrl = 'https://wa.me/'
+
+function PublicLanding() {
+  return <main className="landing-shell">
+    <div className="landing-backdrop" />
+    <header className="landing-header"><img src="/logo-machado.png" alt="Barbearia Machado" /></header>
+    <section className="landing-content" aria-labelledby="landing-title">
+      <p className="eyebrow">Barbearia Machado</p>
+      <h1 id="landing-title">Como podemos te atender?</h1>
+      <p className="landing-copy">Escolha uma opção para falar com a gente ou reservar seu próximo horário.</p>
+      <nav className="landing-actions" aria-label="Canais de atendimento">
+        <a className="landing-action whatsapp" href={machadoWhatsAppUrl} target="_blank" rel="noreferrer">
+          <span className="landing-icon"><MessageCircle aria-hidden="true" /></span>
+          <span><strong>WhatsApp</strong><small>Fale com a nossa equipe</small></span>
+          <ArrowRight aria-hidden="true" />
+        </a>
+        <a className="landing-action booking" href="/agendar">
+          <span className="landing-icon"><CalendarDays aria-hidden="true" /></span>
+          <span><strong>Agendamento</strong><small>Reserve seu horário online</small></span>
+          <ArrowRight aria-hidden="true" />
+        </a>
+      </nav>
+    </section>
+    <footer className="landing-footer">© 2026 Barbearia Machado · <a href="/privacidade">Privacidade</a></footer>
+  </main>
+}
 export function AdminLayout() {
   const [sidebar, setSidebar] = useState(false)
   const [newAppointment, setNewAppointment] = useState(false)
@@ -57,15 +86,15 @@ function SettingsPage() {
   const [confirmation, setConfirmation] = useState('')
   const { run, busy, error } = useOperations()
   const origin = typeof window === 'undefined' ? '' : window.location.origin
-  return <Page title="Configurações" text="Acessos e controles da barbearia."><section className="panel operation-panel"><h3>Link para a bio do Instagram</h3><p>O cliente agenda sem fazer login.</p><div className="copy-field"><code>{origin}/agendar</code><button onClick={async () => { try { await navigator.clipboard.writeText(origin+'/agendar'); setCopied(true) } catch { setCopied(false) } }}>{copied ? 'Copiado' : 'Copiar'}</button><a href="/agendar" target="_blank" rel="noreferrer">Abrir</a></div><h3>Acesso administrativo</h3><p>Somente contas administrativas autorizadas acessam o painel.</p><button className="outline" onClick={() => void supabase?.auth.signOut()}>Sair da conta</button></section>
+  return <Page title="Configurações" text="Acessos e controles da barbearia."><section className="panel operation-panel"><h3>Link para a bio do Instagram</h3><p>O cliente escolhe entre falar no WhatsApp ou fazer o agendamento online.</p><div className="copy-field"><code>{origin}/</code><button onClick={async () => { try { await navigator.clipboard.writeText(origin+'/'); setCopied(true) } catch { setCopied(false) } }}>{copied ? 'Copiado' : 'Copiar'}</button><a href="/" target="_blank" rel="noreferrer">Abrir</a></div><h3>Acesso administrativo</h3><p>Somente contas administrativas autorizadas acessam o painel.</p><button className="outline" onClick={() => void supabase?.auth.signOut()}>Sair da conta</button></section>
     <section className="panel operation-panel danger-zone"><h3>Zerar dados operacionais</h3><p>Use somente para começar uma operação do zero ou remover testes. Apaga permanentemente agenda, clientes, comandas, pagamentos, caixa, repasses e relatórios. Serviços, profissionais, produtos e estoque permanecem.</p><button className="danger" disabled={busy} onClick={() => { setConfirmation(''); setResetOpen(true) }}>Zerar agenda, caixa e relatórios</button></section>
     {resetOpen && <Modal title="Zerar dados operacionais" close={() => setResetOpen(false)}><p><strong>Atenção:</strong> esta ação remove permanentemente todos os clientes e registros operacionais. Não há como desfazer.</p><p>Para confirmar, digite exatamente: <strong>ZERAR OPERAÇÃO</strong></p><form onSubmit={async e => { e.preventDefault(); if (await run('reset_operational_data', { confirmation })) { setResetOpen(false); setConfirmation('') } }}><label className="field"><span>Confirmação</span><input autoFocus required value={confirmation} onChange={e => setConfirmation(e.target.value)} placeholder="ZERAR OPERAÇÃO" /></label>{error && <p className="form-error">{error}</p>}<button className="danger" disabled={busy || confirmation !== 'ZERAR OPERAÇÃO'}>{busy ? 'Zerando…' : 'Apagar dados operacionais'}</button></form></Modal>}
   </Page>
 }
 function Privacy() {
-  return <main className="public-shell"><article className="privacy"><h1>Privacidade</h1><p>Usamos nome e telefone para identificar seu agendamento, entrar em contato e manter o histórico de atendimento. Solicite correção ou exclusão dos seus dados diretamente à barbearia.</p><a href="/agendar">Voltar ao agendamento</a></article></main>
+  return <main className="public-shell"><article className="privacy"><h1>Privacidade</h1><p>Usamos nome e telefone para identificar seu agendamento, entrar em contato e manter o histórico de atendimento. Solicite correção ou exclusão dos seus dados diretamente à barbearia.</p><a href="/">Voltar ao início</a></article></main>
 }
 export default function App() {
-  const startRoute = Capacitor.isNativePlatform() ? '/admin' : '/agendar'
-  return <CatalogProvider><Routes><Route path="/agendar" element={<PublicBookingV2 />} /><Route path="/privacidade" element={<Privacy />} /><Route path="/admin/*" element={<AdminAccess><OperationsProvider><AdminLayout /></OperationsProvider></AdminAccess>} /><Route path="*" element={<Navigate to={startRoute} replace />} /></Routes></CatalogProvider>
+  const startRoute = Capacitor.isNativePlatform() ? '/admin' : '/'
+  return <CatalogProvider><Routes><Route path="/" element={<PublicLanding />} /><Route path="/agendar" element={<PublicBookingV2 />} /><Route path="/privacidade" element={<Privacy />} /><Route path="/admin/*" element={<AdminAccess><OperationsProvider><AdminLayout /></OperationsProvider></AdminAccess>} /><Route path="*" element={<Navigate to={startRoute} replace />} /></Routes></CatalogProvider>
 }
