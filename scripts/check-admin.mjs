@@ -22,7 +22,7 @@ const result = await build({
         const html=renderToString(h(MemoryRouter,{initialEntries:[path]},h(CatalogProvider,null,h(TestContext.Provider,{value},h(Routes,null,h(Route,{path:'/admin/*',element:h(AdminLayout)}))))))
         assert.ok(html.includes('class="page'),'Missing content '+path)
         if(data===fixture&&['clientes','caixa'].includes(page)) assert.ok(html.includes('Cliente integrado'),'Missing real customer '+path)
-        if(data===fixture&&page==='caixa') { assert.ok(html.includes('Prontos para receber'));assert.ok(html.includes('Corte integrado')) }
+        if(data===fixture&&page==='caixa') { assert.ok(html.includes('Prontas para receber'));assert.ok(html.includes('Corte integrado')) }
         if(data===fixture&&page==='comandas') assert.ok(html.includes('Comandas'))
         console.log('PASS '+path+' '+(data===fixture?'with records':'empty'))
       }
