@@ -20,7 +20,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
     try {
       const result = await supabase.rpc('office_snapshot')
       if (result.error) throw result.error
-      const normalized = result.data ? { ...result.data, blocks: Array.isArray(result.data.blocks) ? result.data.blocks : [] } : null
+      const normalized = result.data ? { ...result.data, blocks: Array.isArray(result.data.blocks) ? result.data.blocks : [], packageRedemptions: Array.isArray(result.data.packageRedemptions) ? result.data.packageRedemptions : [] } : null
       if (!normalized || !Object.keys(emptyOperations).every(k => Array.isArray(normalized[k]))) throw new Error('Resposta inválida ao atualizar dados.')
       if (alive.current && version === request.current) { setData(normalized as Operations); setRefreshed(new Date().toLocaleTimeString('pt-BR')); setLoading(false); setLoadError('') }
     } catch (e) {
@@ -72,6 +72,10 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
             ? await supabase.rpc('create_schedule_block', { professional_id: String(payload.professional_id ?? ''), starts_at: String(payload.starts_at ?? ''), ends_at: String(payload.ends_at ?? ''), reason: String(payload.reason ?? '') })
           : action === 'delete_schedule_block'
             ? await supabase.rpc('delete_schedule_block', { block_id: String(payload.id ?? '') })
+          : action === 'delete_product'
+            ? await supabase.rpc('delete_product_record', { product_id: String(payload.id ?? '') })
+          : action === 'close_package_command'
+            ? await supabase.rpc('close_package_command', { command_id: String(payload.id ?? '') })
             : await supabase.rpc('office_action', { action, payload })
       if (result.error) throw result.error
       await refresh()
