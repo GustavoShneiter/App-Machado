@@ -14,7 +14,7 @@ const result = await build({
     import {TestContext} from './src/OperationsStore'
     import {emptyOperations,summarize,cashBalance,commandTotal,dayKey,csvCell} from './src/operations'
     import {fixture} from './scripts/operations-fixture.mjs'
-    const pages=['','agenda','caixa','clientes','produtos','servicos','profissionais','relatorios','configuracoes']
+    const pages=['','agenda','caixa','comandas','clientes','produtos','servicos','profissionais','relatorios','configuracoes']
     for(const data of [emptyOperations,fixture]){
       const value={data,loading:false,error:'',busy:false,refreshed:'12:00',refresh:async()=>{},run:async()=>true}
       for(const page of pages){
@@ -23,6 +23,7 @@ const result = await build({
         assert.ok(html.includes('class="page'),'Missing content '+path)
         if(data===fixture&&['clientes','caixa'].includes(page)) assert.ok(html.includes('Cliente integrado'),'Missing real customer '+path)
         if(data===fixture&&page==='caixa') { assert.ok(html.includes('Prontos para receber'));assert.ok(html.includes('Corte integrado')) }
+        if(data===fixture&&page==='comandas') assert.ok(html.includes('Comandas'))
         console.log('PASS '+path+' '+(data===fixture?'with records':'empty'))
       }
       const modal=renderToString(h(CatalogProvider,null,h(TestContext.Provider,{value},h(AppointmentModal,{close(){}}))))
