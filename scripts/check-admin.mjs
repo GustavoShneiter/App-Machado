@@ -1,9 +1,10 @@
 /* global process */
-import { build } from 'esbuild'
-import { readFile } from 'node:fs/promises'
-import { createRequire } from 'node:module'
+import { build } from "esbuild";
+import { readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 const result = await build({
-  stdin: { contents: `
+  stdin: {
+    contents: `
     import assert from 'node:assert/strict'
     import {createElement as h} from 'react'
     import {renderToString} from 'react-dom/server'
@@ -16,7 +17,7 @@ const result = await build({
     import {fixture} from './scripts/operations-fixture.mjs'
     const pages=['','agenda','caixa','comandas','clientes','produtos','servicos','profissionais','pacotes','empresa','relatorios','configuracoes']
     for(const data of [emptyOperations,fixture]){
-      const value={data,loading:false,error:'',busy:false,refreshed:'12:00',refresh:async()=>{},run:async()=>true}
+      const value={data,loading:false,error:'',busy:false,refreshed:'12:00',refresh:async()=>{},clearError:()=>{},run:async()=>true}
       for(const page of pages){
         const path='/admin'+(page?'/'+page:'')
         const html=renderToString(h(MemoryRouter,{initialEntries:[path]},h(CatalogProvider,null,h(TestContext.Provider,{value},h(Routes,null,h(Route,{path:'/admin/*',element:h(AdminLayout)}))))))
@@ -39,10 +40,37 @@ const result = await build({
     assert.equal(dayKey('2026-09-19T01:00:00Z'),'2026-09-18')
     assert.equal(csvCell('=1+1').charCodeAt(1),39)
     console.log('PASS financeiro: comissões, filtros, cancelados, dinheiro vs Pix, CSV')
-  `, resolveDir:process.cwd(),loader:'tsx'},
-  bundle:true,platform:'node',format:'cjs',packages:'external',write:false,jsx:'automatic',
-  define:{'import.meta.env':'{}'},
-  plugins:[{name:'test-context',setup(builder){builder.onLoad({filter:/OperationsStore[.]tsx$/},async({path})=>({contents:await readFile(path,'utf8')+'\nexport { Context as TestContext };',loader:'tsx'}))}}],
-})
-const testModule={exports:{}}
-new Function('require','module','exports',result.outputFiles[0].text)(createRequire(import.meta.url),testModule,testModule.exports)
+  `,
+    resolveDir: process.cwd(),
+    loader: "tsx",
+  },
+  bundle: true,
+  platform: "node",
+  format: "cjs",
+  packages: "external",
+  write: false,
+  jsx: "automatic",
+  define: { "import.meta.env": "{}" },
+  plugins: [
+    {
+      name: "test-context",
+      setup(builder) {
+        builder.onLoad(
+          { filter: /OperationsStore[.]tsx$/ },
+          async ({ path }) => ({
+            contents:
+              (await readFile(path, "utf8")) +
+              "\nexport { Context as TestContext };",
+            loader: "tsx",
+          }),
+        );
+      },
+    },
+  ],
+});
+const testModule = { exports: {} };
+new Function("require", "module", "exports", result.outputFiles[0].text)(
+  createRequire(import.meta.url),
+  testModule,
+  testModule.exports,
+);
