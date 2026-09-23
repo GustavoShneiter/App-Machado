@@ -13,6 +13,7 @@
     "android:open": "npm run android:sync && npx cap open android"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.1",
     "@capacitor/core": "^8.5.2",
     "@hookform/resolvers": "^5.2.1",
     "@supabase/supabase-js": "^2.116.0",

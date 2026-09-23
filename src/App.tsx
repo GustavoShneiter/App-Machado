@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { Link, NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
+import { App as CapacitorApp } from '@capacitor/app'
 import { ArrowRight, Building2, CalendarDays, Gift, LayoutDashboard, Menu, MessageCircle, Package, Scissors, Users, WalletCards, Settings, X, ClipboardList, Plus } from 'lucide-react'
 import { CatalogProvider } from './CatalogStore'
 import { ServicesV2, ProfessionalsV2 } from './OperationalPages'
@@ -10,6 +11,7 @@ import { OperationsProvider, useOperations } from './OperationsStore'
 import { Dashboard, Agenda, Customers, CashManagement, Reports, Products, Orders, AppointmentModal, Modal, Page } from './ManagementPages'
 import { CompanySettings, Packages } from './BusinessPages'
 import { supabase } from './supabaseClient'
+import { dismissTopLayer, registerDismissibleLayer } from './dismissibleLayers'
 
 const navItems = [
   { to: '/admin', label: 'Início', icon: LayoutDashboard },
@@ -67,6 +69,10 @@ export function AdminLayout() {
   const showCreate = isCommands || isClients || isCash || isAgenda
   const createLabel = isCommands ? 'Nova comanda' : isClients ? 'Novo cliente' : isCash ? 'Novo lançamento' : 'Novo agendamento'
   const openCreate = () => { if (isCommands) setNewManualCommand(true); else if (isClients) setNewCustomer(true); else if (isCash) setNewCashEntry(true); else setNewAppointment(true) }
+  useEffect(() => {
+    if (!sidebar) return
+    return registerDismissibleLayer(() => setSidebar(false))
+  }, [sidebar])
   return <div className="app-shell">
     <aside className={`sidebar ${sidebar ? 'open' : ''}`}><div className="brand"><span className="brand-mark">BM</span><span><strong>Barbearia</strong><small>Machado</small></span><button className="icon-btn close-menu" onClick={() => setSidebar(false)}><X /></button></div>
       <nav>{navItems.map(item => <NavLink key={item.to} to={item.to} end={item.to==='/admin'} onClick={() => setSidebar(false)}><item.icon size={19} /><span>{item.label}</span></NavLink>)}</nav>
@@ -103,6 +109,41 @@ export function AdminLayout() {
     {newAppointment && <AppointmentModal close={() => setNewAppointment(false)} />}
   </div>
 }
+
+function NativeBackHandler() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const locationRef = useRef(location)
+  locationRef.current = location
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+
+    let disposed = false
+    let removeListener: (() => Promise<void>) | undefined
+    void CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+      if (dismissTopLayer()) return
+
+      if (locationRef.current.pathname !== '/admin') {
+        if (canGoBack) navigate(-1)
+        else navigate('/admin', { replace: true })
+        return
+      }
+
+      void CapacitorApp.exitApp()
+    }).then(handle => {
+      if (disposed) void handle.remove()
+      else removeListener = () => handle.remove()
+    })
+
+    return () => {
+      disposed = true
+      if (removeListener) void removeListener()
+    }
+  }, [navigate])
+
+  return null
+}
 function SettingsPage() {
   const [copied, setCopied] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
@@ -120,5 +161,5 @@ function Privacy() {
 export default function App() {
   const isNativeApp = Capacitor.isNativePlatform()
   const startRoute = isNativeApp ? '/admin' : '/'
-  return <CatalogProvider><Routes><Route path="/" element={isNativeApp ? <Navigate to="/admin" replace /> : <PublicLanding />} /><Route path="/agendar" element={isNativeApp ? <Navigate to="/admin" replace /> : <PublicBookingV2 />} /><Route path="/privacidade" element={isNativeApp ? <Navigate to="/admin" replace /> : <Privacy />} /><Route path="/admin/*" element={<AdminAccess><OperationsProvider><AdminLayout /></OperationsProvider></AdminAccess>} /><Route path="*" element={<Navigate to={startRoute} replace />} /></Routes></CatalogProvider>
+  return <CatalogProvider><NativeBackHandler /><Routes><Route path="/" element={isNativeApp ? <Navigate to="/admin" replace /> : <PublicLanding />} /><Route path="/agendar" element={isNativeApp ? <Navigate to="/admin" replace /> : <PublicBookingV2 />} /><Route path="/privacidade" element={isNativeApp ? <Navigate to="/admin" replace /> : <Privacy />} /><Route path="/admin/*" element={<AdminAccess><OperationsProvider><AdminLayout /></OperationsProvider></AdminAccess>} /><Route path="*" element={<Navigate to={startRoute} replace />} /></Routes></CatalogProvider>
 }

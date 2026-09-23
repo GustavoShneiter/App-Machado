@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useOperations } from './OperationsStore'
 import { useCatalog } from './CatalogStore'
@@ -6,12 +6,22 @@ import { supabase } from './supabaseClient'
 import { cashBalance, commandTotal, dateTime, dayKey, exportCsv, labels, methods, money, summarize, type Appointment, type Customer, type Product } from './operations'
 import { uploadCatalogPhoto } from './media'
 import { History, MessageCircle, Pencil } from 'lucide-react'
+import { registerDismissibleLayer } from './dismissibleLayers'
 
 export function Page({ title, text, action, children }: { title: string; text?: string; action?: ReactNode; children: ReactNode }) {
   return <section className="page"><div className="page-head"><div><h2>{title}</h2>{text && <p>{text}</p>}</div>{action}</div>{children}</section>
 }
 export function Modal({ title, close, children }: { title: string; close: () => void; children: ReactNode }) {
-  return <div className="modal-backdrop"><section className="modal" role="dialog" aria-modal="true" aria-label={title}><div className="modal-head"><h2>{title}</h2><button className="outline small" onClick={close}>Fechar</button></div>{children}</section></div>
+  const closeRef = useRef(close)
+  closeRef.current = close
+
+  useEffect(() => registerDismissibleLayer(() => closeRef.current()), [])
+
+  return <div className="modal-backdrop" onClick={() => closeRef.current()} onKeyDown={event => { if (event.key === 'Escape') closeRef.current() }}>
+    <section className="modal" role="dialog" aria-modal="true" aria-label={title} onClick={event => event.stopPropagation()}>
+      <div className="modal-head"><h2>{title}</h2><button className="outline small" onClick={() => closeRef.current()}>Fechar</button></div>{children}
+    </section>
+  </div>
 }
 function Metrics({ entries }: { entries: [string, string | number][] }) { return <div className="stats-grid">{entries.map(([label, value]) => <article className="stat-card" key={label}><span>{label}</span><strong>{value}</strong></article>)}</div> }
 function Method({ value, set }: { value: string; set: (v: string) => void }) { return <fieldset className="payment-methods"><legend>Recebimento</legend><div>{Object.entries(methods).map(([key, label]) => <button type="button" key={key} className={value === key ? 'selected' : ''} onClick={() => set(key)}>{label}</button>)}</div></fieldset> }
