@@ -1,4 +1,5 @@
 export type Appointment = { id: string; customer_id: string; professional_id: string; service_id: string; starts_at: string; ends_at: string; expected_price_cents: number; status: string; source: string; customer_name: string; customer_phone: string; professional_name: string; service_name: string }
+export type ScheduleBlock = { id: string; professional_id: string; starts_at: string; ends_at: string; reason: string; created_at: string }
 export type Customer = { id: string; name: string; phone: string; email?: string | null; birth_date?: string | null; notes: string | null }
 export type Command = { id: string; appointment_id: string | null; customer_id: string; status: string; discount_cents: number; surcharge_cents: number; created_at: string; closed_at: string | null }
 export type Item = { id: string; command_id: string; type?: 'service' | 'product'; service_id?: string | null; product_id?: string | null; professional_id: string | null; description: string; unit_price_cents: number; quantity: number; commission_cents: number }
@@ -12,8 +13,8 @@ export type ServicePackage = { id: string; name: string; description: string | n
 export type PackageBalance = { service_id: string; service_name: string; total: number; remaining: number }
 export type PackageSale = { id: string; package_id: string; customer_id: string; package_name: string; customer_name: string; amount_cents: number; method: string; status: string; sold_at: string; balances: PackageBalance[] }
 export type BusinessSettings = { id: boolean; name: string; legal_name: string | null; email: string | null; phone: string | null; postal_code: string | null; street: string | null; city: string | null; state: string | null; instagram: string | null; website: string | null }
-export type Operations = { appointments: Appointment[]; customers: Customer[]; commands: Command[]; items: Item[]; payments: Payment[]; commissions: Commission[]; sessions: CashSession[]; movements: Movement[]; products: Product[]; packages: ServicePackage[]; packageSales: PackageSale[]; business: BusinessSettings[] }
-export const emptyOperations: Operations = { appointments: [], customers: [], commands: [], items: [], payments: [], commissions: [], sessions: [], movements: [], products: [], packages: [], packageSales: [], business: [] }
+export type Operations = { appointments: Appointment[]; blocks: ScheduleBlock[]; customers: Customer[]; commands: Command[]; items: Item[]; payments: Payment[]; commissions: Commission[]; sessions: CashSession[]; movements: Movement[]; products: Product[]; packages: ServicePackage[]; packageSales: PackageSale[]; business: BusinessSettings[] }
+export const emptyOperations: Operations = { appointments: [], blocks: [], customers: [], commands: [], items: [], payments: [], commissions: [], sessions: [], movements: [], products: [], packages: [], packageSales: [], business: [] }
 export const money = (cents: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100)
 export const dayKey = (value: string | Date = new Date()) => new Date(value).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' })
 export const dateTime = (value: string) => new Date(value).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' })

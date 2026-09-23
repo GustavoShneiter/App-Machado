@@ -1,4 +1,7 @@
 export const fixture = {
+  blocks: [
+    { id:'b1',professional_id:'p1',starts_at:'2026-09-18T13:00:00Z',ends_at:'2026-09-18T14:00:00Z',reason:'Intervalo',created_at:'2026-09-17T12:00:00Z' },
+  ],
   appointments: [
     { id:'a1',customer_id:'c1',professional_id:'p1',service_id:'s1',starts_at:'2026-09-18T12:00:00Z',ends_at:'2026-09-18T12:30:00Z',expected_price_cents:4000,status:'completed',source:'instagram',customer_name:'Cliente integrado',customer_phone:'11999990001',professional_name:'Araújo',service_name:'Corte integrado' },
     { id:'a2',customer_id:'c2',professional_id:'p2',service_id:'s1',starts_at:'2026-09-18T13:00:00Z',ends_at:'2026-09-18T13:30:00Z',expected_price_cents:4000,status:'completed',source:'panel',customer_name:'Cliente Machado',customer_phone:'11999990002',professional_name:'Machado',service_name:'Corte integrado' },

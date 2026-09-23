@@ -20,8 +20,9 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
     try {
       const result = await supabase.rpc('office_snapshot')
       if (result.error) throw result.error
-      if (!result.data || !Object.keys(emptyOperations).every(k => Array.isArray(result.data[k]))) throw new Error('Resposta inválida ao atualizar dados.')
-      if (alive.current && version === request.current) { setData(result.data as Operations); setRefreshed(new Date().toLocaleTimeString('pt-BR')); setLoading(false); setLoadError('') }
+      const normalized = result.data ? { ...result.data, blocks: Array.isArray(result.data.blocks) ? result.data.blocks : [] } : null
+      if (!normalized || !Object.keys(emptyOperations).every(k => Array.isArray(normalized[k]))) throw new Error('Resposta inválida ao atualizar dados.')
+      if (alive.current && version === request.current) { setData(normalized as Operations); setRefreshed(new Date().toLocaleTimeString('pt-BR')); setLoading(false); setLoadError('') }
     } catch (e) {
       if (alive.current && version === request.current) { setLoading(false); setLoadError(e instanceof Error ? e.message : 'Não foi possível atualizar os dados. Tente novamente.') }
     }
@@ -67,13 +68,17 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
             ? await supabase.rpc('save_business_settings', { payload })
           : action === 'delete_customer'
             ? await supabase.rpc('delete_customer_record', { customer_id: String(payload.id ?? '') })
+          : action === 'create_schedule_block'
+            ? await supabase.rpc('create_schedule_block', { professional_id: String(payload.professional_id ?? ''), starts_at: String(payload.starts_at ?? ''), ends_at: String(payload.ends_at ?? ''), reason: String(payload.reason ?? '') })
+          : action === 'delete_schedule_block'
+            ? await supabase.rpc('delete_schedule_block', { block_id: String(payload.id ?? '') })
             : await supabase.rpc('office_action', { action, payload })
       if (result.error) throw result.error
       await refresh()
       return true
     } catch (e) {
       const rawMessage = typeof e === 'object' && e && 'message' in e ? String(e.message) : 'Não foi possível salvar. Tente novamente.'
-      const message = /atendimento nesse horário|slot_not_available|exclusion/i.test(rawMessage) ? 'Esse profissional já possui um atendimento nesse horário. Escolha outro horário disponível.' : rawMessage
+      const message = /atendimento nesse horário|slot_not_available|slot_blocked|exclusion|horário bloqueado/i.test(rawMessage) ? 'Esse profissional já possui um atendimento ou bloqueio nesse horário. Escolha outro horário disponível.' : rawMessage
       setError(message); return false
     } finally { saving.current = false; setBusy(false) }
   }

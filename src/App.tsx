@@ -67,6 +67,7 @@ export function AdminLayout() {
   const isCash = location.pathname.endsWith('/caixa')
   const isAgenda = location.pathname.endsWith('/agenda') || location.pathname === '/admin'
   const showCreate = isCommands || isClients || isCash || isAgenda
+  const showTopCreate = showCreate && !isAgenda
   const createLabel = isCommands ? 'Nova comanda' : isClients ? 'Novo cliente' : isCash ? 'Novo lançamento' : 'Novo agendamento'
   const openCreate = () => { if (isCommands) setNewManualCommand(true); else if (isClients) setNewCustomer(true); else if (isCash) setNewCashEntry(true); else setNewAppointment(true) }
   useEffect(() => {
@@ -79,11 +80,11 @@ export function AdminLayout() {
       <button className="outline" onClick={() => void supabase?.auth.signOut()}>Sair da conta</button>
     </aside>
     {sidebar && <div className="scrim" onClick={() => setSidebar(false)} />}
-    <main className="main"><header className="topbar"><button className="icon-btn menu-trigger" aria-label="Abrir menu" onClick={() => setSidebar(true)}><Menu /></button><div><p className="eyebrow">Barbearia Machado</p><small>{refreshed ? `Atualizado às ${refreshed}` : 'Carregando dados…'}</small></div><div className="top-actions"><button className="outline small" disabled={busy} onClick={() => void refresh()}>Atualizar</button>{showCreate && <button className="primary compact" onClick={openCreate}>{createLabel}</button>}</div></header>
+    <main className="main"><header className="topbar"><button className="icon-btn menu-trigger" aria-label="Abrir menu" onClick={() => setSidebar(true)}><Menu /></button><div><p className="eyebrow">Barbearia Machado</p><small>{refreshed ? `Atualizado às ${refreshed}` : 'Carregando dados…'}</small></div><div className="top-actions"><button className="outline small" disabled={busy} onClick={() => void refresh()}>Atualizar</button>{showTopCreate && <button className="primary compact" onClick={openCreate}>{createLabel}</button>}</div></header>
       {error && <div className="operation-error" role="alert">{error}</div>}
       {loading ? <div className="empty">Carregando registros da barbearia…</div> : <Routes>
         <Route index element={<Dashboard />} />
-        <Route path="agenda" element={<Agenda onNew={() => setNewAppointment(true)} />} />
+        <Route path="agenda" element={<Agenda />} />
         <Route path="clientes" element={<Customers requestedNew={newCustomer} onRequestedNewHandled={() => setNewCustomer(false)} />} />
         <Route path="comandas" element={<Orders requestedNew={newManualCommand} onRequestedNewHandled={() => setNewManualCommand(false)} />} />
         <Route path="caixa" element={<CashManagement requestedNew={newCashEntry} onRequestedNewHandled={() => setNewCashEntry(false)} />} />
