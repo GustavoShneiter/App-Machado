@@ -21,7 +21,17 @@ import {
   type ScheduleBlock,
 } from "./operations";
 import { uploadCatalogPhoto } from "./media";
-import { Gift, History, MessageCircle, Pencil, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  Gift,
+  HandCoins,
+  History,
+  MessageCircle,
+  Pencil,
+  Trash2,
+  TrendingUp,
+  WalletCards,
+} from "lucide-react";
 import { registerDismissibleLayer } from "./dismissibleLayers";
 
 export function Page({
@@ -2004,6 +2014,7 @@ export function CashManagement({
   const [entryIds, setEntryIds] = useState<string[]>([]);
   const [receive, setReceive] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [payoutsOpen, setPayoutsOpen] = useState(false);
   const [commissionView, setCommissionView] = useState("pending");
   const [commissionProfessional, setCommissionProfessional] = useState("");
   const active = data.sessions.find((s) => !s.closed_at);
@@ -2016,6 +2027,36 @@ export function CashManagement({
     (e) => e.status === "pending" && e.commission_cents > 0,
   );
   const movements = data.movements.filter((m) => m.session_id === shown?.id);
+  const receivedInSession = movements
+    .filter(
+      (movement) =>
+        movement.amount_cents > 0 &&
+        ["sale", "package_sale"].includes(movement.type),
+    )
+    .reduce((sum, movement) => sum + movement.amount_cents, 0);
+  const commandIdsInSession = new Set(
+    movements
+      .filter((movement) => movement.command_id)
+      .map((movement) => movement.command_id),
+  );
+  const itemIdsInSession = new Set(
+    data.items
+      .filter((item) => commandIdsInSession.has(item.command_id))
+      .map((item) => item.id),
+  );
+  const commissionsInSession = data.commissions
+    .filter((commission) => itemIdsInSession.has(commission.command_item_id))
+    .reduce((sum, commission) => sum + commission.commission_cents, 0);
+  const operatingExpenses = movements
+    .filter(
+      (movement) =>
+        movement.amount_cents < 0 &&
+        movement.type === "expense" &&
+        !movement.commission_entry_id,
+    )
+    .reduce((sum, movement) => sum + Math.abs(movement.amount_cents), 0);
+  const barbershopEarnings =
+    receivedInSession - commissionsInSession - operatingExpenses;
   const pendingPayments = data.commands.filter(
     (c) => c.status === "awaiting_payment",
   );
@@ -2066,7 +2107,7 @@ export function CashManagement({
       action={
         <div className="row-actions">
           <button className="outline" onClick={() => setFiltersOpen((v) => !v)}>
-            {filtersOpen ? "Fechar filtros" : "Filtros"}
+            {filtersOpen ? "Fechar histórico" : "Histórico"}
           </button>
           <button
             className="primary"
@@ -2096,44 +2137,164 @@ export function CashManagement({
               ))}
             </select>
           </label>
-          <label>
-            Repasses
-            <select
-              value={commissionView}
-              onChange={(e) => setCommissionView(e.target.value)}
+        </div>
+      )}
+      <section className="cash-overview-grid">
+        <article className="cash-overview-card cash-register-card">
+          <div className="cash-overview-icon">
+            <WalletCards size={22} />
+          </div>
+          <div>
+            <span>Caixa físico</span>
+            <strong>{money(shown ? cashBalance(data, shown) : 0)}</strong>
+            <small className={active ? "open" : "closed"}>
+              {active ? "Caixa aberto" : "Caixa fechado"}
+            </small>
+          </div>
+        </article>
+        <article className="cash-overview-card earnings-card">
+          <div className="cash-overview-icon">
+            <TrendingUp size={22} />
+          </div>
+          <div>
+            <span>Rendimento da barbearia</span>
+            <strong>{money(barbershopEarnings)}</strong>
+            <small>
+              {money(receivedInSession)} recebido ·{" "}
+              {money(commissionsInSession)} reservado para repasses
+            </small>
+          </div>
+        </article>
+      </section>
+      <CashActivity movements={movements} />
+      <button
+        className={`payout-summary-button ${payoutsOpen ? "open" : ""}`}
+        onClick={() => setPayoutsOpen((value) => !value)}
+        aria-expanded={payoutsOpen}
+      >
+        <span className="payout-summary-icon">
+          <HandCoins size={22} />
+        </span>
+        <span>
+          <small>Colaboradores e profissionais</small>
+          <strong>Valores a repassar</strong>
+        </span>
+        <b>
+          {money(
+            pending.reduce((sum, entry) => sum + entry.commission_cents, 0),
+          )}
+        </b>
+        <ChevronDown size={19} />
+      </button>
+      {payoutsOpen && (
+        <section className="panel operation-panel payout-panel">
+          <div className="panel-title">
+            <div>
+              <h3>
+                {commissionView === "pending"
+                  ? "Repasses pendentes"
+                  : "Repasses pagos"}
+              </h3>
+              <p>Valores calculados conforme a comissão de cada serviço.</p>
+            </div>
+          </div>
+          <div className="payout-filters">
+            <button
+              className={commissionView === "pending" ? "active" : ""}
+              onClick={() => setCommissionView("pending")}
             >
-              <option value="pending">Pendentes</option>
-              <option value="paid">Pagos</option>
-            </select>
-          </label>
-          <label>
-            Profissional
+              Pendentes
+            </button>
+            <button
+              className={commissionView === "paid" ? "active" : ""}
+              onClick={() => setCommissionView("paid")}
+            >
+              Pagos
+            </button>
             <select
               value={commissionProfessional}
-              onChange={(e) => setCommissionProfessional(e.target.value)}
+              onChange={(event) =>
+                setCommissionProfessional(event.target.value)
+              }
+              aria-label="Filtrar profissional"
             >
-              <option value="">Todos</option>
-              {professionals.map((p) => (
-                <option value={p.id} key={p.id}>
-                  {p.nome}
+              <option value="">Todos os profissionais</option>
+              {professionals.map((professional) => (
+                <option value={professional.id} key={professional.id}>
+                  {professional.nome}
                 </option>
               ))}
             </select>
-          </label>
-        </div>
+          </div>
+          {commissionView === "pending"
+            ? [
+                ...new Set(
+                  visibleCommissions.map((entry) => entry.professional_id),
+                ),
+              ].map((id) => {
+                const entries = visibleCommissions.filter(
+                  (entry) => entry.professional_id === id,
+                );
+                return (
+                  <div className="record-row payout-row" key={id}>
+                    <div>
+                      <strong>
+                        {professionals.find(
+                          (professional) => professional.id === id,
+                        )?.nome ??
+                          data.appointments.find(
+                            (appointment) => appointment.professional_id === id,
+                          )?.professional_name ??
+                          "Profissional"}
+                      </strong>
+                      <small>
+                        {entries.length}{" "}
+                        {entries.length === 1 ? "serviço" : "serviços"}
+                      </small>
+                    </div>
+                    <b>
+                      {money(
+                        entries.reduce(
+                          (sum, entry) => sum + entry.commission_cents,
+                          0,
+                        ),
+                      )}
+                    </b>
+                    <button
+                      className="primary small"
+                      disabled={!active || busy}
+                      onClick={() => {
+                        setProfessionalId(id);
+                        setEntryIds(entries.map((entry) => entry.id));
+                        openDialog("pay");
+                      }}
+                    >
+                      Pagar repasse
+                    </button>
+                  </div>
+                );
+              })
+            : visibleCommissions.map((entry) => (
+                <div className="record-row payout-row" key={entry.id}>
+                  <span>
+                    {professionals.find(
+                      (professional) =>
+                        professional.id === entry.professional_id,
+                    )?.nome ?? "Profissional"}{" "}
+                    · {entry.paid_at ? dateTime(entry.paid_at) : ""}
+                  </span>
+                  <b>{money(entry.commission_cents)}</b>
+                </div>
+              ))}
+          {!visibleCommissions.length && (
+            <Empty>
+              {commissionView === "pending"
+                ? "Nenhum repasse pendente."
+                : "Nenhum repasse pago neste filtro."}
+            </Empty>
+          )}
+        </section>
       )}
-      <Metrics
-        entries={[
-          ["Caixa", active ? "Aberto" : "Fechado"],
-          ["Saldo", money(shown ? cashBalance(data, shown) : 0)],
-          ["Prontas", pendingPayments.length],
-          [
-            "Repasses",
-            money(pending.reduce((s, e) => s + e.commission_cents, 0)),
-          ],
-        ]}
-      />
-      <CashActivity movements={movements} />
       <section className="panel operation-panel ready-receipts">
         <div className="panel-title">
           <h3>Prontas para receber</h3>
@@ -2228,65 +2389,6 @@ export function CashManagement({
           );
         })}
         {!movements.length && <Empty />}
-      </section>
-      <section className="panel operation-panel">
-        <h3>
-          {commissionView === "pending"
-            ? "Repasses pendentes"
-            : "Repasses pagos"}
-        </h3>
-        {commissionView === "pending"
-          ? [...new Set(visibleCommissions.map((e) => e.professional_id))].map(
-              (id) => {
-                const entries = visibleCommissions.filter(
-                  (e) => e.professional_id === id,
-                );
-                return (
-                  <div className="record-row" key={id}>
-                    <strong>
-                      {professionals.find((p) => p.id === id)?.nome ??
-                        data.appointments.find((a) => a.professional_id === id)
-                          ?.professional_name ??
-                        "Profissional"}
-                    </strong>
-                    <span>
-                      {entries.length} serviços ·{" "}
-                      {money(
-                        entries.reduce((s, e) => s + e.commission_cents, 0),
-                      )}
-                    </span>
-                    <button
-                      className="primary small"
-                      disabled={!active || busy}
-                      onClick={() => {
-                        setProfessionalId(id);
-                        setEntryIds(entries.map((e) => e.id));
-                        openDialog("pay");
-                      }}
-                    >
-                      Pagar repasse
-                    </button>
-                  </div>
-                );
-              },
-            )
-          : visibleCommissions.map((e) => (
-              <div className="record-row" key={e.id}>
-                <span>
-                  {professionals.find((p) => p.id === e.professional_id)
-                    ?.nome ?? "Profissional"}{" "}
-                  · {e.paid_at ? dateTime(e.paid_at) : ""}
-                </span>
-                <strong>{money(e.commission_cents)}</strong>
-              </div>
-            ))}
-        {!visibleCommissions.length && (
-          <Empty>
-            {commissionView === "pending"
-              ? "Nenhum repasse pendente."
-              : "Nenhum repasse pago neste filtro."}
-          </Empty>
-        )}
       </section>
       {dialog && (
         <Modal

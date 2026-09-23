@@ -373,7 +373,7 @@ function SettingsPage() {
           <Users />
           <span>
             <strong>Profissionais</strong>
-            <small>Equipe, valores e regras de atendimento.</small>
+            <small>Equipe e disponibilidade no agendamento.</small>
           </span>
           <ArrowRight />
         </Link>
