@@ -53,6 +53,18 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
             ? await supabase.rpc('remove_command_item', { command_item_id: String(payload.id ?? '') })
           : action === 'mark_command_ready'
             ? await supabase.rpc('mark_command_ready', { command_id: String(payload.command_id ?? '') })
+          : action === 'set_command_adjustments'
+            ? await supabase.rpc('set_command_adjustments', { command_id: String(payload.command_id ?? ''), discount_cents: Number(payload.discount ?? 0), surcharge_cents: Number(payload.surcharge ?? 0) })
+          : action === 'save_customer'
+            ? await supabase.rpc('save_customer_profile', { payload })
+          : action === 'save_package'
+            ? await supabase.rpc('save_service_package', { payload })
+          : action === 'sell_package'
+            ? await supabase.rpc('sell_service_package', { package_id: String(payload.package_id ?? ''), customer_id: String(payload.customer_id ?? ''), payment_method: String(payload.method ?? '') })
+          : action === 'redeem_package'
+            ? await supabase.rpc('redeem_package_service', { package_sale_id: String(payload.sale_id ?? ''), service_id: String(payload.service_id ?? '') })
+          : action === 'save_business'
+            ? await supabase.rpc('save_business_settings', { payload })
           : action === 'delete_customer'
             ? await supabase.rpc('delete_customer_record', { customer_id: String(payload.id ?? '') })
             : await supabase.rpc('office_action', { action, payload })

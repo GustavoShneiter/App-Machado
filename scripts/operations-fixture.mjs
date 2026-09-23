@@ -12,4 +12,7 @@ export const fixture = {
   sessions:[{id:'cash1',opened_at:'2026-09-18T11:00:00Z',opening_balance_cents:10000,closed_at:null,declared_balance_cents:null,notes:null}],
   movements:[{id:'m1',session_id:'cash1',type:'sale',amount_cents:4000,payment_method:'pix',notes:'Recebimento',created_at:'2026-09-18T15:00:00Z',command_id:'cmd1',commission_entry_id:null},{id:'m2',session_id:'cash1',type:'expense',amount_cents:-1000,payment_method:'cash',notes:'Material',created_at:'2026-09-18T15:00:00Z',command_id:null,commission_entry_id:null}],
   products:[{id:'product1',name:'Pomada',category:'Finalização',quantity:5,minimum_quantity:2,sale_price_cents:3500,cost_cents:1500,active:true}],
+  packages:[],
+  packageSales:[],
+  business:[],
 }

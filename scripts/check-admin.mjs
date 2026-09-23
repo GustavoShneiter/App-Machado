@@ -14,7 +14,7 @@ const result = await build({
     import {TestContext} from './src/OperationsStore'
     import {emptyOperations,summarize,cashBalance,commandTotal,dayKey,csvCell} from './src/operations'
     import {fixture} from './scripts/operations-fixture.mjs'
-    const pages=['','agenda','caixa','comandas','clientes','produtos','servicos','profissionais','relatorios','configuracoes']
+    const pages=['','agenda','caixa','comandas','clientes','produtos','servicos','profissionais','pacotes','empresa','relatorios','configuracoes']
     for(const data of [emptyOperations,fixture]){
       const value={data,loading:false,error:'',busy:false,refreshed:'12:00',refresh:async()=>{},run:async()=>true}
       for(const page of pages){
