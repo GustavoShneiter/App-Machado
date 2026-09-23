@@ -1,7 +1,7 @@
 export type Appointment = { id: string; customer_id: string; professional_id: string; service_id: string; starts_at: string; ends_at: string; expected_price_cents: number; status: string; source: string; customer_name: string; customer_phone: string; professional_name: string; service_name: string }
 export type Customer = { id: string; name: string; phone: string; notes: string | null }
-export type Command = { id: string; appointment_id: string; customer_id: string; status: string; discount_cents: number; surcharge_cents: number; created_at: string; closed_at: string | null }
-export type Item = { id: string; command_id: string; professional_id: string; description: string; unit_price_cents: number; quantity: number; commission_cents: number }
+export type Command = { id: string; appointment_id: string | null; customer_id: string; status: string; discount_cents: number; surcharge_cents: number; created_at: string; closed_at: string | null }
+export type Item = { id: string; command_id: string; type?: 'service' | 'product'; service_id?: string | null; product_id?: string | null; professional_id: string | null; description: string; unit_price_cents: number; quantity: number; commission_cents: number }
 export type Payment = { id: string; command_id: string; method: string; amount_cents: number; paid_at: string; reversed_at: string | null }
 export type Commission = { id: string; command_item_id: string; professional_id: string; gross_cents: number; commission_cents: number; status: string; paid_at: string | null; created_at: string }
 export type CashSession = { id: string; opened_at: string; opening_balance_cents: number; closed_at: string | null; declared_balance_cents: number | null; notes: string | null }
@@ -20,16 +20,17 @@ export function summarize(state: Operations, from: string, to: string, professio
   const appointments = state.appointments.filter(a => dayKey(a.starts_at) >= from && dayKey(a.starts_at) <= to && (!professional || a.professional_id === professional))
   const completed = appointments.filter(a => a.status === 'completed')
   const completedIds = new Set(completed.map(a => a.id))
-  const commandIds = new Set(state.commands.filter(c => completedIds.has(c.appointment_id)).map(c => c.id))
-  const items = state.items.filter(i => commandIds.has(i.command_id))
+  const commandIds = new Set(state.commands.filter(c => (c.appointment_id !== null && completedIds.has(c.appointment_id)) || (!c.appointment_id && (c.status === 'awaiting_payment' || c.status === 'closed') && dayKey(c.created_at) >= from && dayKey(c.created_at) <= to)).map(c => c.id))
+  const proCommands = new Set(state.commands.filter(c => commandIds.has(c.id) && state.items.some(i => i.command_id === c.id && i.professional_id === professional)).map(c => c.id))
+  const includedCommandIds = professional ? proCommands : commandIds
+  const items = state.items.filter(i => includedCommandIds.has(i.command_id))
   const gross = items.reduce((s, i) => s + i.unit_price_cents * i.quantity, 0)
   const earned = items.reduce((s, i) => s + i.commission_cents, 0)
   const itemIds = new Set(items.map(i => i.id))
   const pending = state.commissions.filter(e => itemIds.has(e.command_item_id) && e.status === 'pending').reduce((s, e) => s + e.commission_cents, 0)
   const paidCommission = state.commissions.filter(e => itemIds.has(e.command_item_id) && e.status === 'paid').reduce((s, e) => s + e.commission_cents, 0)
-  const proCommands = new Set(state.commands.filter(c => state.appointments.some(a => a.id === c.appointment_id && (!professional || a.professional_id === professional))).map(c => c.id))
   const received = state.payments.filter(p => !p.reversed_at && dayKey(p.paid_at) >= from && dayKey(p.paid_at) <= to && (!professional || proCommands.has(p.command_id))).reduce((s, p) => s + p.amount_cents, 0)
-  return { appointments, completed, gross, earned, pending, paidCommission, received, shop: gross - earned, ticket: completed.length ? Math.round(gross / completed.length) : 0 }
+  return { appointments, completed, gross, earned, pending, paidCommission, received, shop: gross - earned, ticket: includedCommandIds.size ? Math.round(gross / includedCommandIds.size) : 0 }
 }
 
 export const csvCell = (value: unknown) => '"' + String(value ?? '').replace(/^[=+@-]/, "'$&").replace(/"/g, '""') + '"'

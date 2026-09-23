@@ -45,6 +45,14 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
           ? await supabase.rpc('save_product_profile', { payload })
           : action === 'add_command_product'
             ? await supabase.rpc('add_product_to_command', { command_id: String(payload.command_id ?? ''), product_id: String(payload.product_id ?? ''), item_quantity: Number(payload.quantity ?? 1) })
+          : action === 'open_manual_command'
+            ? await supabase.rpc('open_manual_command', { customer_name: String(payload.name ?? ''), customer_phone: String(payload.phone ?? '') })
+          : action === 'add_command_service'
+            ? await supabase.rpc('add_service_to_command', { command_id: String(payload.command_id ?? ''), service_id: String(payload.service_id ?? ''), professional_id: String(payload.professional_id ?? '') })
+          : action === 'remove_command_item'
+            ? await supabase.rpc('remove_command_item', { command_item_id: String(payload.id ?? '') })
+          : action === 'mark_command_ready'
+            ? await supabase.rpc('mark_command_ready', { command_id: String(payload.command_id ?? '') })
           : action === 'delete_customer'
             ? await supabase.rpc('delete_customer_record', { customer_id: String(payload.id ?? '') })
             : await supabase.rpc('office_action', { action, payload })

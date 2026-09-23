@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, NavLink, Navigate, Route, Routes } from 'react-router-dom'
+import { Link, NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { ArrowRight, CalendarDays, LayoutDashboard, Menu, MessageCircle, Package, Scissors, Users, WalletCards, Settings, X, ClipboardList, Plus } from 'lucide-react'
 import { CatalogProvider } from './CatalogStore'
@@ -54,20 +54,24 @@ function PublicLanding() {
 export function AdminLayout() {
   const [sidebar, setSidebar] = useState(false)
   const [newAppointment, setNewAppointment] = useState(false)
+  const [newManualCommand, setNewManualCommand] = useState(false)
+  const location = useLocation()
   const { loading, error, busy, refreshed, refresh } = useOperations()
+  const isCommands = location.pathname.endsWith('/comandas')
+  const openCreate = () => { if (isCommands) setNewManualCommand(true); else setNewAppointment(true) }
   return <div className="app-shell">
     <aside className={`sidebar ${sidebar ? 'open' : ''}`}><div className="brand"><span className="brand-mark">BM</span><span><strong>Barbearia</strong><small>Machado</small></span><button className="icon-btn close-menu" onClick={() => setSidebar(false)}><X /></button></div>
       <nav>{navItems.map(item => <NavLink key={item.to} to={item.to} end={item.to==='/admin'} onClick={() => setSidebar(false)}><item.icon size={19} /><span>{item.label}</span></NavLink>)}</nav>
       <button className="outline" onClick={() => void supabase?.auth.signOut()}>Sair da conta</button>
     </aside>
     {sidebar && <div className="scrim" onClick={() => setSidebar(false)} />}
-    <main className="main"><header className="topbar"><button className="icon-btn menu-trigger" aria-label="Abrir menu" onClick={() => setSidebar(true)}><Menu /></button><div><p className="eyebrow">Barbearia Machado</p><small>{refreshed ? `Atualizado às ${refreshed}` : 'Carregando dados…'}</small></div><div className="top-actions"><button className="outline small" disabled={busy} onClick={() => void refresh()}>Atualizar</button><button className="primary compact" onClick={() => setNewAppointment(true)}>Novo agendamento</button></div></header>
+    <main className="main"><header className="topbar"><button className="icon-btn menu-trigger" aria-label="Abrir menu" onClick={() => setSidebar(true)}><Menu /></button><div><p className="eyebrow">Barbearia Machado</p><small>{refreshed ? `Atualizado às ${refreshed}` : 'Carregando dados…'}</small></div><div className="top-actions"><button className="outline small" disabled={busy} onClick={() => void refresh()}>Atualizar</button><button className="primary compact" onClick={openCreate}>{isCommands ? 'Nova comanda' : 'Novo agendamento'}</button></div></header>
       {error && <div className="operation-error" role="alert">{error}</div>}
       {loading ? <div className="empty">Carregando registros da barbearia…</div> : <Routes>
         <Route index element={<Dashboard />} />
         <Route path="agenda" element={<Agenda onNew={() => setNewAppointment(true)} />} />
         <Route path="clientes" element={<Customers />} />
-        <Route path="comandas" element={<Orders onNew={() => setNewAppointment(true)} />} />
+        <Route path="comandas" element={<Orders requestedNew={newManualCommand} onRequestedNewHandled={() => setNewManualCommand(false)} />} />
         <Route path="caixa" element={<CashManagement />} />
         <Route path="relatorios" element={<Reports />} />
         <Route path="produtos" element={<Products />} />
@@ -85,7 +89,7 @@ export function AdminLayout() {
       <NavLink to="/admin/clientes"><Users size={20} /><span>Clientes</span></NavLink>
       <NavLink to="/admin/configuracoes"><Menu size={21} /><span>Menu</span></NavLink>
     </nav>
-    <button className="mobile-create" aria-label="Criar novo agendamento" onClick={() => setNewAppointment(true)}><Plus size={24} /></button>
+    <button className="mobile-create" aria-label={isCommands ? 'Criar nova comanda' : 'Criar novo agendamento'} onClick={openCreate}><Plus size={24} /></button>
     {newAppointment && <AppointmentModal close={() => setNewAppointment(false)} />}
   </div>
 }
