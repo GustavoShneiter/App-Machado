@@ -104,6 +104,7 @@ function Privacy() {
   return <main className="public-shell"><article className="privacy"><h1>Privacidade</h1><p>Usamos nome e telefone para identificar seu agendamento, entrar em contato e manter o histórico de atendimento. Solicite correção ou exclusão dos seus dados diretamente à barbearia.</p><a href="/">Voltar ao início</a></article></main>
 }
 export default function App() {
-  const startRoute = Capacitor.isNativePlatform() ? '/admin' : '/'
-  return <CatalogProvider><Routes><Route path="/" element={<PublicLanding />} /><Route path="/agendar" element={<PublicBookingV2 />} /><Route path="/privacidade" element={<Privacy />} /><Route path="/admin/*" element={<AdminAccess><OperationsProvider><AdminLayout /></OperationsProvider></AdminAccess>} /><Route path="*" element={<Navigate to={startRoute} replace />} /></Routes></CatalogProvider>
+  const isNativeApp = Capacitor.isNativePlatform()
+  const startRoute = isNativeApp ? '/admin' : '/'
+  return <CatalogProvider><Routes><Route path="/" element={isNativeApp ? <Navigate to="/admin" replace /> : <PublicLanding />} /><Route path="/agendar" element={isNativeApp ? <Navigate to="/admin" replace /> : <PublicBookingV2 />} /><Route path="/privacidade" element={isNativeApp ? <Navigate to="/admin" replace /> : <Privacy />} /><Route path="/admin/*" element={<AdminAccess><OperationsProvider><AdminLayout /></OperationsProvider></AdminAccess>} /><Route path="*" element={<Navigate to={startRoute} replace />} /></Routes></CatalogProvider>
 }

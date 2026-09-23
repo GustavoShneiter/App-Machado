@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { Capacitor } from '@capacitor/core'
 import { supabase } from './supabaseClient'
 
 export function AdminAccess({ children }: { children: ReactNode }) {
@@ -36,5 +37,5 @@ export function AdminAccess({ children }: { children: ReactNode }) {
   }
   if (allowed) return <>{children}</>
   if (checking) return <main className="auth-shell"><p>Verificando acesso…</p></main>
-  return <main className="auth-shell"><form className="auth-card" onSubmit={signIn}><span className="brand-mark">BM</span><h1>Entrar no painel</h1><label className="field"><span>E-mail</span><input type="email" autoComplete="username" required value={email} onChange={e => setEmail(e.target.value)} /></label><label className="field"><span>Senha</span><input type="password" autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} /></label>{error && <p className="form-error">{error}</p>}<button className="primary">Entrar</button><a href="/agendar">Agendamento público</a></form></main>
+  return <main className="auth-shell"><form className="auth-card" onSubmit={signIn}><span className="brand-mark">BM</span><h1>Entrar no painel</h1><label className="field"><span>E-mail</span><input type="email" autoComplete="username" required value={email} onChange={e => setEmail(e.target.value)} /></label><label className="field"><span>Senha</span><input type="password" autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} /></label>{error && <p className="form-error">{error}</p>}<button className="primary">Entrar</button>{!Capacitor.isNativePlatform() && <a href="/agendar">Agendamento público</a>}</form></main>
 }
