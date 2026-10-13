@@ -1,0 +1,191 @@
+/* App navigation and motion polish: loaded after the legacy app stylesheet. */
+@media (max-width: 700px) {
+  .app-shell .mobile-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: center;
+    justify-content: initial;
+    gap: 2px;
+    padding-inline: 8px;
+  }
+
+  .app-shell .mobile-nav > a {
+    position: relative;
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 54px;
+    margin: 0;
+    padding: 6px 2px;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-radius: 14px;
+    background: transparent;
+    color: #718177;
+    font-size: 9px;
+    line-height: 1.1;
+    transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+  }
+
+  .app-shell .mobile-nav > a::before {
+    content: none;
+    display: none;
+  }
+
+  .app-shell .mobile-nav > a.active {
+    background: #e6f5eb;
+    color: #14663d;
+  }
+
+  .app-shell .mobile-nav > a.active span {
+    font-weight: 800;
+  }
+
+  .app-shell .mobile-nav > a svg,
+  .app-shell .mobile-nav > a.active svg {
+    display: block;
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    color: currentColor;
+    transform: none;
+  }
+
+  .app-shell .mobile-nav .mobile-nav-agenda,
+  .app-shell .mobile-nav .mobile-nav-agenda.active {
+    top: auto;
+    color: #718177;
+    background: transparent;
+  }
+
+  .app-shell .mobile-nav .mobile-nav-agenda.active {
+    color: #14663d;
+    background: #e6f5eb;
+  }
+
+  .app-shell .mobile-nav .mobile-nav-agenda svg,
+  .app-shell .mobile-nav .mobile-nav-agenda.active svg {
+    width: 20px;
+    height: 20px;
+    color: currentColor;
+  }
+
+  .app-shell .mobile-nav .mobile-nav-agenda span {
+    margin: 0;
+  }
+
+  .app-shell .mobile-nav > a:active {
+    transform: scale(.96);
+  }
+
+  .app-shell .mobile-create {
+    animation: create-button-breathe 3.8s ease-in-out infinite;
+  }
+
+  .app-shell .cash-register-card .cash-overview-icon {
+    animation: cash-icon-breathe 4.6s ease-in-out infinite;
+  }
+}
+
+.agenda-professionals {
+  justify-content: center;
+  flex-wrap: wrap;
+  overflow: visible;
+  margin-inline: 0;
+  padding-inline: 2px;
+}
+
+.agenda-professionals button {
+  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.agenda-professionals button.active {
+  box-shadow: 0 5px 14px #17724518;
+}
+
+.cash-activity-card {
+  border-color: #d4e9da;
+  background: linear-gradient(155deg, #fbfffc 0%, #ffffff 72%);
+  box-shadow: 0 9px 25px #17332310;
+}
+
+.cash-activity-card .panel-title > strong {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #e8f6ec;
+  color: #177245;
+}
+
+.cash-activity-card .panel-title > strong.red {
+  background: #fff0ed;
+  color: #a83f31;
+}
+
+.app-shell .cash-chart {
+  height: 158px;
+  border-color: #dce9df;
+}
+
+.app-shell .cash-chart > div {
+  position: relative;
+}
+
+.app-shell .cash-chart > div.current::before {
+  position: absolute;
+  inset: 0 -4px -1px;
+  z-index: 0;
+  border-radius: 10px 10px 0 0;
+  background: linear-gradient(180deg, #e8f6ec00, #e8f6ecaa);
+  content: "";
+}
+
+.app-shell .cash-chart i {
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 4px 12px #17724520;
+}
+
+.app-shell .cash-chart > div.negative i {
+  background: linear-gradient(180deg, #efb4a9, #c76b5b);
+}
+
+.app-shell .cash-chart span {
+  position: relative;
+  z-index: 1;
+  font-weight: 700;
+}
+
+.app-shell .cash-chart > div.current span {
+  color: #177245;
+}
+
+@keyframes create-button-breathe {
+  0%, 82%, 100% { transform: scale(1); box-shadow: 0 12px 25px #17724545; }
+  88% { transform: scale(1.045); box-shadow: 0 14px 29px #17724555; }
+  94% { transform: scale(1); }
+}
+
+@keyframes cash-icon-breathe {
+  0%, 76%, 100% { transform: scale(1); }
+  84% { transform: scale(1.06); }
+  92% { transform: scale(1); }
+}
+
+@media (hover: hover) {
+  .cash-activity-card:hover {
+    border-color: #b7ddc2;
+    box-shadow: 0 12px 29px #17332316;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
