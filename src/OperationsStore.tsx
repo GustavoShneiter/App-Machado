@@ -112,6 +112,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
                   command_id: String(payload.command_id ?? ""),
                   product_id: String(payload.product_id ?? ""),
                   item_quantity: Number(payload.quantity ?? 1),
+                  professional_id: String(payload.professional_id ?? ""),
                 })
               : action === "open_manual_command"
                 ? await supabase.rpc("open_manual_command", {
@@ -175,6 +176,11 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
                                           customer_id: String(payload.id ?? ""),
                                         },
                                       )
+                                    : action === "delete_appointment"
+                                      ? await supabase.rpc(
+                                          "delete_appointment_record",
+                                          { appointment_id: String(payload.id ?? "") },
+                                        )
                                     : action === "create_schedule_block"
                                       ? await supabase.rpc(
                                           "create_schedule_block",

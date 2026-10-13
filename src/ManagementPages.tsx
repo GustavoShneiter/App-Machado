@@ -21,6 +21,7 @@ import {
   type ScheduleBlock,
 } from "./operations";
 import { uploadCatalogPhoto } from "./media";
+import { deleteCatalogPhoto } from "./media";
 import {
   ChevronDown,
   Gift,
@@ -1039,8 +1040,8 @@ export function Agenda() {
         <Modal title="Remover agendamento" close={() => setRemoving(null)}>
           <AppointmentIdentity appointment={removing} />
           <p>
-            Esse horário será removido da agenda. O histórico financeiro
-            permanece protegido.
+            O agendamento e todos os dados relacionados, incluindo comanda,
+            pagamento e repasse, serão apagados permanentemente.
           </p>
           {error && <p className="form-error">{error}</p>}
           <button
@@ -1048,15 +1049,12 @@ export function Agenda() {
             disabled={busy}
             onClick={async () => {
               if (
-                await run("set_status", {
-                  id: removing.id,
-                  status: "cancelled",
-                })
+                await run("delete_appointment", { id: removing.id })
               )
                 setRemoving(null);
             }}
           >
-            Remover da agenda
+            Apagar agendamento e dados associados
           </button>
         </Modal>
       )}
@@ -1084,7 +1082,7 @@ export function Customers({
     if (
       !draft?.id ||
       !window.confirm(
-        "Remover este cliente? Primeiro remova os agendamentos dele, se houver.",
+        `Apagar ${draft.name} permanentemente? Agendamentos, comandas, pagamentos, pacotes e repasses associados também serão apagados.`,
       )
     )
       return;
@@ -1339,6 +1337,7 @@ export function Orders({
   const [details, setDetails] = useState("");
   const [commandAction, setCommandAction] = useState("");
   const [productId, setProductId] = useState("");
+  const [productProfessionalId, setProductProfessionalId] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [serviceId, setServiceId] = useState("");
   const [professionalId, setProfessionalId] = useState("");
@@ -1366,6 +1365,8 @@ export function Orders({
     setDetails(id);
     setCommandAction("");
     setProductId("");
+    const appointment = data.appointments.find((item) => item.id === current?.appointment_id);
+    setProductProfessionalId(appointment?.professional_id ?? "");
     setQuantity("1");
     setServiceId("");
     setProfessionalId("");
@@ -1713,7 +1714,7 @@ export function Orders({
                     onClick={async () => {
                       if (
                         window.confirm(
-                          "Excluir esta comanda e liberar o atendimento?",
+                          "Apagar esta comanda permanentemente? Os pagamentos, repasses e registros associados também serão apagados.",
                         ) &&
                         (await run("delete_command", { id: command.id }))
                       )
@@ -1823,10 +1824,12 @@ export function Orders({
                         command_id: command.id,
                         product_id: productId,
                         quantity: Number(quantity),
+                        professional_id: productProfessionalId,
                       })
                     ) {
                       setProductId("");
                       setQuantity("1");
+                      setProductProfessionalId("");
                       setCommandAction("");
                     }
                   }}
@@ -1861,7 +1864,14 @@ export function Orders({
                           onChange={(e) => setQuantity(e.target.value)}
                         />
                       </label>
-                      <button className="outline" disabled={busy || !productId}>
+                      <label className="field">
+                        <span>Quem vendeu</span>
+                        <select required value={productProfessionalId} onChange={(event) => setProductProfessionalId(event.target.value)}>
+                          <option value="">Escolha o profissional</option>
+                          {professionals.filter((professional) => professional.ativo).map((professional) => <option value={professional.id} key={professional.id}>{professional.nome}</option>)}
+                        </select>
+                      </label>
+                      <button className="outline" disabled={busy || !productId || !productProfessionalId}>
                         Adicionar produto
                       </button>
                     </>
@@ -2655,6 +2665,7 @@ export function Products() {
     sale_price_cents: 0,
     cost_cents: 0,
     active: true,
+    commission_percent: 20,
     photo_url: null,
   };
   const visibleProducts = data.products.filter((product) => product.active);
@@ -2737,6 +2748,7 @@ export function Products() {
                     price: draft.sale_price_cents,
                     cost: draft.cost_cents,
                     minimum: draft.minimum_quantity,
+                    commission: draft.commission_percent,
                     active: draft.active,
                     photo_url: photoUrl,
                   })
@@ -2811,6 +2823,10 @@ export function Products() {
                 />
               </label>
             ))}
+            <label className="field">
+              <span>Comissão padrão do produto (%)</span>
+              <input required type="number" min="0" max="100" step="0.01" value={draft.commission_percent} onChange={(event) => setDraft({ ...draft, commission_percent: Number(event.target.value) })} />
+            </label>
             <label className="check">
               <input
                 type="checkbox"
@@ -2834,11 +2850,17 @@ export function Products() {
                   onClick={async () => {
                     if (
                       window.confirm(
-                        `Remover ${draft.name} da lista de produtos?`,
+                        `Apagar ${draft.name} permanentemente? Comandas, pagamentos, comissões e movimentações de estoque relacionados também serão apagados.`,
                       ) &&
                       (await run("delete_product", { id: draft.id }))
-                    )
+                    ) {
+                      try {
+                        await deleteCatalogPhoto(draft.photo_url);
+                      } catch {
+                        // The product was already permanently deleted.
+                      }
                       setDraft(null);
+                    }
                   }}
                 >
                   Remover produto

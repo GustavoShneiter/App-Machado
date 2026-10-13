@@ -15,7 +15,7 @@ export type Servico = {
   duracao: number;
   cor: string;
   ativo: boolean;
-  comissoes?: Record<string, number>;
+  comissaoPadrao: number;
 };
 export type Profissional = {
   id: string;
@@ -26,6 +26,8 @@ export type Profissional = {
   cor: string;
   ativo: boolean;
   foto_url?: string | null;
+  comissaoServico?: number | null;
+  comissaoProduto?: number | null;
 };
 export type Cliente = {
   id: string;
@@ -59,6 +61,7 @@ export const servicos: Servico[] = [
     duracao: 40,
     cor: "#3e8f75",
     ativo: true,
+    comissaoPadrao: 50,
   },
   {
     id: "barba",
@@ -68,6 +71,7 @@ export const servicos: Servico[] = [
     duracao: 30,
     cor: "#b68a4d",
     ativo: true,
+    comissaoPadrao: 50,
   },
   {
     id: "corte-barba",
@@ -77,6 +81,7 @@ export const servicos: Servico[] = [
     duracao: 70,
     cor: "#617fcb",
     ativo: true,
+    comissaoPadrao: 50,
   },
 ];
 

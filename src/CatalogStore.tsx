@@ -8,6 +8,7 @@ import {
 } from "react";
 import { type Profissional, type Servico } from "./data";
 import { supabase } from "./supabaseClient";
+import { deleteCatalogPhoto } from "./media";
 
 type Catalog = {
   services: Servico[];
@@ -31,7 +32,6 @@ type Catalog = {
 const CatalogContext = createContext<Catalog | null>(null);
 const mapService = (
   row: Record<string, unknown>,
-  commissions: Record<string, number>,
 ): Servico => ({
   id: String(row.id),
   nome: String(row.name),
@@ -40,7 +40,7 @@ const mapService = (
   duracao: Number(row.duration_minutes),
   cor: String(row.color ?? "#203F20"),
   ativo: Boolean(row.active),
-  comissoes: commissions,
+  comissaoPadrao: Number(row.default_commission_percent ?? 50),
 });
 const mapProfessional = (row: Record<string, unknown>): Profissional => ({
   id: String(row.id),
@@ -56,6 +56,14 @@ const mapProfessional = (row: Record<string, unknown>): Profissional => ({
   cor: "#203F20",
   ativo: Boolean(row.active),
   foto_url: typeof row.photo_url === "string" ? row.photo_url : null,
+  comissaoServico:
+    row.default_commission_percent == null
+      ? null
+      : Number(row.default_commission_percent),
+  comissaoProduto:
+    row.default_product_commission_percent == null
+      ? null
+      : Number(row.default_product_commission_percent),
 });
 export function CatalogProvider({ children }: { children: ReactNode }) {
   const [services, setServices] = useState<Servico[]>([]);
@@ -68,31 +76,16 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       return;
     }
-    const [s, p, links] = await Promise.all([
+    const [s, p] = await Promise.all([
       supabase.from("services").select("*").order("name"),
       supabase.from("professionals").select("*").order("name"),
-      supabase
-        .from("professional_services")
-        .select("professional_id,service_id,commission_percent"),
     ]);
-    if (s.error || p.error || links.error) {
+    if (s.error || p.error) {
       setError("Não foi possível atualizar serviços e profissionais.");
       setLoading(false);
       return;
     }
-    const commissionMap = new Map<string, Record<string, number>>();
-    for (const link of links.data ?? []) {
-      const serviceId = String(link.service_id);
-      commissionMap.set(serviceId, {
-        ...(commissionMap.get(serviceId) ?? {}),
-        [String(link.professional_id)]: Number(link.commission_percent ?? 0),
-      });
-    }
-    setServices(
-      (s.data ?? []).map((row) =>
-        mapService(row, commissionMap.get(String(row.id)) ?? {}),
-      ),
-    );
+    setServices((s.data ?? []).map(mapService));
     setProfessionals((p.data ?? []).map(mapProfessional));
     setError("");
     setLoading(false);
@@ -109,11 +102,6 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "professionals" },
-        () => void load(),
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "professional_services" },
         () => void load(),
       )
       .subscribe();
@@ -158,12 +146,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       duration: s.duracao,
       color: s.cor,
       active: s.ativo,
-      commissions: Object.entries(s.comissoes ?? {}).map(
-        ([professional_id, commission_percent]) => ({
-          professional_id,
-          commission_percent,
-        }),
-      ),
+      commission: s.comissaoPadrao,
     });
   };
   const updateProfessional = (id: string, update: Partial<Profissional>) => {
@@ -175,7 +158,24 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       specialties: p.especialidades,
       photo_url: p.foto_url ?? null,
       active: p.ativo,
+      service_commission: p.comissaoServico ?? null,
+      product_commission: p.comissaoProduto ?? null,
     });
+  };
+  const deleteProfessional = async (id: string) => {
+    if (!supabase) return "Conexão indisponível.";
+    const professional = professionals.find((item) => item.id === id);
+    const result = await supabase.rpc("delete_professional_record", {
+      professional_id: id,
+    });
+    if (result.error) return result.error.message;
+    try {
+      await deleteCatalogPhoto(professional?.foto_url);
+    } catch {
+      // The professional is already gone; a storage cleanup failure shouldn't undo that.
+    }
+    await load();
+    return null;
   };
   return (
     <CatalogContext.Provider
@@ -188,7 +188,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         addService: (s) => updateService("", s),
         updateProfessional,
         addProfessional: (p) => updateProfessional("", { ...p, ativo: true }),
-        deleteProfessional: (id) => updateProfessional(id, { ativo: false }),
+        deleteProfessional,
       }}
     >
       {children}
