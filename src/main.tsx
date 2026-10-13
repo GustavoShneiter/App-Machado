@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { AppErrorBoundary } from './AppErrorBoundary'
 import './styles.css'
+import './public-polish.css'
 
 const queryClient = new QueryClient()
 

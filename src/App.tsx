@@ -95,7 +95,7 @@ function PublicLanding() {
             </span>
             <ArrowRight aria-hidden="true" />
           </a>
-          <a className="landing-action booking" href="/agendar">
+          <a className="landing-action appointment" href="/agendar">
             <span className="landing-icon">
               <CalendarDays aria-hidden="true" />
             </span>

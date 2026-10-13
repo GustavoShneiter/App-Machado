@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { useCatalog } from './CatalogStore'
 import { supabase } from './supabaseClient'
@@ -9,6 +10,8 @@ const priceLabel = (value: number) => value > 0 ? money(value) : 'Consultar'
 const dateBr = (date: string) => new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(`${date}T12:00:00`))
 const weekDay = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' })
 const dayNumber = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' })
+const monthYear = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' })
+const dateValue = (date: Date) => date.toLocaleDateString('en-CA')
 
 function Shell({ children }: { children: React.ReactNode }) {
   return <main className="public-shell"><header className="public-header"><a href="/" className="booking-logo" aria-label="Barbearia Machado — início"><img src="/logo-machado.png" alt="Machado" /></a></header>{children}<footer>© 2026 Barbearia Machado · <a href="/privacidade">Privacidade</a></footer></main>
@@ -29,6 +32,7 @@ export function PublicBookingV2() {
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [bookingError, setBookingError] = useState('')
+  const datePickerRef = useRef<HTMLInputElement>(null)
   const form = useForm<{ nome: string; telefone: string; terms: boolean }>({ defaultValues: { nome: '', telefone: '', terms: false } })
   const service = servicos.find((item) => item.id === serviceId) ?? servicos[0]!
   useEffect(() => {
@@ -48,11 +52,41 @@ export function PublicBookingV2() {
   }, [date, professionalId, service?.id])
   const bookingSlots = useMemo(() => supabase ? remoteSlots : [], [remoteSlots])
   const selectedProfessional = profissionais.find(pro => pro.id === professionalId)
-  const bookingDays = useMemo(() => Array.from({ length: 7 }, (_, index) => {
-    const value = new Date(`${today}T12:00:00`)
-    value.setDate(value.getDate() + index)
-    return { value: value.toLocaleDateString('en-CA'), weekday: index === 0 ? 'Hoje' : weekDay.format(value).replace('.', ''), label: dayNumber.format(value) }
-  }), [])
+  const bookingDays = useMemo(() => {
+    const selected = new Date(`${date}T12:00:00`)
+    const firstDay = new Date(selected)
+    firstDay.setDate(firstDay.getDate() - ((firstDay.getDay() + 6) % 7))
+    return Array.from({ length: 7 }, (_, index) => {
+      const value = new Date(firstDay)
+      value.setDate(value.getDate() + index)
+      const dayValue = dateValue(value)
+      return {
+        value: dayValue,
+        weekday: dayValue === today ? 'Hoje' : weekDay.format(value).replace('.', ''),
+        label: dayNumber.format(value),
+        past: dayValue < today,
+      }
+    })
+  }, [date])
+  const selectedDate = new Date(`${date}T12:00:00`)
+  const selectedWeekStart = new Date(selectedDate)
+  selectedWeekStart.setDate(selectedWeekStart.getDate() - ((selectedWeekStart.getDay() + 6) % 7))
+  const todayWeekStart = new Date(`${today}T12:00:00`)
+  todayWeekStart.setDate(todayWeekStart.getDate() - ((todayWeekStart.getDay() + 6) % 7))
+  const canGoPreviousWeek = selectedWeekStart > todayWeekStart
+  const changeWeek = (offset: number) => {
+    const next = new Date(`${date}T12:00:00`)
+    next.setDate(next.getDate() + offset * 7)
+    const nextValue = dateValue(next)
+    setDate(nextValue < today ? today : nextValue)
+    setTime('')
+  }
+  const openDatePicker = () => {
+    const picker = datePickerRef.current
+    if (!picker) return
+    if (typeof picker.showPicker === 'function') picker.showPicker()
+    else picker.focus()
+  }
   const submit = form.handleSubmit(async (customer) => {
     if (!customer.terms || !time || !service) return
     const chosenId = remoteSlots.find((slot) => slot.slot_time === time && slot.available)?.professional_id
@@ -80,7 +114,7 @@ export function PublicBookingV2() {
   return <Shell><div className="booking"><div className="booking-intro"><p className="eyebrow">Agendamento online</p><h1>Seu próximo corte começa aqui.</h1><p>Escolha o serviço, o horário e venha se cuidar com a gente.</p><div className="steps">{['Serviço', 'Profissional', 'Horário', 'Seus dados'].map((label, index) => <span className={step === index + 1 ? 'current' : step > index + 1 ? 'completed' : ''} key={label}><i>{index + 1}</i>{label}</span>)}</div></div><div className="booking-card">
     {step === 1 && <><h2>Escolha seu serviço</h2><div className="service-options">{servicos.map((item) => <button type="button" className={service.id === item.id ? 'selected' : ''} onClick={() => setServiceId(item.id)} key={item.id}><strong>{item.nome}</strong><b>{priceLabel(item.preco)}</b></button>)}</div></>}
     {step === 2 && <><h2>Preferência de profissional</h2><div className="pro-options"><button type="button" className={`any-professional ${professionalId === 'qualquer' ? 'selected' : ''}`} onClick={() => setProfessionalId('qualquer')}><strong>Qualquer profissional disponível</strong><span>Ver mais horários</span></button><div className="professional-grid">{profissionais.map((pro) => <button type="button" className={`professional-card ${professionalId === pro.id ? 'selected' : ''}`} onClick={() => setProfessionalId(pro.id)} key={pro.id}>{pro.foto_url?<img src={pro.foto_url} alt={`Profissional ${pro.nome}`}/>:<span className="professional-photo-placeholder">{pro.iniciais}</span>}<strong>{pro.nome}</strong></button>)}</div></div></>}
-    {step === 3 && <><div className="booking-slot-head"><div><p className="eyebrow">Disponibilidade</p><h2>Escolha o horário</h2></div></div>{bookingError && <p className="form-error">{bookingError}</p>}<div className="week-picker">{bookingDays.map(day=><button key={day.value} type="button" className={date===day.value?'selected':''} onClick={()=>{setDate(day.value);setTime('')}}><strong>{day.weekday}</strong><span>{day.label}</span></button>)}</div><div className="booking-date">{selectedProfessional&&<span className="availability-chip">{selectedProfessional.nome}</span>}</div>{loadingSlots && <p className="empty">Buscando horários disponíveis…</p>}<div className="slots">{bookingSlots.map((slot) => <button type="button" disabled={!slot.available} className={`${time === slot.slot_time ? 'selected' : ''} ${!slot.available ? 'unavailable' : ''}`} key={slot.slot_time} onClick={() => setTime(slot.slot_time)}><span>{slot.slot_time}</span>{!slot.available&&<small>Ocupado</small>}</button>)}</div>{!loadingSlots && !bookingSlots.length && <p className="empty">Não há horários neste dia.</p>}<p className="availability-note">Horários escuros estão indisponíveis.</p></>}
+    {step === 3 && <><div className="booking-slot-head"><div><p className="eyebrow">Disponibilidade</p><h2>Escolha o horário</h2></div></div><div className="booking-calendar-control"><button type="button" className="calendar-week-arrow" aria-label="Semana anterior" disabled={!canGoPreviousWeek} onClick={() => changeWeek(-1)}><ChevronLeft aria-hidden="true" /></button><button type="button" className="booking-month-button" onClick={openDatePicker}><CalendarDays aria-hidden="true" /><span><strong>{monthYear.format(selectedDate)}</strong><small>Escolher dia, mês ou ano</small></span></button><input ref={datePickerRef} className="booking-calendar-input" type="date" min={today} value={date} aria-label="Escolha uma data" onChange={(event) => { setDate(event.target.value); setTime('') }} /><button type="button" className="calendar-week-arrow" aria-label="Próxima semana" onClick={() => changeWeek(1)}><ChevronRight aria-hidden="true" /></button></div>{bookingError && <p className="form-error">{bookingError}</p>}<div className="week-picker">{bookingDays.map(day=><button key={day.value} type="button" disabled={day.past} className={date===day.value?'selected':''} onClick={()=>{setDate(day.value);setTime('')}}><strong>{day.weekday}</strong><span>{day.label}</span></button>)}</div><div className="booking-date">{selectedProfessional&&<span className="availability-chip">{selectedProfessional.nome}</span>}</div>{loadingSlots && <p className="empty">Buscando horários disponíveis…</p>}<div className="slots">{bookingSlots.map((slot) => <button type="button" disabled={!slot.available} className={`${time === slot.slot_time ? 'selected' : ''} ${!slot.available ? 'unavailable' : ''}`} key={slot.slot_time} onClick={() => setTime(slot.slot_time)}><span>{slot.slot_time}</span>{!slot.available&&<small>Ocupado</small>}</button>)}</div>{!loadingSlots && !bookingSlots.length && <p className="empty">Não há horários neste dia.</p>}<p className="availability-note">Horários escuros estão indisponíveis.</p></>}
     {step === 4 && <form onSubmit={submit}><h2>Agora, seus dados</h2><p>Vamos usá-los somente para confirmar seu horário.</p><label className="field"><span>Nome completo</span><input placeholder="Como você quer ser chamado?" {...form.register('nome', { required: true, minLength: 3 })} /></label><label className="field"><span>WhatsApp</span><input placeholder="(00) 00000-0000" {...form.register('telefone', { required: true, minLength: 10 })} /></label><label className="check"><input type="checkbox" {...form.register('terms', { required: true })} /> Li e aceito os <a href="/privacidade" target="_blank">termos e a política de privacidade</a>.</label>{bookingError && <p className="form-error">{bookingError}</p>}<button className="primary wide" disabled={!time || submitting}>{submitting ? 'Reservando…' : 'Confirmar agendamento'}</button></form>}
     <div className="booking-footer">{step > 1 && <button type="button" className="text-button" onClick={() => setStep((current) => current - 1)}>Voltar</button>}{step < 4 && <button type="button" className="primary" disabled={step === 3 && (!time || loadingSlots)} onClick={() => setStep((current) => current + 1)}>Continuar</button>}</div>
   </div></div></Shell>
