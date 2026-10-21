@@ -1,6 +1,16 @@
 {
+  "framework": "vite",
+  "regions": ["gru1"],
+  "functions": {"api/**/*.js":{"maxDuration":60}},
   "outputDirectory": "dist",
+  "crons": [{"path":"/api/backup-daily","schedule":"0 8 * * *"}],
+  "headers": [
+    {"source":"/(.*)","headers":[{"key":"X-Content-Type-Options","value":"nosniff"},{"key":"Referrer-Policy","value":"strict-origin-when-cross-origin"},{"key":"X-Frame-Options","value":"DENY"},{"key":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=()"}]},
+    {"source":"/api/(.*)","headers":[{"key":"Cache-Control","value":"no-store"}]},
+    {"source":"/index.html","headers":[{"key":"Cache-Control","value":"no-cache"}]}
+  ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/(.*)", "destination": "/api/router?route=$1" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

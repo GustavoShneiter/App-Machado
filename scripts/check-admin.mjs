@@ -1,4 +1,3 @@
-/* global process */
 import { build } from "esbuild";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
@@ -22,6 +21,9 @@ const result = await build({
         const path='/admin'+(page?'/'+page:'')
         const html=renderToString(h(MemoryRouter,{initialEntries:[path]},h(CatalogProvider,null,h(TestContext.Provider,{value},h(Routes,null,h(Route,{path:'/admin/*',element:h(AdminLayout)}))))))
         assert.ok(html.includes('class="page'),'Missing content '+path)
+        assert.ok(!html.includes('class="mobile-nav"'),'Bottom navigation returned '+path)
+        assert.ok(!html.includes('class="mobile-create"'),'Floating shortcut returned '+path)
+        if(['','agenda'].includes(page)) { assert.ok(html.includes('Atendimentos da barbearia'));assert.ok(html.includes('Filtros'));assert.ok(!html.includes('Visão geral')) }
         if(data===fixture&&['clientes','caixa'].includes(page)) assert.ok(html.includes('Cliente integrado'),'Missing real customer '+path)
         if(data===fixture&&page==='caixa') { assert.ok(html.includes('Prontas para receber'));assert.ok(html.includes('Corte integrado'));assert.ok(html.includes('Caixa físico'));assert.ok(html.includes('Rendimento da barbearia'));assert.ok(html.includes('Valores a repassar')) }
         if(data===fixture&&page==='comandas') assert.ok(html.includes('Comandas'))
@@ -39,6 +41,18 @@ const result = await build({
     assert.equal(commandTotal(fixture,fixture.commands[0]),4000)
     assert.equal(dayKey('2026-09-19T01:00:00Z'),'2026-09-18')
     assert.equal(csvCell('=1+1').charCodeAt(1),39)
+    assert.equal(csvCell('  =1+1').charCodeAt(1),39)
+    const mixed=structuredClone(fixture)
+    const first=mixed.commands[0]
+    const extra={...mixed.items.find(item=>item.command_id===first.id),id:'extra-pro',professional_id:'p2',unit_price_cents:2000,commission_cents:0}
+    mixed.items.push(extra)
+    first.discount_cents=600
+    assert.equal(summarize(mixed,'2026-09-18','2026-09-18','p1').earned,1600)
+    assert.equal(summarize(mixed,'2026-09-18','2026-09-18','p1').gross,3600)
+    assert.equal(summarize(mixed,'2026-09-18','2026-09-18','p2').gross,5800)
+    const later=structuredClone(fixture)
+    later.payments[0].paid_at='2026-09-19T15:00:00-03:00'
+    assert.equal(summarize(later,'2026-09-19','2026-09-19','p1').received,4000)
     console.log('PASS financeiro: comissões, filtros, cancelados, dinheiro vs Pix, CSV')
   `,
     resolveDir: process.cwd(),

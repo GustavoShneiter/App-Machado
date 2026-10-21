@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react'
+import { Capacitor } from '@capacitor/core'
 
 export class AppErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false }
@@ -14,7 +15,7 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, { faile
         <h1>Não foi possível abrir esta tela</h1>
         <p>Ocorreu um erro ao carregar a página. Tente abri-la novamente.</p>
         <button className="primary wide" onClick={() => window.location.reload()}>Tentar novamente</button>
-        <a href="/agendar">Ir para agendamento</a>
+        <a href={Capacitor.isNativePlatform() ? '/admin' : '/agendar'}>{Capacitor.isNativePlatform() ? 'Voltar ao painel' : 'Ir para agendamento'}</a>
       </section></main>
     }
     return this.props.children

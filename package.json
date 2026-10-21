@@ -1,7 +1,7 @@
 {
   "name": "barbearia-machado",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.20.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,34 +10,55 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "android:sync": "npm run build && npx cap sync android",
-    "android:open": "npm run android:sync && npx cap open android"
+    "android:open": "npm run android:sync && npx cap open android",
+    "android:prepare-access": "node --env-file=.env.local scripts/prepare-native-access.mjs",
+    "db:agenda": "node --env-file=.env.local scripts/migrate-agenda.mjs",
+    "dev:api": "node --env-file=.env.local scripts/dev-server.mjs",
+    "test:database": "node --env-file=.env.local scripts/test-database.mjs",
+    "test:api": "node scripts/test-api.mjs",
+    "test:browser": "node --env-file=.env.local scripts/test-browser.mjs",
+    "backup:verify": "node --env-file=.env.local scripts/verify-backup.mjs"
   },
   "dependencies": {
-    "@capacitor/app": "^8.1.1",
-    "@capacitor/core": "^8.5.2",
-    "@hookform/resolvers": "^5.2.1",
-    "@supabase/supabase-js": "^2.116.0",
-    "@tanstack/react-query": "^5.66.8",
-    "date-fns": "^4.1.0",
-    "lucide-react": "^0.468.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-hook-form": "^7.54.2",
-    "react-router-dom": "^7.1.3",
-    "zod": "^3.24.2"
+    "@capacitor/app": "8.1.1",
+    "@capacitor/core": "8.5.2",
+    "@capacitor/filesystem": "8.1.5",
+    "@capacitor/share": "8.0.3",
+    "@hookform/resolvers": "5.9.1",
+    "@tanstack/react-query": "5.103.1",
+    "@vercel/blob": "2.8.2",
+    "@vercel/functions": "3.10.1",
+    "bcryptjs": "3.0.3",
+    "better-auth": "1.7.12",
+    "date-fns": "4.4.0",
+    "lucide-react": "0.468.0",
+    "pg": "8.23.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-hook-form": "7.88.0",
+    "react-router-dom": "7.18.4",
+    "zod": "3.25.76"
   },
   "devDependencies": {
-    "@capacitor/android": "^8.5.2",
-    "@capacitor/cli": "^8.5.2",
-    "@eslint/js": "^9.17.0",
-    "@types/react": "^19.0.3",
-    "@types/react-dom": "^19.0.2",
-    "@vitejs/plugin-react": "^4.3.4",
-    "eslint": "^9.17.0",
-    "eslint-plugin-react-hooks": "^5.0.0",
-    "eslint-plugin-react-refresh": "^0.4.16",
-    "typescript": "~5.6.2",
-    "typescript-eslint": "^8.18.2",
-    "vite": "^6.0.5"
+    "@capacitor/android": "8.5.2",
+    "@capacitor/cli": "8.5.3",
+    "@eslint/js": "9.39.5",
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.10.0",
+    "@types/pg": "8.15.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "4.7.0",
+    "eslint": "9.39.5",
+    "eslint-plugin-react-hooks": "5.2.0",
+    "eslint-plugin-react-refresh": "0.4.26",
+    "typescript": "5.6.3",
+    "typescript-eslint": "8.70.0",
+    "vite": "6.4.4"
+  },
+  "overrides": {
+    "xcode": {
+      "uuid": "11.1.1"
+    }
   }
 }

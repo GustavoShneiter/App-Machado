@@ -5,3 +5,7 @@ node_modules/
 docs/
 supabase/
 *.apk
+.private/
+.agents/
+test-results/
+playwright-report/

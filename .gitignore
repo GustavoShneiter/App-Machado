@@ -4,8 +4,20 @@ dist/
 
 .vercel
 .env*
+!.env.example
 android/local.properties
 android/.gradle/
 android/build/
 android/app/build/
 .idea/
+.private/
+.agents/
+skills-lock.json
+releases/android/*.apk
+test-results/
+playwright-report/
+android/keystore.properties
+android/native-access.properties
+*.jks
+*.keystore
+supabase/.temp/

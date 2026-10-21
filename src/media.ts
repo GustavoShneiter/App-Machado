@@ -1,12 +1,9 @@
-import { supabase } from './supabaseClient'
+import { apiRequest } from './dataClient'
 
 export async function uploadCatalogPhoto(file: File, folder: 'professionals' | 'products') {
-  if (!supabase) throw new Error('Conexão indisponível.')
-  if (!file.type.startsWith('image/')) throw new Error('Escolha uma imagem válida.')
-  if (file.size > 5 * 1024 * 1024) throw new Error('A imagem deve ter no máximo 5 MB.')
-  const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-  const path = `${folder}/${crypto.randomUUID()}.${extension}`
-  const { error } = await supabase.storage.from('machado-media').upload(path, file, { contentType: file.type, cacheControl: '3600', upsert: false })
-  if (error) throw error
-  return supabase.storage.from('machado-media').getPublicUrl(path).data.publicUrl
+  if (!['image/jpeg','image/png','image/webp'].includes(file.type)) throw new Error('Escolha uma foto JPEG, PNG ou WebP.')
+  if (file.size > 3 * 1024 * 1024) throw new Error('A foto deve ter no máximo 3 MB.')
+  const base64 = await new Promise<string>((resolve,reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(',')[1]); reader.onerror = reject; reader.readAsDataURL(file) })
+  const result = await apiRequest<{url:string}>('/upload',{method:'POST',body:JSON.stringify({folder,base64,mimeType:file.type})})
+  return result.url
 }

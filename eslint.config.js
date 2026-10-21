@@ -2,9 +2,10 @@ import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules', 'android'] },
+  { ignores: ['dist', 'node_modules', 'android', '.private', '.agents', '.vercel', 'test-results', 'releases'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  { files: ['server/**/*.mjs','scripts/**/*.mjs','api/**/*.js'], languageOptions: { globals: { process: 'readonly', console: 'readonly', Buffer: 'readonly', URL: 'readonly', Request: 'readonly', Response: 'readonly', Headers: 'readonly', fetch: 'readonly', setTimeout: 'readonly', clearTimeout: 'readonly' } } },
   {
     files: ['public/sw.js'],
     languageOptions: { globals: { self: 'readonly', caches: 'readonly', fetch: 'readonly' } },

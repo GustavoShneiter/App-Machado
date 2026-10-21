@@ -1,4 +1,3 @@
-/* global console */
 import { createServer } from "vite";
 import { readFile } from "node:fs/promises";
 import { URL } from "node:url";

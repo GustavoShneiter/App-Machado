@@ -1,4 +1,4 @@
-export type Appointment = { id: string; customer_id: string; professional_id: string; service_id: string; starts_at: string; ends_at: string; expected_price_cents: number; status: string; source: string; customer_name: string; customer_phone: string; professional_name: string; service_name: string }
+export type Appointment = { id: string; agenda_hidden?: boolean; customer_id: string; professional_id: string; service_id: string; starts_at: string; ends_at: string; expected_price_cents: number; status: string; source: string; customer_name: string; customer_phone: string; professional_name: string; service_name: string }
 export type ScheduleBlock = { id: string; professional_id: string; starts_at: string; ends_at: string; reason: string; created_at: string }
 export type Customer = { id: string; name: string; phone: string; email?: string | null; birth_date?: string | null; notes: string | null }
 export type Command = { id: string; appointment_id: string | null; customer_id: string; status: string; discount_cents: number; surcharge_cents: number; created_at: string; closed_at: string | null }
@@ -26,25 +26,36 @@ export const cashBalance = (state: Operations, session: CashSession) => session.
 export function summarize(state: Operations, from: string, to: string, professional = '') {
   const appointments = state.appointments.filter(a => dayKey(a.starts_at) >= from && dayKey(a.starts_at) <= to && (!professional || a.professional_id === professional))
   const completed = appointments.filter(a => a.status === 'completed')
-  const completedIds = new Set(completed.map(a => a.id))
-  const commandIds = new Set(state.commands.filter(c => (c.appointment_id !== null && completedIds.has(c.appointment_id)) || (!c.appointment_id && (c.status === 'awaiting_payment' || c.status === 'closed') && dayKey(c.created_at) >= from && dayKey(c.created_at) <= to)).map(c => c.id))
-  const proCommands = new Set(state.commands.filter(c => commandIds.has(c.id) && state.items.some(i => i.command_id === c.id && i.professional_id === professional)).map(c => c.id))
-  const includedCommandIds = professional ? proCommands : commandIds
-  const items = state.items.filter(i => includedCommandIds.has(i.command_id))
+  const completedIds = new Set(state.appointments.filter(a => a.status === 'completed' && dayKey(a.starts_at) >= from && dayKey(a.starts_at) <= to).map(a => a.id))
+  const commands = state.commands.filter(c => ['awaiting_payment','closed'].includes(c.status) && (c.appointment_id ? completedIds.has(c.appointment_id) : dayKey(c.created_at) >= from && dayKey(c.created_at) <= to))
+  const matchingItems = (commandId: string) => state.items.filter(item => item.command_id === commandId && (!professional || item.professional_id === professional))
+  const selectedCommands = commands.filter(command => !professional || matchingItems(command.id).length > 0)
+  const includedCommandIds = new Set(selectedCommands.map(command => command.id))
+  const items = state.items.filter(i => includedCommandIds.has(i.command_id) && (!professional || i.professional_id === professional))
+  const proportion = (command: Command) => {
+    if (!professional) return 1
+    const all = state.items.filter(item => item.command_id === command.id).reduce((sum,item) => sum+item.unit_price_cents*item.quantity,0)
+    const selected = matchingItems(command.id).reduce((sum,item) => sum+item.unit_price_cents*item.quantity,0)
+    return all > 0 ? selected/all : 0
+  }
   const packageSales = professional ? [] : state.packageSales.filter(sale => dayKey(sale.sold_at) >= from && dayKey(sale.sold_at) <= to && sale.status !== 'cancelled')
   const packageGross = packageSales.reduce((sum, sale) => sum + sale.amount_cents, 0)
   const serviceGross = items.reduce((s, i) => s + i.unit_price_cents * i.quantity, 0)
-  const gross = serviceGross + packageGross
+  const adjustments = selectedCommands.reduce((sum,command) => sum + Math.round((command.surcharge_cents-command.discount_cents)*proportion(command)),0)
+  const gross = serviceGross + adjustments + packageGross
   const earned = items.reduce((s, i) => s + i.commission_cents, 0)
   const itemIds = new Set(items.map(i => i.id))
   const pending = state.commissions.filter(e => itemIds.has(e.command_item_id) && e.status === 'pending').reduce((s, e) => s + e.commission_cents, 0)
   const paidCommission = state.commissions.filter(e => itemIds.has(e.command_item_id) && e.status === 'paid').reduce((s, e) => s + e.commission_cents, 0)
-  const received = state.payments.filter(p => !p.reversed_at && dayKey(p.paid_at) >= from && dayKey(p.paid_at) <= to && (!professional || proCommands.has(p.command_id))).reduce((s, p) => s + p.amount_cents, 0) + packageGross
-  return { appointments, completed, gross, earned, pending, paidCommission, received, shop: gross - earned, ticket: includedCommandIds.size ? Math.round(gross / includedCommandIds.size) : 0 }
+  const received = state.payments.filter(p => !p.reversed_at && dayKey(p.paid_at) >= from && dayKey(p.paid_at) <= to).reduce((sum,payment) => {
+    const command=state.commands.find(row => row.id === payment.command_id)
+    return sum + (professional ? command ? Math.round(payment.amount_cents*proportion(command)) : 0 : payment.amount_cents)
+  },0) + packageGross
+  const count = includedCommandIds.size + packageSales.length
+  return { appointments, completed, gross, earned, pending, paidCommission, received, shop: gross - earned, ticket: count ? Math.round(gross / count) : 0 }
 }
 
-export const csvCell = (value: unknown) => '"' + String(value ?? '').replace(/^[=+@-]/, "'$&").replace(/"/g, '""') + '"'
+export const csvCell = (value: unknown) => '"' + String(value ?? '').replace(/^\s*[=+@-]/, "'$&").replace(/"/g, '""') + '"'
 export function exportCsv(filename: string, rows: unknown[][]) {
-  const blob = new Blob(['\ufeff' + rows.map(row => row.map(csvCell).join(';')).join('\r\n')], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = filename; link.click(); URL.revokeObjectURL(url)
+  void import('./fileExport').then(({ saveExport }) => saveExport(filename, '\ufeff' + rows.map(row => row.map(csvCell).join(';')).join('\r\n'), 'text/csv;charset=utf-8;')).catch(() => { window.alert('Não foi possível exportar. Tente novamente e escolha onde salvar o arquivo.') })
 }

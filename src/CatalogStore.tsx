@@ -7,9 +7,10 @@ import {
   type ReactNode,
 } from "react";
 import { type Profissional, type Servico } from "./data";
-import { supabase } from "./supabaseClient";
+import { backend } from "./dataClient";
 
 type Catalog = {
+  business?: { name: string; phone: string | null; email: string | null; street: string | null; city: string | null; state: string | null } | null;
   services: Servico[];
   professionals: Profissional[];
   loading: boolean;
@@ -62,26 +63,21 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const [professionals, setProfessionals] = useState<Profissional[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [business, setBusiness] = useState<Catalog['business']>(null);
   const load = useCallback(async () => {
-    if (!supabase) {
+    if (!backend) {
       setError("Conexão indisponível.");
       setLoading(false);
       return;
     }
-    const [s, p, links] = await Promise.all([
-      supabase.from("services").select("*").order("name"),
-      supabase.from("professionals").select("*").order("name"),
-      supabase
-        .from("professional_services")
-        .select("professional_id,service_id,commission_percent"),
-    ]);
-    if (s.error || p.error || links.error) {
+    const result = await backend.rpc('catalog');
+    if (result.error || !result.data) {
       setError("Não foi possível atualizar serviços e profissionais.");
       setLoading(false);
       return;
     }
     const commissionMap = new Map<string, Record<string, number>>();
-    for (const link of links.data ?? []) {
+    for (const link of result.data.links ?? []) {
       const serviceId = String(link.service_id);
       commissionMap.set(serviceId, {
         ...(commissionMap.get(serviceId) ?? {}),
@@ -89,35 +85,18 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       });
     }
     setServices(
-      (s.data ?? []).map((row) =>
+      (result.data.services ?? []).map((row: Record<string, unknown>) =>
         mapService(row, commissionMap.get(String(row.id)) ?? {}),
       ),
     );
-    setProfessionals((p.data ?? []).map(mapProfessional));
+    setProfessionals((result.data.professionals ?? []).map(mapProfessional));
+    setBusiness(result.data.business ?? null);
     setError("");
     setLoading(false);
   }, []);
   useEffect(() => {
     void load();
-    const channel = supabase
-      ?.channel("catalog-live")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "services" },
-        () => void load(),
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "professionals" },
-        () => void load(),
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "professional_services" },
-        () => void load(),
-      )
-      .subscribe();
-    const auth = supabase?.auth.onAuthStateChange(() => {
+    const auth = backend?.auth.onAuthStateChange(() => {
       window.setTimeout(() => void load(), 0);
     });
     const reload = () => void load();
@@ -125,22 +104,23 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       if (document.visibilityState === "visible") void load();
     }, 15000);
     window.addEventListener("focus", reload);
+    window.addEventListener("online", reload);
     return () => {
       clearInterval(timer);
       window.removeEventListener("focus", reload);
+      window.removeEventListener("online", reload);
       auth?.data.subscription.unsubscribe();
-      if (channel) void supabase?.removeChannel(channel);
     };
   }, [load]);
   const save = async (action: string, payload: Record<string, unknown>) => {
-    if (!supabase) return "Conexão indisponível.";
+    if (!backend) return "Conexão indisponível.";
     try {
       const result =
         action === "save_professional_profile"
-          ? await supabase.rpc("save_professional_profile", { payload })
+          ? await backend.rpc("save_professional_profile", { payload })
           : action === "save_service_profile"
-            ? await supabase.rpc("save_service_profile", { payload })
-            : await supabase.rpc("office_action", { action, payload });
+            ? await backend.rpc("save_service_profile", { payload })
+            : await backend.rpc("office_action", { action, payload });
       if (result.error) return result.error.message;
       await load();
       return null;
@@ -181,6 +161,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     <CatalogContext.Provider
       value={{
         services,
+        business,
         professionals,
         loading,
         error,

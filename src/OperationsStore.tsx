@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { supabase } from "./supabaseClient";
+import { backend } from "./dataClient";
 import { emptyOperations, type Operations } from "./operations";
 
 type Store = {
@@ -33,13 +33,13 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
   const alive = useRef(true);
   const refresh = useCallback(async () => {
     const version = ++request.current;
-    if (!supabase) {
+    if (!backend) {
       setLoadError("Conexão com o sistema indisponível.");
       setLoading(false);
       return;
     }
     try {
-      const result = await supabase.rpc("office_snapshot");
+      const result = await backend.rpc("office_snapshot");
       if (result.error) throw result.error;
       const normalized = result.data
         ? {
@@ -82,72 +82,72 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
       void refresh();
     };
     window.addEventListener("focus", focus);
-    const channel = supabase
-      ?.channel("office-live")
-      .on("postgres_changes", { event: "*", schema: "public" }, focus)
-      .subscribe();
+    window.addEventListener("online", focus);
     return () => {
       alive.current = false;
       request.current++;
       clearInterval(timer);
       window.removeEventListener("focus", focus);
-      if (channel) void supabase?.removeChannel(channel);
+      window.removeEventListener("online", focus);
     };
   }, [refresh]);
   const run = async (action: string, payload: Record<string, unknown> = {}) => {
-    if (saving.current || !supabase) return false;
+    if (saving.current || !backend) return false;
+    if (!navigator.onLine) { setError('Sem internet. Reconecte antes de salvar.'); return false; }
     saving.current = true;
     setBusy(true);
     setError("");
     try {
       const result =
-        action === "reset_operational_data"
-          ? await supabase.rpc("reset_operational_data", {
+        action === "remove_agenda_appointment"
+          ? await backend.rpc("remove_agenda_appointment", { appointment_id: String(payload.id ?? '') })
+          : action === "reset_operational_data"
+          ? await backend.rpc("reset_operational_data", {
               confirmation: String(payload.confirmation ?? ""),
             })
           : action === "save_product_profile"
-            ? await supabase.rpc("save_product_profile", { payload })
+            ? await backend.rpc("save_product_profile", { payload })
             : action === "add_command_product"
-              ? await supabase.rpc("add_product_to_command", {
+              ? await backend.rpc("add_product_to_command", {
                   command_id: String(payload.command_id ?? ""),
                   product_id: String(payload.product_id ?? ""),
                   item_quantity: Number(payload.quantity ?? 1),
                 })
               : action === "open_manual_command"
-                ? await supabase.rpc("open_manual_command", {
+                ? await backend.rpc("open_manual_command", {
                     customer_name: String(payload.name ?? ""),
                     customer_phone: String(payload.phone ?? ""),
                   })
                 : action === "add_command_service"
-                  ? await supabase.rpc("add_service_to_command", {
+                  ? await backend.rpc("add_service_to_command", {
                       command_id: String(payload.command_id ?? ""),
                       service_id: String(payload.service_id ?? ""),
                       professional_id: String(payload.professional_id ?? ""),
                     })
                   : action === "remove_command_item"
-                    ? await supabase.rpc("remove_command_item", {
+                    ? await backend.rpc("remove_command_item", {
                         command_item_id: String(payload.id ?? ""),
                       })
                     : action === "mark_command_ready"
-                      ? await supabase.rpc("mark_command_ready", {
+                      ? await backend.rpc("mark_command_ready", {
                           command_id: String(payload.command_id ?? ""),
                         })
                       : action === "set_command_adjustments"
-                        ? await supabase.rpc("set_command_adjustments", {
+                        ? await backend.rpc("set_command_adjustments", {
                             command_id: String(payload.command_id ?? ""),
                             discount_cents: Number(payload.discount ?? 0),
                             surcharge_cents: Number(payload.surcharge ?? 0),
                           })
                         : action === "save_customer"
-                          ? await supabase.rpc("save_customer_profile", {
+                          ? await backend.rpc("save_customer_profile", {
                               payload,
                             })
                           : action === "save_package"
-                            ? await supabase.rpc("save_service_package", {
+                            ? await backend.rpc("save_service_package", {
                                 payload,
                               })
                             : action === "sell_package"
-                              ? await supabase.rpc("sell_service_package", {
+                              ? await backend.rpc("sell_service_package", {
                                   package_id: String(payload.package_id ?? ""),
                                   customer_id: String(
                                     payload.customer_id ?? "",
@@ -155,7 +155,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
                                   payment_method: String(payload.method ?? ""),
                                 })
                               : action === "redeem_package"
-                                ? await supabase.rpc("redeem_package_service", {
+                                ? await backend.rpc("redeem_package_service", {
                                     package_sale_id: String(
                                       payload.sale_id ?? "",
                                     ),
@@ -164,19 +164,19 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
                                     ),
                                   })
                                 : action === "save_business"
-                                  ? await supabase.rpc(
+                                  ? await backend.rpc(
                                       "save_business_settings",
                                       { payload },
                                     )
                                   : action === "delete_customer"
-                                    ? await supabase.rpc(
+                                    ? await backend.rpc(
                                         "delete_customer_record",
                                         {
                                           customer_id: String(payload.id ?? ""),
                                         },
                                       )
                                     : action === "create_schedule_block"
-                                      ? await supabase.rpc(
+                                      ? await backend.rpc(
                                           "create_schedule_block",
                                           {
                                             professional_id: String(
@@ -194,7 +194,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
                                           },
                                         )
                                       : action === "delete_schedule_block"
-                                        ? await supabase.rpc(
+                                        ? await backend.rpc(
                                             "delete_schedule_block",
                                             {
                                               block_id: String(
@@ -203,7 +203,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
                                             },
                                           )
                                         : action === "delete_product"
-                                          ? await supabase.rpc(
+                                          ? await backend.rpc(
                                               "delete_product_record",
                                               {
                                                 product_id: String(
@@ -212,7 +212,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
                                               },
                                             )
                                           : action === "close_package_command"
-                                            ? await supabase.rpc(
+                                            ? await backend.rpc(
                                                 "close_package_command",
                                                 {
                                                   command_id: String(
@@ -221,7 +221,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
                                                 },
                                               )
                                             : action === "delete_command"
-                                              ? await supabase.rpc(
+                                              ? await backend.rpc(
                                                   "delete_command_record",
                                                   {
                                                     command_id: String(
@@ -229,7 +229,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
                                                     ),
                                                   },
                                                 )
-                                              : await supabase.rpc(
+                                              : await backend.rpc(
                                                   "office_action",
                                                   { action, payload },
                                                 );

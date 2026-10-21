@@ -1,31 +1,11 @@
-# Android — Machado Gestão
+# Android — Machado Gestão 1.20
 
-O aplicativo Android é nativo (Capacitor) e abre diretamente o painel administrativo. Ele usa o mesmo Supabase do site: um agendamento feito em `/agendar` aparece no app automaticamente.
+O APK abre o painel administrativo e utiliza a API publicada na Vercel, o mesmo banco Neon do site, Better Auth e Vercel Blob. O site de agendamento é uma distribuição separada.
 
-## Fluxo de desenvolvimento
+Prepare o acesso privado com `npm run android:prepare-access`, gere os arquivos web e sincronize o Android com `npm run android:sync`. Configure a chave privada de produção em `android/keystore.properties` e execute `android/gradlew.bat assembleRelease` usando o Java do Android Studio. O APK é gerado em `android/app/build/outputs/apk/release/app-release.apk`.
 
-Após qualquer mudança no sistema, sincronize a versão Android:
+O identificador continua `com.barbeariamachado.gestao`. A versão 1.20 usa `versionCode 21`, requer Android 7.0/API 24 e conecta por HTTPS. O build de produção não usa a chave de depuração. Versões antigas de depuração precisam ser desinstaladas antes da instalação inicial da versão assinada. As próximas versões de produção devem manter a mesma chave.
 
-```powershell
-cd "E:\App Gestão Machado"
-npm run android:sync
-```
+O botão de voltar fecha as camadas abertas e retorna à navegação. O acesso à gestão é automático, sem tela de login, usando uma conta própria da distribuição privada do APK. O site continua exigindo autenticação no painel. O link público copiado no menu utiliza o endereço do site, e arquivos CSV usam o compartilhamento nativo do Android. Não há gravação de operações sem internet.
 
-## Gerar o APK instalável
-
-Este computador precisa ter o Android Studio e o Android SDK instalados. Depois:
-
-1. Abra o Android Studio.
-2. Escolha **Open** e selecione `E:\App Gestão Machado\android`.
-3. Aguarde a sincronização do Gradle.
-4. Para testar no celular: **Build → Build APK(s)**.
-5. O APK de teste será criado em `android\app\build\outputs\apk\debug\app-debug.apk`.
-
-Para Play Store, use **Build → Generate Signed Bundle / APK → Android App Bundle** e guarde a chave de assinatura em local seguro. O identificador do aplicativo é `com.barbeariamachado.gestao`.
-
-## Comportamento
-
-- Ao abrir o app, o destino é `/admin`, nunca o agendamento público.
-- O login do proprietário continua obrigatório para o painel.
-- A página pública de agendamento segue independente no site e não exige login.
-- O app exige Android 7.0 ou superior (API 24).
+O app abre na Agenda; a navegação fica no menu superior, sem barra inferior ou atalhos flutuantes. Não publique arquivos de assinatura, credenciais de acesso nem o APK em canais abertos. Os arquivos de entrega e as instruções de uso estão descritos em [ENTREGA-1.20.md](ENTREGA-1.20.md).

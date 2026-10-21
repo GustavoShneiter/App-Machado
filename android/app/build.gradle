@@ -1,14 +1,30 @@
 apply plugin: 'com.android.application'
 
+def signingProperties = new Properties()
+def signingPropertiesFile = rootProject.file('keystore.properties')
+if (signingPropertiesFile.exists()) signingProperties.load(new FileInputStream(signingPropertiesFile))
+if (!signingPropertiesFile.exists() && gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }) {
+    throw new GradleException('Configure android/keystore.properties para gerar uma versão assinada.')
+}
+def accessProperties = new Properties()
+def accessPropertiesFile = rootProject.file('native-access.properties')
+if (accessPropertiesFile.exists()) accessProperties.load(new FileInputStream(accessPropertiesFile))
+if ((!accessProperties['email'] || !accessProperties['password']) && gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }) {
+    throw new GradleException('Execute npm run android:prepare-access para configurar o acesso privado do APK.')
+}
+
 android {
+    buildFeatures { buildConfig = true }
     namespace = "com.barbeariamachado.gestao"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "com.barbeariamachado.gestao"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 18
-        versionName "1.17"
+        versionCode 21
+        versionName "1.20"
+        buildConfigField 'String', 'MANAGED_EMAIL', groovy.json.JsonOutput.toJson(accessProperties.getProperty('email', ''))
+        buildConfigField 'String', 'MANAGED_PASSWORD', groovy.json.JsonOutput.toJson(accessProperties.getProperty('password', ''))
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +32,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (signingPropertiesFile.exists()) {
+                storeFile rootProject.file(signingProperties['storeFile'])
+                storePassword signingProperties['storePassword']
+                keyAlias signingProperties['keyAlias']
+                keyPassword signingProperties['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

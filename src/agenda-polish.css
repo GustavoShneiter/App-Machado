@@ -1,0 +1,408 @@
+/* Agenda e navegação administrativa sem barra inferior. */
+.app-shell .main {
+  padding-bottom: 24px !important;
+}
+.app-shell .menu-trigger {
+  display: grid !important;
+  place-items: center;
+  flex-shrink: 0;
+}
+.app-shell .topbar {
+  gap: 12px;
+}
+.app-shell .topbar > div:nth-child(2) {
+  flex: 1;
+}
+.app-shell .agenda-clean {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding-bottom: 28px;
+}
+.agenda-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.agenda-heading h1 {
+  font-size: 30px;
+  letter-spacing: -0.03em;
+  margin: 4px 0 0;
+  color: #18221c;
+}
+.agenda-heading .eyebrow {
+  font-size: 11px;
+  color: #708177;
+  margin: 0;
+}
+.agenda-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.agenda-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+}
+.agenda-filter-count {
+  background: #e5f4eb;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 11px;
+}
+.agenda-period {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #e1e9e4;
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+.agenda-period > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  text-align: center;
+  color: #274b36;
+}
+.agenda-period strong {
+  font-size: 16px;
+  line-height: 1.5;
+}
+.agenda-period span {
+  font-size: 12px;
+  color: #6b7e72;
+}
+.agenda-appointments {
+  display: grid;
+  gap: 16px;
+}
+.agenda-appointment {
+  padding: 20px 22px;
+  background: #fff;
+  border: 1px solid #dfe9e2;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px #17332306;
+}
+.agenda-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.agenda-card-top .status {
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 7px 10px;
+  white-space: normal;
+}
+.agenda-card-summary {
+  display: block;
+  width: 100%;
+  padding: 14px 0;
+  text-align: left;
+  background: transparent;
+  color: #18221c;
+}
+.agenda-card-summary h2 {
+  font-size: 21px;
+  line-height: 1.4;
+  margin: 0 0 16px;
+  overflow-wrap: anywhere;
+}
+.agenda-card-summary dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 28px;
+  margin: 0;
+}
+.agenda-card-summary dt {
+  font-size: 11px;
+  color: #76867c;
+  margin-bottom: 5px;
+}
+.agenda-card-summary dd {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 600;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.agenda-price {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: #176b43;
+  margin-top: 16px;
+}
+.agenda-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-top: 1px solid #edf1ee;
+  padding-top: 16px;
+}
+.agenda-card-actions:empty {
+  display: none;
+}
+.agenda-card-actions button,
+.agenda-card-actions a {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.agenda-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 22px;
+}
+.agenda-block-list {
+  margin-top: 24px;
+  display: grid;
+  gap: 10px;
+}
+.agenda-block-list h2 {
+  font-size: 16px;
+  margin: 0 0 4px;
+}
+.agenda-block-list button {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  padding: 16px;
+}
+.agenda-block-list span,
+.agenda-block-list small {
+  font-size: 12px;
+  color: #6d7e73;
+}
+.agenda-availability {
+  margin-top: 24px;
+  background: #fff;
+  border: 1px solid #e1e9e4;
+  border-radius: 16px;
+  padding: 18px;
+}
+.agenda-availability summary {
+  cursor: pointer;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.agenda-availability p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #718177;
+}
+.agenda-available-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+.agenda-available-grid button {
+  display: grid;
+  gap: 4px;
+  min-height: 58px;
+  border-radius: 9px;
+  background: #e8f6ed;
+  color: #176b43;
+  font-weight: 700;
+}
+.agenda-available-grid small {
+  font-size: 10px;
+  font-weight: 400;
+}
+.agenda-available-grid button:disabled {
+  background: #e7ebe8;
+  color: #8a958e;
+  cursor: not-allowed;
+}
+.agenda-available-grid button.unavailable {
+  background: #39483f;
+  color: #d7e0da;
+}
+.agenda-clean .empty {
+  padding: 40px 24px;
+  background: #fff;
+  border: 1px dashed #d8e4dc;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+/* Escolha pública de profissional e horário, centralizada em todas as larguras. */
+.public-shell .booking-slot-head {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+}
+.public-shell .booking-slot-head > div {
+  width: 100%;
+  text-align: center;
+}
+.public-shell .booking-date {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.public-shell .booking-calendar-control {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 640px;
+}
+.public-shell .week-picker {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+.public-shell .week-picker button {
+  text-align: center;
+}
+.public-shell .slots {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+  justify-content: center;
+  gap: 10px;
+}
+.public-shell .slots button {
+  min-width: 0;
+  text-align: center;
+}
+.public-shell .availability-note {
+  text-align: center;
+}
+.public-shell .pro-options {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.public-shell .professional-grid {
+  order: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  max-width: 640px;
+  gap: 20px;
+}
+.public-shell .professional-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  min-height: 0;
+}
+.public-shell .professional-card img,
+.public-shell .professional-photo-placeholder {
+  display: flex;
+  width: 100%;
+  height: auto !important;
+  aspect-ratio: 4/5;
+  object-fit: cover;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+  font-size: 42px;
+  flex: none;
+}
+.public-shell .professional-card > strong {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  text-align: center;
+  font-size: 16px;
+}
+.public-shell .any-professional {
+  order: 1;
+  width: auto;
+  max-width: 100%;
+  min-height: 0;
+  padding: 11px 18px;
+  font-size: 12px;
+  box-shadow: none;
+}
+.public-shell .any-professional strong {
+  font-size: 12px;
+}
+.public-shell .any-professional span {
+  font-size: 10px;
+}
+@media (max-width: 700px) {
+  .app-shell .main {
+    padding-bottom: 12px !important;
+  }
+  .app-shell .page.agenda-clean {
+    padding: 22px 16px;
+  }
+  .agenda-heading {
+    display: block;
+    margin-bottom: 18px;
+    text-align: center;
+  }
+  .agenda-heading h1 {
+    font-size: 28px;
+  }
+  .agenda-toolbar {
+    justify-content: center;
+    margin-top: 18px;
+  }
+  .agenda-toolbar button {
+    font-size: 12px;
+    padding: 11px 14px;
+  }
+  .agenda-period {
+    padding: 14px 8px;
+    gap: 4px;
+  }
+  .agenda-period strong {
+    font-size: 13px;
+  }
+  .agenda-appointment {
+    padding: 16px;
+  }
+  .agenda-card-summary h2 {
+    font-size: 20px;
+  }
+  .agenda-card-summary dl {
+    gap: 14px 16px;
+  }
+  .agenda-card-summary dd {
+    font-size: 13px;
+  }
+  .agenda-card-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .agenda-available-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .public-shell .slots {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .public-shell .professional-grid {
+    gap: 12px;
+  }
+  .public-shell .professional-card > strong {
+    padding: 12px 8px;
+    font-size: 14px;
+  }
+}
