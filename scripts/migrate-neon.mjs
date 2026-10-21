@@ -36,6 +36,7 @@ try {
   await client.query(await readFile('database/003_readiness.sql', 'utf8'))
   await client.query(await readFile('database/004_agenda.sql', 'utf8'))
   await client.query(await readFile('database/005_service_commissions.sql', 'utf8'))
+  await client.query(await readFile('database/006_item_commissions_and_deletions.sql', 'utf8'))
   const codes = []
   for (const user of source.auth_users) {
     const profile = source.profiles.find(row => row.id === user.id)

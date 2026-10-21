@@ -10,6 +10,7 @@ import './public-polish.css'
 import './readiness.css'
 import './booking-layout.css'
 import './navigation-119.css'
+import './dialog-layout.css'
 
 const queryClient = new QueryClient()
 

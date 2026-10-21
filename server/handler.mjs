@@ -18,7 +18,7 @@ const rpcArguments = {
   sell_service_package: ['package_id','customer_id','payment_method'], redeem_package_service: ['package_sale_id','service_id'], close_package_command: ['command_id'],
   create_schedule_block: ['professional_id','starts_at','ends_at','reason'], delete_schedule_block: ['block_id'],
   remove_agenda_appointment: ['appointment_id'],
-  delete_command_record: ['command_id'], delete_appointment_record: ['appointment_id'], delete_customer_record: ['customer_id'], delete_professional_record: ['professional_id'], delete_product_record: ['product_id'], reset_operational_data: ['confirmation'],
+  delete_command_record: ['command_id'], delete_appointment_record: ['appointment_id'], delete_customer_record: ['customer_id'], delete_professional_record: ['professional_id'], delete_product_record: ['product_id'], delete_service_record: ['service_id'], reset_operational_data: ['confirmation'],
 }
 
 const fail = (message,status=400) => Object.assign(new Error(message),{status})
@@ -77,7 +77,7 @@ export default async function handler(req,res) {
       const cookies=response.headers.getSetCookie(); if(cookies.length)res.setHeader('Set-Cookie',cookies)
       res.statusCode=response.status; res.end(Buffer.from(await response.arrayBuffer())); return
     }
-    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.20.0',backend:'vercel',database:'neon'}); return }
+    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.19.2',backend:'vercel',database:'neon'}); return }
     if(path==='/api/catalog' && req.method==='GET') {
       const session=await sessionFor(req)
       const data=await transaction(session?.user.id,async client=>{

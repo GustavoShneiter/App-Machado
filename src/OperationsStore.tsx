@@ -83,12 +83,14 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
     };
     window.addEventListener("focus", focus);
     window.addEventListener("online", focus);
+    window.addEventListener("operations:changed", focus);
     return () => {
       alive.current = false;
       request.current++;
       clearInterval(timer);
       window.removeEventListener("focus", focus);
       window.removeEventListener("online", focus);
+      window.removeEventListener("operations:changed", focus);
     };
   }, [refresh]);
   const run = async (action: string, payload: Record<string, unknown> = {}) => {
@@ -110,6 +112,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
                   command_id: String(payload.command_id ?? ""),
                   product_id: String(payload.product_id ?? ""),
                   item_quantity: Number(payload.quantity ?? 1),
+                  professional_id: payload.professional_id ? String(payload.professional_id) : null,
                 })
               : action === "open_manual_command"
                 ? await backend.rpc("open_manual_command", {
@@ -166,7 +169,9 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
                                       "save_business_settings",
                                       { payload },
                                     )
-                                  : action === "delete_customer"
+                                  : action === "delete_appointment"
+                                    ? await backend.rpc("delete_appointment_record", { appointment_id: String(payload.id ?? "") })
+                                    : action === "delete_customer"
                                     ? await backend.rpc(
                                         "delete_customer_record",
                                         {

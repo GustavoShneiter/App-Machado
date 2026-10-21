@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { CommissionFields } from "./CommissionFields";
+import { createPortal } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useOperations } from "./OperationsStore";
 import { useCatalog } from "./CatalogStore";
@@ -69,9 +71,24 @@ export function Modal({
 }) {
   const closeRef = useRef(close);
   const dialogRef = useRef<HTMLElement>(null);
+  const layerRef = useRef<HTMLDivElement>(null);
+  const [validationError, setValidationError] = useState("");
   closeRef.current = close;
 
   useEffect(() => registerDismissibleLayer(() => closeRef.current()), []);
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const resize = () => {
+      layerRef.current?.style.setProperty('--dialog-height', `${viewport?.height ?? window.innerHeight}px`);
+      layerRef.current?.style.setProperty('--dialog-top', `${viewport?.offsetTop ?? 0}px`);
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && dialogRef.current?.contains(active)) active.scrollIntoView({ block: 'nearest' });
+    };
+    resize();
+    viewport?.addEventListener('resize', resize);
+    viewport?.addEventListener('scroll', resize);
+    return () => { viewport?.removeEventListener('resize', resize); viewport?.removeEventListener('scroll', resize); };
+  }, []);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     const previousOverflow = document.body.style.overflow;
@@ -88,8 +105,8 @@ export function Modal({
     return () => { document.removeEventListener('keydown', trap); document.body.style.overflow = previousOverflow; if (previous?.isConnected) previous.focus(); };
   }, []);
 
-  return (
-    <div
+  const content = (
+    <div ref={layerRef} className="app-shell modal-layer"><div
       className="modal-backdrop"
       onClick={() => closeRef.current()}
       onKeyDown={(event) => {
@@ -103,6 +120,17 @@ export function Modal({
         aria-modal="true"
         aria-label={title}
         onClick={(event) => event.stopPropagation()}
+        onInvalidCapture={(event) => {
+          event.preventDefault();
+          const input = event.target;
+          if (input instanceof HTMLInputElement || input instanceof HTMLSelectElement || input instanceof HTMLTextAreaElement) {
+            if (dialogRef.current?.querySelector('input:invalid, select:invalid, textarea:invalid') !== input) return;
+            setValidationError(`${input.closest('label')?.querySelector('span')?.textContent ?? 'Campo'}: ${input.validationMessage}`);
+            input.focus();
+            input.scrollIntoView({ block: 'nearest' });
+          }
+        }}
+        onInputCapture={() => setValidationError("")}
       >
         <div className="modal-head">
           <h2>{title}</h2>
@@ -110,10 +138,12 @@ export function Modal({
             Fechar
           </button>
         </div>
+        {validationError && <p className="form-error modal-validation" role="alert">{validationError}</p>}
         {children}
       </section>
-    </div>
+    </div></div>
   );
+  return typeof document === 'undefined' ? content : createPortal(content, document.body);
 }
 function Metrics({ entries }: { entries: [string, string | number][] }) {
   return (
@@ -1056,8 +1086,8 @@ export function Agenda() {
         <Modal title="Remover agendamento" close={() => setRemoving(null)}>
           <AppointmentIdentity appointment={removing} />
           <p>
-            Esse horário será removido da agenda. O histórico financeiro
-            permanece protegido.
+            Exclusão definitiva: o agendamento e sua comanda, pagamentos e
+            comissões serão apagados. Esta ação não pode ser desfeita.
           </p>
           {error && <p className="form-error">{error}</p>}
           <button
@@ -1065,15 +1095,14 @@ export function Agenda() {
             disabled={busy}
             onClick={async () => {
               if (
-                await run("set_status", {
+                await run("delete_appointment", {
                   id: removing.id,
-                  status: "cancelled",
                 })
               )
                 setRemoving(null);
             }}
           >
-            Remover da agenda
+            Excluir definitivamente
           </button>
         </Modal>
       )}
@@ -1101,7 +1130,7 @@ export function Customers({
     if (
       !draft?.id ||
       !window.confirm(
-        "Remover este cliente? Primeiro remova os agendamentos dele, se houver.",
+        "Excluir definitivamente este cliente, seus agendamentos, comandas, pagamentos, comissões e planos comprados? Esta ação não pode ser desfeita.",
       )
     )
       return;
@@ -1730,7 +1759,7 @@ export function Orders({
                     onClick={async () => {
                       if (
                         window.confirm(
-                          "Excluir esta comanda e liberar o atendimento?",
+                          "Excluir definitivamente esta comanda, seu agendamento, pagamentos e comissões? Esta ação não pode ser desfeita.",
                         ) &&
                         (await run("delete_command", { id: command.id }))
                       )
@@ -1840,6 +1869,7 @@ export function Orders({
                         command_id: command.id,
                         product_id: productId,
                         quantity: Number(quantity),
+                        professional_id: professionalId,
                       })
                     ) {
                       setProductId("");
@@ -1868,6 +1898,13 @@ export function Orders({
                         </select>
                       </label>
                       <label className="field">
+                        <span>Profissional responsável pela venda</span>
+                        <select required value={professionalId} onChange={event => setProfessionalId(event.target.value)}>
+                          <option value="">Escolha um profissional</option>
+                          {professionals.filter(pro => pro.ativo).map(pro => <option key={pro.id} value={pro.id}>{pro.nome}</option>)}
+                        </select>
+                      </label>
+                      <label className="field">
                         <span>Quantidade</span>
                         <input
                           required
@@ -1878,7 +1915,7 @@ export function Orders({
                           onChange={(e) => setQuantity(e.target.value)}
                         />
                       </label>
-                      <button className="outline" disabled={busy || !productId}>
+                      <button className="outline" disabled={busy || !productId || !professionalId}>
                         Adicionar produto
                       </button>
                     </>
@@ -2212,7 +2249,7 @@ export function CashManagement({
                   ? "Repasses pendentes"
                   : "Repasses pagos"}
               </h3>
-              <p>Valores calculados conforme a comissão de cada serviço.</p>
+              <p>Comissões de serviços e produtos, conforme a regra de cada item e profissional.</p>
             </div>
           </div>
           <div className="payout-filters">
@@ -2266,8 +2303,14 @@ export function CashManagement({
                       </strong>
                       <small>
                         {entries.length}{" "}
-                        {entries.length === 1 ? "serviço" : "serviços"}
+                        {entries.length === 1 ? "item" : "itens"}
                       </small>
+                      <div className="cash-commission-breakdown">
+                        {entries.map(entry => {
+                          const item = data.items.find(row => row.id === entry.command_item_id);
+                          return <span key={entry.id}>{item?.type === 'product' ? 'Produto' : 'Serviço'} · {item?.description ?? 'Atendimento'} · {item?.commission_value ?? 0}% · Profissional: {money(entry.commission_cents)} · Barbearia: {money(entry.gross_cents - entry.commission_cents)}</span>;
+                        })}
+                      </div>
                     </div>
                     <b>
                       {money(
@@ -2345,6 +2388,12 @@ export function CashManagement({
                     {packageInfo.name}
                   </span>
                 )}
+                <div className="cash-commission-breakdown">
+                  {data.items.filter(item => item.command_id === command.id).map(item => <span key={item.id}>
+                    {item.description} · {professionals.find(pro => pro.id === item.professional_id)?.nome ?? 'Profissional'} · {item.commission_value ?? 0}% · Comissão: {money(item.commission_cents)}
+                  </span>)}
+                  <span>Barbearia: {money(total - data.items.filter(item => item.command_id === command.id).reduce((sum, item) => sum + item.commission_cents, 0))}</span>
+                </div>
               </div>
               <strong>{money(total)}</strong>
               <button
@@ -2658,6 +2707,7 @@ export function Reports() {
 
 export function Products() {
   const { data, run, busy, error } = useOperations();
+  const { professionals } = useCatalog();
   const [draft, setDraft] = useState<Product | null>(null);
   const [stock, setStock] = useState<Product | null>(null);
   const [photo, setPhoto] = useState<File | null>(null);
@@ -2673,6 +2723,8 @@ export function Products() {
     cost_cents: 0,
     active: true,
     photo_url: null,
+    commission_percent: 20,
+    commissions: {},
   };
   const visibleProducts = data.products.filter((product) => product.active);
   return (
@@ -2707,6 +2759,9 @@ export function Products() {
               <span className={p.quantity <= p.minimum_quantity ? "low" : ""}>
                 {p.quantity} un. · mín. {p.minimum_quantity}
               </span>
+              <div className="service-commission-summary">
+                {professionals.filter(pro => pro.ativo).map(pro => <span key={pro.id}>{pro.nome}: {p.commissions?.[pro.id] ?? p.commission_percent ?? 20}%</span>)}
+              </div>
               <div className="row-actions">
                 <button
                   className="outline small"
@@ -2756,6 +2811,8 @@ export function Products() {
                     minimum: draft.minimum_quantity,
                     active: draft.active,
                     photo_url: photoUrl,
+                    commission: draft.commission_percent ?? 20,
+                    commissions: Object.entries(draft.commissions ?? {}).map(([professional_id, commission_percent]) => ({ professional_id, commission_percent })),
                   })
                 )
                   setDraft(null);
@@ -2828,6 +2885,8 @@ export function Products() {
                 />
               </label>
             ))}
+            <CommissionFields rate={draft.commission_percent ?? 20} overrides={draft.commissions ?? {}}
+              onChange={(rate, overrides) => setDraft({ ...draft, commission_percent: rate, commissions: overrides })} />
             <label className="check">
               <input
                 type="checkbox"
@@ -2851,7 +2910,7 @@ export function Products() {
                   onClick={async () => {
                     if (
                       window.confirm(
-                        `Remover ${draft.name} da lista de produtos?`,
+                        `Excluir definitivamente ${draft.name}, suas movimentações e os atendimentos, pagamentos e comissões vinculados? Esta ação não pode ser desfeita.`,
                       ) &&
                       (await run("delete_product", { id: draft.id }))
                     )

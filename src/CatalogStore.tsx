@@ -27,6 +27,7 @@ type Catalog = {
   addProfessional: (
     professional: Partial<Profissional>,
   ) => Promise<string | null>;
+  deleteService: (id: string) => Promise<string | null>;
   deleteProfessional: (id: string) => Promise<string | null>;
 };
 const CatalogContext = createContext<Catalog | null>(null);
@@ -42,6 +43,7 @@ const mapService = (
   cor: String(row.color ?? "#203F20"),
   ativo: Boolean(row.active),
   comissoes: commissions,
+  comissaoPadrao: Number(row.default_commission_percent ?? 50),
 });
 const mapProfessional = (row: Record<string, unknown>): Profissional => ({
   id: String(row.id),
@@ -78,6 +80,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     }
     const commissionMap = new Map<string, Record<string, number>>();
     for (const link of result.data.links ?? []) {
+      if (link.commission_percent == null) continue;
       const serviceId = String(link.service_id);
       commissionMap.set(serviceId, {
         ...(commissionMap.get(serviceId) ?? {}),
@@ -116,13 +119,16 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     if (!backend) return "Conexão indisponível.";
     try {
       const result =
-        action === "save_professional_profile"
+        action === "delete_professional_record" || action === "delete_service_record"
+          ? await backend.rpc(action, payload)
+          : action === "save_professional_profile"
           ? await backend.rpc("save_professional_profile", { payload })
           : action === "save_service_profile"
             ? await backend.rpc("save_service_profile", { payload })
             : await backend.rpc("office_action", { action, payload });
       if (result.error) return result.error.message;
       await load();
+      if (action.startsWith("delete_")) window.dispatchEvent(new Event("operations:changed"));
       return null;
     } catch {
       return "Não foi possível salvar. Confira sua conexão e tente novamente.";
@@ -138,6 +144,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       duration: s.duracao,
       color: s.cor,
       active: s.ativo,
+      commission: s.comissaoPadrao ?? 50,
       commissions: Object.entries(s.comissoes ?? {}).map(
         ([professional_id, commission_percent]) => ({
           professional_id,
@@ -169,7 +176,8 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         addService: (s) => updateService("", s),
         updateProfessional,
         addProfessional: (p) => updateProfessional("", { ...p, ativo: true }),
-        deleteProfessional: (id) => updateProfessional(id, { ativo: false }),
+        deleteProfessional: (id) => save("delete_professional_record", { professional_id: id }),
+        deleteService: (id) => save("delete_service_record", { service_id: id }),
       }}
     >
       {children}

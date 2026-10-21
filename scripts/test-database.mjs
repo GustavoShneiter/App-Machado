@@ -8,6 +8,7 @@ try{
   const before=(await client.query("select (select count(*) from customers) as customers,(select count(*) from appointments) as appointments")).rows[0]
   await client.query(await readFile('supabase/tests/connected_operations.sql','utf8'))
   await client.query(await readFile('database/tests/agenda.sql','utf8'))
+  await client.query(await readFile('database/tests/final-adjustments.sql','utf8'))
   const data=await client.query("select (select count(*) from customers) as customers,(select count(*) from appointments) as appointments")
   assert.equal(Number(data.rows[0].customers),Number(before.customers))
   assert.equal(Number(data.rows[0].appointments),Number(before.appointments))

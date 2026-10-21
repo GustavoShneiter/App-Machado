@@ -8,6 +8,7 @@ begin
     insert into public.professionals(name,active,default_commission_percent) values('TESTE integração Araújo',true,40) returning id into pro;
     insert into public.professionals(name,active,default_commission_percent) values('Machado',true,0) returning id into machado;
     insert into public.services(name,price_cents,duration_minutes,active) values('TESTE integração corte',4000,30,true) returning id into service;
+    insert into public.professional_services(professional_id,service_id,commission_percent) values(pro,service,40),(machado,service,0);
     response := public.office_action('create_appointment',jsonb_build_object('name','TESTE cliente integração','phone','119'||lpad(floor(random()*100000000)::bigint::text,8,'0'),'professional_id',pro,'service_id',service,'starts_at','2099-01-05T09:00:00-03:00'));
     appt := (response->>'id')::uuid;
     select id into strict command from public.commands where appointment_id=appt;

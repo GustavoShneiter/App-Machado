@@ -1,0 +1,27 @@
+/* Portals keep dialogs outside animated route containers and above fixed navigation. */
+.app-shell.modal-layer{position:fixed;inset:0;z-index:1000;min-height:0;background:transparent!important;isolation:isolate}
+.modal-layer .modal-backdrop{position:absolute;inset:var(--dialog-top,0px) 0 auto;height:var(--dialog-height,100dvh);display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));overflow:hidden;background:#17332366;backdrop-filter:blur(3px)}
+.app-shell.modal-layer .modal{width:100%;max-width:620px;max-height:100%;min-height:0;margin:0;border-radius:20px;overflow:auto;overscroll-behavior:contain;scroll-padding:88px 0 24px;transform:none;animation:dialog-enter .2s ease-out;background:#fff;color:#18221c;box-shadow:0 18px 60px #17332340}
+.modal-layer .modal-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0;background:#fff;padding:18px 22px;border-bottom:1px solid #e8eeea}
+.modal-layer .modal-head h2{margin:0;font-size:21px;min-width:0;overflow-wrap:anywhere}
+.modal-layer .modal-head button{flex-shrink:0;min-height:40px}
+.modal-layer .modal>form{padding:20px 22px;margin:0;min-width:0}
+.modal-layer .field{min-width:0;display:grid;gap:8px;margin:0 0 16px;font-size:14px}
+.modal-layer .field input,.modal-layer .field select,.modal-layer .field textarea{display:block;width:100%;max-width:100%;min-width:0;font:inherit;font-size:16px;min-height:46px;border:1px solid #dbe5df;border-radius:10px;padding:11px;background:#fff;color:#18221c}
+.modal-layer .field textarea{min-height:100px;resize:vertical}
+.modal-layer input[type=file]{white-space:normal;overflow:hidden}
+.modal-layer .field input:focus,.modal-layer .field textarea:focus,.modal-layer .field select:focus{outline:2px solid #51ac77;outline-offset:1px}
+.modal-layer .percent-input{display:flex;align-items:center;gap:8px;width:100%}
+.modal-layer .percent-input input{flex:1;width:0}
+.modal-layer .modal-validation{position:sticky;top:77px;z-index:1;padding:12px;background:#fff0ed;border-radius:8px;font-size:13px}
+.modal-layer .service-commission-fields{margin:18px 0;padding:14px;border:1px solid #dbe5df;border-radius:12px;min-width:0}
+.modal-layer .service-commission-fields legend{font-weight:700;font-size:14px;padding:0 6px}
+.modal-layer .service-commission-fields p{font-size:13px;line-height:1.5;color:#60746a;margin:0 0 14px}
+.modal-layer .service-commission-fields .field{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;align-items:start}
+.modal-layer .service-commission-fields .field input{width:100%;min-width:0}
+.modal-layer .check{color:#40584b}
+.cash-commission-breakdown{display:grid;gap:5px;margin-top:8px;font-size:12px;color:#4b6657}
+.cash-commission-breakdown span{line-height:1.5;overflow-wrap:anywhere}
+@keyframes dialog-enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(max-width:700px){.modal-layer .modal-backdrop{padding:12px;align-items:center}.app-shell.modal-layer .modal{border-radius:16px}.modal-layer .modal-head{padding:15px 16px}.modal-layer .modal>form{padding:17px 16px}.modal-layer .modal .primary{min-height:46px}.modal-layer .row-actions{flex-wrap:wrap}.modal-layer .row-actions>button{flex:1 1 140px}}
+@media(prefers-reduced-motion:reduce){.app-shell.modal-layer .modal{animation:none}}

@@ -1,3 +1,4 @@
+import { CommissionFields } from "./CommissionFields";
 import { useState } from "react";
 import { useCatalog } from "./CatalogStore";
 import { type Servico, type Profissional } from "./data";
@@ -6,7 +7,7 @@ import { money } from "./operations";
 import { uploadCatalogPhoto } from "./media";
 
 export function ServicesV2() {
-  const { services, professionals, updateService, addService } = useCatalog();
+  const { services, professionals, updateService, addService, deleteService } = useCatalog();
   const [draft, setDraft] = useState<Servico | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -21,20 +22,11 @@ export function ServicesV2() {
     duracao: 30,
     cor: "#203F20",
     ativo: true,
-    comissoes: Object.fromEntries(
-      activeProfessionals.map((professional) => [professional.id, 0]),
-    ),
+    comissaoPadrao: 50,
+    comissoes: {},
   });
   const edit = (service: Servico) => {
-    setDraft({
-      ...service,
-      comissoes: Object.fromEntries(
-        activeProfessionals.map((professional) => [
-          professional.id,
-          service.comissoes?.[professional.id] ?? 0,
-        ]),
-      ),
-    });
+    setDraft({ ...service, comissoes: { ...service.comissoes } });
     setError("");
   };
 
@@ -67,7 +59,7 @@ export function ServicesV2() {
                 {activeProfessionals.map((professional) => (
                   <span key={professional.id}>
                     {professional.nome}:{" "}
-                    {service.comissoes?.[professional.id] ?? 0}%
+                    {service.comissoes?.[professional.id] ?? service.comissaoPadrao ?? 50}%
                   </span>
                 ))}
               </div>
@@ -154,38 +146,8 @@ export function ServicesV2() {
                 }
               />
             </label>
-            <fieldset className="service-commission-fields">
-              <legend>Comissão por profissional</legend>
-              <p>A porcentagem é calculada apenas neste serviço.</p>
-              {activeProfessionals.map((professional) => (
-                <label className="field" key={professional.id}>
-                  <span>{professional.nome}</span>
-                  <div className="percent-input">
-                    <input
-                      required
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={draft.comissoes?.[professional.id] ?? 0}
-                      onChange={(event) =>
-                        setDraft({
-                          ...draft,
-                          comissoes: {
-                            ...(draft.comissoes ?? {}),
-                            [professional.id]: Number(event.target.value),
-                          },
-                        })
-                      }
-                    />
-                    <b>%</b>
-                  </div>
-                </label>
-              ))}
-              {!activeProfessionals.length && (
-                <small>Cadastre um profissional para definir comissões.</small>
-              )}
-            </fieldset>
+            <CommissionFields rate={draft.comissaoPadrao ?? 50} overrides={draft.comissoes ?? {}}
+              onChange={(rate, overrides) => setDraft({ ...draft, comissaoPadrao: rate, comissoes: overrides })} />
             <label className="check">
               <input
                 type="checkbox"
@@ -200,6 +162,14 @@ export function ServicesV2() {
             <button className="primary" disabled={busy}>
               {busy ? "Salvando…" : "Salvar serviço"}
             </button>
+            {draft.id && <button className="danger-button" type="button" disabled={busy} onClick={async () => {
+              if (!window.confirm("Excluir definitivamente este serviço e os atendimentos, pagamentos, comissões e pacotes vinculados? Esta ação não pode ser desfeita.")) return;
+              setBusy(true);
+              try {
+                const failure = await deleteService(draft.id);
+                if (failure) setError(failure); else setDraft(null);
+              } finally { setBusy(false); }
+            }}>Excluir serviço</button>}
           </form>
         </Modal>
       )}
@@ -232,7 +202,7 @@ export function ProfessionalsV2() {
       !draft ||
       busy ||
       !window.confirm(
-        "Remover este profissional do agendamento? O histórico será preservado.",
+        "Excluir definitivamente este profissional e seus agendamentos, comandas, pagamentos e comissões? Esta ação não pode ser desfeita.",
       )
     )
       return;
@@ -379,7 +349,7 @@ export function ProfessionalsV2() {
               />
             </label>
             <p className="commission-location-note">
-              As comissões são definidas individualmente dentro de cada serviço.
+              As comissões são definidas em cada serviço ou produto, com percentual específico por profissional.
             </p>
             <label className="check">
               <input

@@ -18,22 +18,19 @@ begin
     if not exists(select 1 from public.cash_sessions where closed_at is null) then perform public.office_action('open_cash','{"amount":0}'); end if;
     perform public.office_action('receive',jsonb_build_object('id',command,'method','pix'));
     perform public.remove_agenda_appointment(appointment);
-    if not exists(select 1 from public.appointments where id=appointment and agenda_hidden and status='completed') then raise exception 'TEST: remoção alterou presença concluída'; end if;
-    if (select sum(amount_cents) from public.payments where command_id=command)<>5000 then raise exception 'TEST: remoção apagou pagamento'; end if;
-    if (select sum(commission_cents) from public.command_items where command_id=command)<>1750 then raise exception 'TEST: remoção apagou comissão'; end if;
-    begin
-      perform public.office_action('create_appointment',jsonb_build_object('name','QA Conflito','phone','4500000121','professional_id',pro,'service_id',service,'starts_at','2099-01-05T09:15:00-03:00'));
-      raise exception 'TEST: atendimento concluído oculto permitiu sobreposição';
-    exception when raise_exception then if sqlerrm like 'TEST:%' then raise; end if; end;
+    if exists(select 1 from public.appointments where id=appointment) then raise exception 'TEST: remoção apenas ocultou presença'; end if;
+    if exists(select 1 from public.payments where command_id=command) then raise exception 'TEST: remoção deixou pagamento'; end if;
+    if exists(select 1 from public.command_items where command_id=command) then raise exception 'TEST: remoção deixou comissão'; end if;
+    perform public.office_action('create_appointment',jsonb_build_object('name','QA Horário após exclusão','phone','4500000121','professional_id',pro,'service_id',service,'starts_at','2099-01-05T09:15:00-03:00'));
     response:=public.office_action('create_appointment',jsonb_build_object('name','QA Ausência','phone','4500000122','professional_id',pro,'service_id',service,'starts_at','2099-01-05T10:00:00-03:00'));
     absent:=(response->>'id')::uuid;
     perform public.office_action('set_status',jsonb_build_object('id',absent,'status','no_show'));
     perform public.remove_agenda_appointment(absent);
-    if not exists(select 1 from public.appointments where id=absent and agenda_hidden and status='no_show') then raise exception 'TEST: não removeu ausência'; end if;
+    if exists(select 1 from public.appointments where id=absent) then raise exception 'TEST: não excluiu ausência'; end if;
     response:=public.office_action('create_appointment',jsonb_build_object('name','QA Remoção','phone','4500000123','professional_id',pro,'service_id',service,'starts_at','2099-01-05T10:00:00-03:00'));
     removed:=(response->>'id')::uuid;
     perform public.remove_agenda_appointment(removed);
-    if not exists(select 1 from public.appointments where id=removed and agenda_hidden and status='cancelled') then raise exception 'TEST: remoção não cancelou reserva pendente'; end if;
+    if exists(select 1 from public.appointments where id=removed) then raise exception 'TEST: não excluiu reserva pendente'; end if;
     perform public.office_action('create_appointment',jsonb_build_object('name','QA Horário liberado','phone','4500000124','professional_id',pro,'service_id',service,'starts_at','2099-01-05T10:00:00-03:00'));
     perform set_config('request.jwt.claim.sub','',true);
     begin

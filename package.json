@@ -1,7 +1,7 @@
 {
   "name": "barbearia-machado",
   "private": true,
-  "version": "1.19.1",
+  "version": "1.19.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -14,6 +14,8 @@
     "android:open": "npm run android:sync && npx cap open android",
     "android:prepare-access": "node --env-file=.env.local scripts/prepare-native-access.mjs",
     "db:agenda": "node --env-file=.env.local scripts/migrate-agenda.mjs",
+    "db:final": "node --env-file=.env.local scripts/migrate-final-adjustments.mjs",
+    "test:dialogs": "node scripts/test-dialog-layout.mjs",
     "dev:api": "node --env-file=.env.local scripts/dev-server.mjs",
     "test:database": "node --env-file=.env.local scripts/test-database.mjs",
     "test:api": "node scripts/test-api.mjs",

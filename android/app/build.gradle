@@ -21,8 +21,8 @@ android {
         applicationId "com.barbeariamachado.gestao"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 22
-        versionName "1.19.1"
+        versionCode 23
+        versionName "1.19.2"
         buildConfigField 'String', 'MANAGED_EMAIL', groovy.json.JsonOutput.toJson(accessProperties.getProperty('email', ''))
         buildConfigField 'String', 'MANAGED_PASSWORD', groovy.json.JsonOutput.toJson(accessProperties.getProperty('password', ''))
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

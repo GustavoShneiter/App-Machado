@@ -16,6 +16,7 @@ export type Servico = {
   cor: string;
   ativo: boolean;
   comissoes?: Record<string, number>;
+  comissaoPadrao?: number;
 };
 export type Profissional = {
   id: string;
