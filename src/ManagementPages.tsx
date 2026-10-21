@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useOperations } from "./OperationsStore";
 import { useCatalog } from "./CatalogStore";
 import { backend } from "./dataClient";
@@ -18,6 +18,7 @@ import {
   type Customer,
   type Operations,
   type Product,
+  type ScheduleBlock,
 } from "./operations";
 import { uploadCatalogPhoto } from "./media";
 import {
@@ -524,6 +525,559 @@ export function AppointmentModal({
         </button>
       </form>
     </Modal>
+  );
+}
+
+export function Agenda() {
+  const { data, run, busy, error } = useOperations();
+  const { professionals } = useCatalog();
+  const navigate = useNavigate();
+  const [date, setDate] = useState(dayKey());
+  const [professional, setProfessional] = useState("");
+  const [focused, setFocused] = useState<Appointment | null>(null);
+  const [focusedBlock, setFocusedBlock] = useState<ScheduleBlock | null>(null);
+  const [slotChoice, setSlotChoice] = useState("");
+  const [slotAppointment, setSlotAppointment] = useState("");
+  const [blockDraft, setBlockDraft] = useState<{
+    time: string;
+    duration: number;
+    reason: string;
+  } | null>(null);
+  const [confirmation, setConfirmation] = useState<{
+    appointment: Appointment;
+    status: string;
+  } | null>(null);
+  const [removing, setRemoving] = useState<Appointment | null>(null);
+  const [actualPrice, setActualPrice] = useState("");
+  const activeProfessionals = professionals.filter((item) => item.ativo);
+  useEffect(() => {
+    if (
+      activeProfessionals.length &&
+      !activeProfessionals.some((item) => item.id === professional)
+    )
+      setProfessional(activeProfessionals[0].id);
+  }, [activeProfessionals, professional]);
+  const selectedDate = new Date(`${date}T12:00:00-03:00`);
+  const weekStart = new Date(selectedDate);
+  weekStart.setDate(selectedDate.getDate() - selectedDate.getDay());
+  const weekDays = Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(weekStart);
+    day.setDate(weekStart.getDate() + index);
+    return {
+      key: dayKey(day),
+      label: day
+        .toLocaleDateString("pt-BR", { weekday: "short" })
+        .replace(".", ""),
+      number: day.getDate(),
+    };
+  });
+  const rows = data.appointments
+    .filter(
+      (a) =>
+        a.status !== "cancelled" &&
+        dayKey(a.starts_at) === date &&
+        (!professional || a.professional_id === professional),
+    )
+    .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  const dayBlocks = data.blocks
+    .filter(
+      (block) =>
+        dayKey(block.starts_at) === date &&
+        (!professional || block.professional_id === professional),
+    )
+    .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  const shiftDate = (amount: number) => {
+    const next = new Date(selectedDate);
+    next.setDate(next.getDate() + amount);
+    setDate(dayKey(next));
+  };
+  const monthLabel = selectedDate.toLocaleDateString("pt-BR", {
+    month: "long",
+    year: "numeric",
+  });
+  const firstHour = 8;
+  const lastHour = 20;
+  const hourHeight = 72;
+  const hours = Array.from(
+    { length: lastHour - firstHour + 1 },
+    (_, index) => firstHour + index,
+  );
+  const slots = Array.from(
+    { length: (lastHour - firstHour) * 4 },
+    (_, index) => {
+      const minutes = firstHour * 60 + index * 15;
+      return {
+        time: `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`,
+        top: (index * hourHeight) / 4,
+        major: index % 4 === 0,
+      };
+    },
+  );
+  const position = (entry: { starts_at: string; ends_at: string }) => {
+    const start = new Date(entry.starts_at);
+    const end = new Date(entry.ends_at);
+    const startMinutes = start.getHours() * 60 + start.getMinutes();
+    const endMinutes = end.getHours() * 60 + end.getMinutes();
+    return {
+      top: Math.max(0, ((startMinutes - firstHour * 60) / 60) * hourHeight),
+      height: Math.max(
+        hourHeight / 4,
+        ((endMinutes - startMinutes) / 60) * hourHeight,
+      ),
+    };
+  };
+  const slotDate = (time: string) => new Date(`${date}T${time}:00-03:00`);
+  const occupied = (time: string) => {
+    const start = slotDate(time).getTime();
+    const end = start + 15 * 60_000;
+    return [...rows, ...dayBlocks].some(
+      (entry) =>
+        new Date(entry.starts_at).getTime() < end &&
+        new Date(entry.ends_at).getTime() > start,
+    );
+  };
+  const saveBlock = async () => {
+    if (!blockDraft || !professional) return;
+    const start = slotDate(blockDraft.time);
+    const end = new Date(start.getTime() + blockDraft.duration * 60_000);
+    if (
+      await run("create_schedule_block", {
+        professional_id: professional,
+        starts_at: start.toISOString(),
+        ends_at: end.toISOString(),
+        reason: blockDraft.reason.trim() || "Agenda bloqueada",
+      })
+    )
+      setBlockDraft(null);
+  };
+  const nextStatus = (status: string) =>
+    status === "arrived"
+      ? "in_service"
+      : status === "in_service"
+        ? "completed"
+        : "arrived";
+  const nextLabel = (status: string) =>
+    status === "arrived"
+      ? "Iniciar"
+      : status === "in_service"
+        ? "Pronto"
+        : "Chegou";
+  return (
+    <section className="page agenda-page">
+      <section
+        className="agenda-professionals"
+        aria-label="Selecionar profissional"
+      >
+        {activeProfessionals.map((item) => (
+          <button
+            type="button"
+            className={professional === item.id ? "active" : ""}
+            aria-pressed={professional === item.id}
+            key={item.id}
+            onClick={() => setProfessional(item.id)}
+          >
+            {item.foto_url ? (
+              <img src={item.foto_url} alt="" />
+            ) : (
+              <span style={{ background: item.cor }}>
+                {item.iniciais || item.nome.slice(0, 2).toUpperCase()}
+              </span>
+            )}
+            <small>{item.nome}</small>
+          </button>
+        ))}
+      </section>
+      <section className="agenda-daybar" aria-label="Navegação por semana">
+        <button aria-label="Semana anterior" onClick={() => shiftDate(-7)}>
+          ‹
+        </button>
+        <div>
+          <span>Semana selecionada</span>
+          <strong>{monthLabel}</strong>
+        </div>
+        <button aria-label="Próxima semana" onClick={() => shiftDate(7)}>
+          ›
+        </button>
+      </section>
+      <section className="agenda-week" aria-label="Dias da semana">
+        {weekDays.map((day) => (
+          <button
+            type="button"
+            className={date === day.key ? "active" : ""}
+            aria-pressed={date === day.key}
+            key={day.key}
+            onClick={() => setDate(day.key)}
+          >
+            <small>{day.label}</small>
+            <strong>{day.number}</strong>
+          </button>
+        ))}
+      </section>
+      <section className="agenda-schedule" aria-label="Horários do dia">
+        <div
+          className="agenda-time-axis"
+          style={{ height: (lastHour - firstHour) * hourHeight }}
+        >
+          {hours.map((hour, index) => (
+            <time style={{ top: index * hourHeight }} key={hour}>
+              {String(hour).padStart(2, "0")}:00
+            </time>
+          ))}
+        </div>
+        <div
+          className="agenda-time-grid"
+          style={{ height: (lastHour - firstHour) * hourHeight }}
+        >
+          {slots.map((slot) => (
+            <button
+              type="button"
+              className={`agenda-slot ${slot.major ? "major" : ""}`}
+              aria-label={`${occupied(slot.time) ? "Ocupado" : "Abrir opções"} às ${slot.time}`}
+              disabled={
+                occupied(slot.time) ||
+                slotDate(slot.time).getTime() < Date.now()
+              }
+              style={{ top: slot.top, height: hourHeight / 4 }}
+              key={slot.time}
+              onClick={() => setSlotChoice(slot.time)}
+            >
+              <span>{slot.time}</span>
+            </button>
+          ))}
+          <i
+            className="agenda-grid-end"
+            style={{ top: (lastHour - firstHour) * hourHeight }}
+          />
+          {dayBlocks.map((block) => {
+            const layout = position(block);
+            return (
+              <button
+                type="button"
+                className="agenda-event blocked"
+                style={{ top: layout.top, height: layout.height }}
+                key={block.id}
+                onClick={() => setFocusedBlock(block)}
+              >
+                <small>
+                  {new Date(block.starts_at).toLocaleTimeString("pt-BR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                  –
+                  {new Date(block.ends_at).toLocaleTimeString("pt-BR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </small>
+                <strong>
+                  Agenda bloqueada
+                  {block.reason && block.reason !== "Agenda bloqueada"
+                    ? ` · ${block.reason}`
+                    : ""}
+                </strong>
+              </button>
+            );
+          })}
+          {rows.map((appointment) => {
+            const layout = position(appointment);
+            const command = data.commands.find(
+              (item) => item.appointment_id === appointment.id,
+            );
+            return (
+              <button
+                type="button"
+                className={`agenda-event ${appointment.status}`}
+                style={{ top: layout.top, height: layout.height }}
+                key={appointment.id}
+                onClick={() =>
+                  command
+                    ? navigate(`/admin/comandas?comanda=${command.id}`)
+                    : setFocused(appointment)
+                }
+              >
+                <small>
+                  {new Date(appointment.starts_at).toLocaleTimeString("pt-BR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                  –
+                  {new Date(appointment.ends_at).toLocaleTimeString("pt-BR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </small>
+                <strong>
+                  {appointment.service_name} · {appointment.customer_name}
+                </strong>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+      {slotChoice && (
+        <Modal title={`Horário ${slotChoice}`} close={() => setSlotChoice("")}>
+          <p className="slot-choice-copy">O que deseja fazer neste horário?</p>
+          <div className="slot-choice-actions">
+            <button
+              className="primary"
+              onClick={() => {
+                setSlotAppointment(slotChoice);
+                setSlotChoice("");
+              }}
+            >
+              Agendar horário
+            </button>
+            <button
+              className="outline"
+              onClick={() => {
+                setBlockDraft({ time: slotChoice, duration: 15, reason: "" });
+                setSlotChoice("");
+              }}
+            >
+              Bloquear horário
+            </button>
+          </div>
+        </Modal>
+      )}
+      {slotAppointment && (
+        <AppointmentModal
+          initialDate={date}
+          initialTime={slotAppointment}
+          initialProfessional={professional}
+          close={() => setSlotAppointment("")}
+        />
+      )}
+      {blockDraft && (
+        <Modal title="Bloquear horário" close={() => setBlockDraft(null)}>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void saveBlock();
+            }}
+          >
+            <div className="block-summary">
+              <strong>{blockDraft.time}</strong>
+              <span>
+                {
+                  activeProfessionals.find((item) => item.id === professional)
+                    ?.nome
+                }{" "}
+                · {selectedDate.toLocaleDateString("pt-BR")}
+              </span>
+            </div>
+            <label className="field">
+              <span>Duração</span>
+              <select
+                value={blockDraft.duration}
+                onChange={(event) =>
+                  setBlockDraft({
+                    ...blockDraft,
+                    duration: Number(event.target.value),
+                  })
+                }
+              >
+                <option value={15}>15 minutos</option>
+                <option value={30}>30 minutos</option>
+                <option value={45}>45 minutos</option>
+                <option value={60}>1 hora</option>
+              </select>
+            </label>
+            <label className="field">
+              <span>Motivo (opcional)</span>
+              <input
+                value={blockDraft.reason}
+                onChange={(event) =>
+                  setBlockDraft({ ...blockDraft, reason: event.target.value })
+                }
+                placeholder="Ex.: intervalo"
+              />
+            </label>
+            {error && <p className="form-error">{error}</p>}
+            <button className="primary" disabled={busy}>
+              {busy ? "Bloqueando…" : "Bloquear horário"}
+            </button>
+          </form>
+        </Modal>
+      )}
+      {focusedBlock && (
+        <Modal title="Agenda bloqueada" close={() => setFocusedBlock(null)}>
+          <div className="block-summary">
+            <strong>
+              {new Date(focusedBlock.starts_at).toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+              –
+              {new Date(focusedBlock.ends_at).toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </strong>
+            <span>{focusedBlock.reason || "Agenda bloqueada"}</span>
+          </div>
+          {error && <p className="form-error">{error}</p>}
+          <button
+            className="danger-button"
+            disabled={busy}
+            onClick={async () => {
+              if (await run("delete_schedule_block", { id: focusedBlock.id }))
+                setFocusedBlock(null);
+            }}
+          >
+            Liberar horário
+          </button>
+        </Modal>
+      )}
+      {focused && (
+        <Modal title="Agendamento" close={() => setFocused(null)}>
+          <AppointmentIdentity appointment={focused} />
+          <div className="row-actions agenda-detail-actions">
+            {!["completed", "cancelled", "no_show"].includes(
+              focused.status,
+            ) && (
+              <button
+                className="primary"
+                disabled={busy}
+                onClick={() => {
+                  setActualPrice(String(focused.expected_price_cents / 100));
+                  setFocused(null);
+                  setConfirmation({
+                    appointment: focused,
+                    status: nextStatus(focused.status),
+                  });
+                }}
+              >
+                {nextLabel(focused.status)}
+              </button>
+            )}
+            {![
+              "arrived",
+              "in_service",
+              "completed",
+              "cancelled",
+              "no_show",
+            ].includes(focused.status) && (
+              <button
+                className="outline"
+                disabled={busy}
+                onClick={() => {
+                  setFocused(null);
+                  setConfirmation({ appointment: focused, status: "no_show" });
+                }}
+              >
+                Faltou
+              </button>
+            )}
+            <button
+              className="danger-button"
+              disabled={busy}
+              onClick={() => {
+                setFocused(null);
+                setRemoving(focused);
+              }}
+            >
+              Remover
+            </button>
+          </div>
+        </Modal>
+      )}
+      {confirmation && (
+        <Modal
+          title={
+            confirmation.status === "completed"
+              ? "Enviar para receber?"
+              : confirmation.status === "no_show"
+                ? "Marcar falta?"
+                : confirmation.status === "in_service"
+                  ? "Iniciar atendimento?"
+                  : "Confirmar chegada?"
+          }
+          close={() => setConfirmation(null)}
+        >
+          <AppointmentIdentity appointment={confirmation.appointment} />
+          <p>
+            {confirmation.status === "completed"
+              ? "A comanda ficará pronta no Caixa."
+              : confirmation.status === "no_show"
+                ? "Este horário será liberado."
+                : confirmation.status === "in_service"
+                  ? "O atendimento ficará em andamento."
+                  : "O cliente ficará marcado como presente."}
+          </p>
+          {confirmation.status === "completed" &&
+            confirmation.appointment.expected_price_cents <= 0 && (
+              <label className="field">
+                <span>Valor (R$)</span>
+                <input
+                  autoFocus
+                  required
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={actualPrice}
+                  onChange={(e) => setActualPrice(e.target.value)}
+                />
+              </label>
+            )}
+          {error && <p className="form-error">{error}</p>}
+          <button
+            className="primary"
+            disabled={busy}
+            onClick={async () => {
+              if (
+                confirmation.status === "completed" &&
+                confirmation.appointment.expected_price_cents <= 0 &&
+                !(await run("set_price", {
+                  id: confirmation.appointment.id,
+                  amount: Math.round(Number(actualPrice) * 100),
+                }))
+              )
+                return;
+              if (
+                await run("set_status", {
+                  id: confirmation.appointment.id,
+                  status: confirmation.status,
+                })
+              )
+                setConfirmation(null);
+            }}
+          >
+            {confirmation.status === "completed"
+              ? "Enviar para Caixa"
+              : confirmation.status === "no_show"
+                ? "Confirmar falta"
+                : confirmation.status === "in_service"
+                  ? "Iniciar atendimento"
+                  : "Confirmar chegada"}
+          </button>
+        </Modal>
+      )}
+      {removing && (
+        <Modal title="Remover agendamento" close={() => setRemoving(null)}>
+          <AppointmentIdentity appointment={removing} />
+          <p>
+            Esse horário será removido da agenda. O histórico financeiro
+            permanece protegido.
+          </p>
+          {error && <p className="form-error">{error}</p>}
+          <button
+            className="danger"
+            disabled={busy}
+            onClick={async () => {
+              if (
+                await run("set_status", {
+                  id: removing.id,
+                  status: "cancelled",
+                })
+              )
+                setRemoving(null);
+            }}
+          >
+            Remover da agenda
+          </button>
+        </Modal>
+      )}
+    </section>
   );
 }
 

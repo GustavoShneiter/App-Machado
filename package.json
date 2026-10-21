@@ -1,12 +1,13 @@
 {
   "name": "barbearia-machado",
   "private": true,
-  "version": "1.20.0",
+  "version": "1.19.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && npm run test:admin && vite build",
     "test:admin": "node scripts/check-admin.mjs",
+    "test:navigation": "node scripts/test-navigation.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "android:sync": "npm run build && npx cap sync android",

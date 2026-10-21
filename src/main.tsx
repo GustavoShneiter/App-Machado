@@ -8,7 +8,8 @@ import { ConnectionStatus } from './ConnectionStatus'
 import './styles.css'
 import './public-polish.css'
 import './readiness.css'
-import './agenda-polish.css'
+import './booking-layout.css'
+import './navigation-119.css'
 
 const queryClient = new QueryClient()
 

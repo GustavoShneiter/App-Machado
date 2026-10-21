@@ -1,0 +1,124 @@
+/* Layout público preservado, separado dos ajustes do aplicativo. */
+
+.public-shell .booking-slot-head {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+}
+.public-shell .booking-slot-head > div {
+  width: 100%;
+  text-align: center;
+}
+.public-shell .booking-date {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.public-shell .booking-calendar-control {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 640px;
+}
+.public-shell .week-picker {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+.public-shell .week-picker button {
+  text-align: center;
+}
+.public-shell .slots {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+  justify-content: center;
+  gap: 10px;
+}
+.public-shell .slots button {
+  min-width: 0;
+  text-align: center;
+}
+.public-shell .availability-note {
+  text-align: center;
+}
+.public-shell .pro-options {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.public-shell .professional-grid {
+  order: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  max-width: 640px;
+  gap: 20px;
+}
+.public-shell .professional-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  min-height: 0;
+}
+.public-shell .professional-card img,
+.public-shell .professional-photo-placeholder {
+  display: flex;
+  width: 100%;
+  height: auto !important;
+  aspect-ratio: 4/5;
+  object-fit: cover;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+  font-size: 42px;
+  flex: none;
+}
+.public-shell .professional-card > strong {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  text-align: center;
+  font-size: 16px;
+}
+.public-shell .any-professional {
+  order: 1;
+  width: auto;
+  max-width: 100%;
+  min-height: 0;
+  padding: 11px 18px;
+  font-size: 12px;
+  box-shadow: none;
+}
+.public-shell .any-professional strong {
+  font-size: 12px;
+}
+.public-shell .any-professional span {
+  font-size: 10px;
+}
+@media (max-width: 700px) {
+  .public-shell .slots {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+}
+@media (max-width: 700px) {
+  .public-shell .professional-grid {
+    gap: 12px;
+  }
+}
+@media (max-width: 700px) {
+  .public-shell .professional-card > strong {
+    padding: 12px 8px;
+    font-size: 14px;
+  }
+}

@@ -1,0 +1,126 @@
+/* Base 1.19: todos os itens da navegação recebem o mesmo destaque animado. */
+.app-shell .mobile-nav-animated {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: start;
+  gap: 0;
+  min-height: 76px;
+  height: auto;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+  isolation: isolate;
+}
+.app-shell .mobile-nav-highlight {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  left: 8px;
+  top: 8px;
+  width: calc((100% - 16px) / 5);
+  height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(140deg, #e0f4e8, #c9ead6);
+  border: 1px solid #b9dfc8;
+  box-shadow: 0 3px 10px #176b4310;
+  transform: translateX(calc(var(--nav-index, 0) * 100%));
+  opacity: var(--nav-visible, 0);
+  transition: transform 420ms cubic-bezier(.22, 1, .36, 1), opacity 220ms ease;
+}
+.app-shell .mobile-nav-animated > a {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  height: 56px;
+  min-width: 0;
+  margin: 0;
+  padding: 5px 2px;
+  border-radius: 14px;
+  background: transparent !important;
+  color: #718177;
+  box-shadow: none !important;
+  transform: none;
+  transition: color 220ms ease, transform 130ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.app-shell .mobile-nav-animated > a.active {
+  color: #125d39;
+}
+.app-shell .mobile-nav-animated > a > svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+.app-shell .mobile-nav-animated > a > span {
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+.app-shell .mobile-nav-animated > a.active > svg {
+  animation: section-icon-enter 360ms cubic-bezier(.22, 1, .36, 1);
+}
+.app-shell .mobile-nav-animated > a:active { transform: scale(.94); }
+.app-shell .mobile-nav-animated > a:focus-visible { outline: 2px solid #177245; outline-offset: 2px; }
+.section-transition { min-width: 0; animation: section-content-enter 240ms ease-out both; }
+@keyframes section-icon-enter { 0% { transform: scale(.86); } 55% { transform: scale(1.09); } 100% { transform: scale(1); } }
+@keyframes section-content-enter { from { opacity: .35; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+.app-shell .agenda-professionals {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto 20px;
+  padding: 10px 8px;
+  overflow: visible;
+}
+.app-shell .agenda-professionals > button {
+  flex: 0 1 88px;
+  width: 88px;
+  min-width: 68px;
+  padding: 8px 4px;
+  text-align: center;
+  border-radius: 14px;
+}
+.app-shell .agenda-professionals > button > img,
+.app-shell .agenda-professionals > button > span {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 62px;
+  height: 62px;
+  margin: 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.app-shell .agenda-professionals > button > small {
+  display: block;
+  width: 100%;
+  margin: 9px 0 0;
+  line-height: 1.35;
+  white-space: normal;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+@media (min-width: 981px) { .app-shell .mobile-nav-animated { display: none; } }
+@media (max-width: 440px) {
+  .app-shell .agenda-professionals { gap: 12px; }
+  .app-shell .agenda-professionals > button { flex-basis: 78px; width: 78px; }
+  .app-shell .agenda-professionals > button > img,
+  .app-shell .agenda-professionals > button > span { width: 56px; height: 56px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell .mobile-nav-highlight,
+  .app-shell .mobile-nav-animated > a { transition: none; }
+  .app-shell .mobile-nav-animated > a.active > svg,
+  .section-transition { animation: none; }
+}

@@ -99,9 +99,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
     setError("");
     try {
       const result =
-        action === "remove_agenda_appointment"
-          ? await backend.rpc("remove_agenda_appointment", { appointment_id: String(payload.id ?? '') })
-          : action === "reset_operational_data"
+        action === "reset_operational_data"
           ? await backend.rpc("reset_operational_data", {
               confirmation: String(payload.confirmation ?? ""),
             })

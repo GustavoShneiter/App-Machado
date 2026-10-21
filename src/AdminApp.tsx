@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   Link,
   NavLink,
@@ -24,17 +24,21 @@ import {
   Settings,
   X,
   ClipboardList,
+  Plus,
 } from "lucide-react";
 import { bookingSiteUrl, appVersion } from "./runtime";
 import { ServicesV2, ProfessionalsV2 } from "./OperationalPages";
 import { AdminAccess } from "./AdminAccess";
 import { OperationsProvider, useOperations } from "./OperationsStore";
 import {
+  Dashboard,
+  Agenda,
   Customers,
   CashManagement,
   Reports,
   Products,
   Orders,
+  AppointmentModal,
   Modal,
   Page,
 } from "./ManagementPages";
@@ -42,9 +46,9 @@ import { CompanySettings, Packages } from "./BusinessPages";
 import { backend } from "./dataClient";
 import { dismissTopLayer, registerDismissibleLayer } from "./dismissibleLayers";
 import { BackupPanel } from './BackupPanel';
-import { Agenda } from './AgendaPage';
 
 const navItems = [
+  { to: "/admin", label: "Início", icon: LayoutDashboard },
   { to: "/admin/agenda", label: "Agenda", icon: CalendarDays },
   { to: "/admin/clientes", label: "Clientes", icon: Users },
   { to: "/admin/caixa", label: "Caixa", icon: WalletCards },
@@ -56,18 +60,32 @@ const navItems = [
   { to: "/admin/configuracoes", label: "Configurações", icon: Settings },
 ];
 
+const mobileSections = [
+  { to: '/admin/caixa', label: 'Caixa', icon: WalletCards },
+  { to: '/admin/comandas', label: 'Comandas', icon: ClipboardList },
+  { to: '/admin/agenda', label: 'Agenda', icon: CalendarDays },
+  { to: '/admin/clientes', label: 'Clientes', icon: Users },
+  { to: '/admin/configuracoes', label: 'Menu', icon: Menu },
+];
+
 export function AdminLayout() {
   const [sidebar, setSidebar] = useState(false);
+  const [newAppointment, setNewAppointment] = useState(false);
   const [newManualCommand, setNewManualCommand] = useState(false);
   const [newCustomer, setNewCustomer] = useState(false);
   const [newCashEntry, setNewCashEntry] = useState(false);
   const location = useLocation();
+  const sectionIndex = mobileSections.findIndex(item => location.pathname === item.to || location.pathname.startsWith(item.to + '/'));
+  const activeSection = sectionIndex >= 0 ? sectionIndex : location.pathname === '/admin' ? -1 : 4;
   const { loading, error, busy, refreshed, refresh, clearError } =
     useOperations();
   const isCommands = location.pathname.endsWith("/comandas");
   const isClients = location.pathname.endsWith("/clientes");
   const isCash = location.pathname.endsWith("/caixa");
-  const showTopCreate = isCommands || isClients || isCash;
+  const isAgenda =
+    location.pathname.endsWith("/agenda") || location.pathname === "/admin";
+  const showCreate = isCommands || isClients || isCash || isAgenda;
+  const showTopCreate = showCreate && !isAgenda;
   const createLabel = isCommands
     ? "Nova comanda"
     : isClients
@@ -79,6 +97,7 @@ export function AdminLayout() {
     if (isCommands) setNewManualCommand(true);
     else if (isClients) setNewCustomer(true);
     else if (isCash) setNewCashEntry(true);
+    else setNewAppointment(true);
   };
   useEffect(() => {
     if (!sidebar) return;
@@ -98,7 +117,6 @@ export function AdminLayout() {
           </span>
           <button
             className="icon-btn close-menu"
-            aria-label="Fechar menu"
             onClick={() => setSidebar(false)}
           >
             <X />
@@ -163,8 +181,8 @@ export function AdminLayout() {
         {loading ? (
           <div className="empty">Carregando registros da barbearia…</div>
         ) : (
-          <Routes>
-            <Route index element={<Agenda />} />
+          <div className="section-transition" key={location.pathname}><Routes>
+            <Route index element={<Dashboard />} />
             <Route path="agenda" element={<Agenda />} />
             <Route
               path="clientes"
@@ -205,9 +223,25 @@ export function AdminLayout() {
               element={<Navigate to="/admin/caixa" replace />}
             />
             <Route path="*" element={<Navigate to="/admin" replace />} />
-          </Routes>
+          </Routes></div>
         )}
       </main>
+      <nav className="mobile-nav mobile-nav-animated" aria-label="Navegação principal" style={{ '--nav-index': Math.max(activeSection, 0), '--nav-visible': activeSection < 0 ? 0 : 1 } as CSSProperties}>
+        <span className="mobile-nav-highlight" aria-hidden="true" />
+        {mobileSections.map((item, index) => <NavLink key={item.to} to={item.to} className={activeSection === index ? 'active' : ''}><item.icon size={22} /><span>{item.label}</span></NavLink>)}
+      </nav>
+      {showCreate && (
+        <button
+          className="mobile-create"
+          aria-label={createLabel}
+          onClick={openCreate}
+        >
+          <Plus size={24} />
+        </button>
+      )}
+      {newAppointment && (
+        <AppointmentModal close={() => setNewAppointment(false)} />
+      )}
     </div>
   );
 }
@@ -226,9 +260,9 @@ function NativeBackHandler() {
     void CapacitorApp.addListener("backButton", ({ canGoBack }) => {
       if (dismissTopLayer()) return;
 
-      if (!["/admin", "/admin/agenda"].includes(locationRef.current.pathname)) {
+      if (locationRef.current.pathname !== "/admin") {
         if (canGoBack) navigate(-1);
-        else navigate("/admin/agenda", { replace: true });
+        else navigate("/admin", { replace: true });
         return;
       }
 

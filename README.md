@@ -1,12 +1,12 @@
 # Machado Gestão
 
-Sistema de gestão e agendamento da Barbearia Machado, em Toledo/PR. Versão 1.20: site React/Vite e aplicativo Android Capacitor, com publicações separadas, compartilhando a API na Vercel, PostgreSQL Neon, Better Auth e Vercel Blob.
+Sistema de gestão e agendamento da Barbearia Machado, em Toledo/PR. Base administrativa 1.19 ajustada: site React/Vite e aplicativo Android Capacitor, com publicações separadas, compartilhando a API na Vercel, PostgreSQL Neon, Better Auth e Vercel Blob.
 
 - Site: https://barbearia-machado-rose.vercel.app
 - Agendamento: `/agendar`
 - Painel: `/admin`
 - Recuperação de acesso: `/recuperar-acesso`
-- [Guia de entrega e operação](docs/ENTREGA-1.20.md)
+- [Guia de entrega e operação](docs/ENTREGA-1.19-AJUSTADA.md)
 
 ## Desenvolvimento
 
@@ -26,7 +26,7 @@ O navegador acessa apenas endpoints permitidos da API. A API valida a sessão Be
 
 Os arquivos da antiga integração Supabase foram mantidos em `supabase/` como histórico e referência de testes. Eles não são executados no ambiente atual.
 
-Para atualizar um banco existente para 1.20, execute `npm run db:agenda` antes de publicar. As migrações 004/005 acrescentam remoção segura da Agenda e priorizam a comissão por serviço/profissional. Preservam registros financeiros históricos. A Agenda é a tela inicial e a confirmação de presença segue diretamente para recebimento no Caixa.
+As migrações 004/005 já aplicadas permanecem registradas como histórico do banco. O retorno visual à base 1.19 não exige reverter dados nem executar migrações. A navegação inferior e os fluxos da base 1.19 foram restaurados; os ajustes atuais são de destaque da seção ativa e centralização dos profissionais.
 
 ## Backups
 
@@ -36,4 +36,4 @@ O cron `/api/backup-daily` é protegido por `CRON_SECRET` e gera uma cópia no B
 
 Execute `npm run android:prepare-access`, `npm run android:sync` e depois `android/gradlew.bat assembleRelease`. A chave e o acesso automático ficam fora do Git; `android/keystore.properties` e `android/native-access.properties` configuram o Gradle. O APK da distribuição privada dá acesso direto à gestão e não deve ser publicado em repositórios ou canais abertos. Alterações do site precisam ser incorporadas em um novo APK para chegar aos aparelhos instalados.
 
-Consulte `docs/ENTREGA-1.20.md` para instalação, acesso, operação, suporte e homologação.
+Consulte `docs/ENTREGA-1.19-AJUSTADA.md` para instalação, acesso, operação, suporte e homologação.

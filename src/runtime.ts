@@ -1,6 +1,6 @@
 import { Capacitor } from '@capacitor/core'
 
-export const appVersion = '1.20.0'
+export const appVersion = '1.19.1'
 export const publicSiteUrl = 'https://barbearia-machado-rose.vercel.app'
 export const bookingSiteUrl = Capacitor.isNativePlatform() || typeof window === 'undefined' ? publicSiteUrl : window.location.origin
 

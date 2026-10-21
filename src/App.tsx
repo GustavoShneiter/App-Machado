@@ -19,8 +19,8 @@ export default function App() {
     return () => auth?.data.subscription.unsubscribe()
   }, [navigate])
   return <CatalogProvider><Suspense fallback={<main className="auth-shell"><p role="status">Carregando…</p></main>}><Routes>
-    <Route path="/" element={native ? <Navigate to="/admin/agenda" replace /> : <PublicLanding />} />
-    <Route path="/agendar" element={native ? <Navigate to="/admin/agenda" replace /> : <PublicBooking />} />
+    <Route path="/" element={native ? <Navigate to="/admin" replace /> : <PublicLanding />} />
+    <Route path="/agendar" element={native ? <Navigate to="/admin" replace /> : <PublicBooking />} />
     <Route path="/privacidade" element={<Privacy />} />
     <Route path="/recuperar-acesso" element={native ? <Navigate to="/admin" replace /> : <RecoveryPage />} />
     <Route path="/admin/*" element={<AdminApp />} />

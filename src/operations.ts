@@ -1,4 +1,4 @@
-export type Appointment = { id: string; agenda_hidden?: boolean; customer_id: string; professional_id: string; service_id: string; starts_at: string; ends_at: string; expected_price_cents: number; status: string; source: string; customer_name: string; customer_phone: string; professional_name: string; service_name: string }
+export type Appointment = { id: string; customer_id: string; professional_id: string; service_id: string; starts_at: string; ends_at: string; expected_price_cents: number; status: string; source: string; customer_name: string; customer_phone: string; professional_name: string; service_name: string }
 export type ScheduleBlock = { id: string; professional_id: string; starts_at: string; ends_at: string; reason: string; created_at: string }
 export type Customer = { id: string; name: string; phone: string; email?: string | null; birth_date?: string | null; notes: string | null }
 export type Command = { id: string; appointment_id: string | null; customer_id: string; status: string; discount_cents: number; surcharge_cents: number; created_at: string; closed_at: string | null }
