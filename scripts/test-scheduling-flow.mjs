@@ -65,6 +65,7 @@ try{
 finally{
  await browser.close()
  await transaction(account.id,async client=>{
+   await client.query('delete from notifications where title=$1 and body=$2',['Novo agendamento online',names.customer+' agendou pelo link público.'])
    for(const name of [names.customer,names.fit])for(const row of (await client.query('select id from customers where name=$1',[name])).rows)await client.query('select delete_customer_record($1)',[row.id])
    for(const row of (await client.query('select id from professionals where name=$1',[names.professional])).rows)await client.query('select delete_professional_record($1)',[row.id])
    for(const row of (await client.query('select id from services where name=$1',[names.service])).rows)await client.query('select delete_service_record($1)',[row.id])
