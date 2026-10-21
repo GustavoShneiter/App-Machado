@@ -1,4 +1,17 @@
 /* Agenda e navegação administrativa sem barra inferior. */
+.app-shell .sidebar {
+  display: flex !important;
+  z-index: 60;
+  overflow-y: auto;
+  transform: none;
+}
+.app-shell .scrim {
+  display: block !important;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #10271db3;
+}
 .app-shell .main {
   padding-bottom: 24px !important;
 }
@@ -344,6 +357,19 @@
 }
 .public-shell .any-professional span {
   font-size: 10px;
+}
+@media (max-width: 980px) {
+  .app-shell .sidebar {
+    visibility: hidden;
+    transform: translateX(-100%);
+  }
+  .app-shell .sidebar.open {
+    visibility: visible;
+    transform: none;
+  }
+  .app-shell .close-menu {
+    display: grid !important;
+  }
 }
 @media (max-width: 700px) {
   .app-shell .main {
