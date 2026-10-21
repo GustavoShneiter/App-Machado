@@ -38,7 +38,6 @@ import {
   Reports,
   Products,
   Orders,
-  AppointmentModal,
   Modal,
   Page,
 } from "./ManagementPages";
@@ -46,6 +45,7 @@ import { CompanySettings, Packages } from "./BusinessPages";
 import { backend } from "./dataClient";
 import { dismissTopLayer, registerDismissibleLayer } from "./dismissibleLayers";
 import { BackupPanel } from './BackupPanel';
+import { AgendaCreateModal } from './AgendaScheduling';
 
 const navItems = [
   { to: "/admin", label: "Início", icon: LayoutDashboard },
@@ -97,6 +97,7 @@ export function AdminLayout() {
     if (isCommands) setNewManualCommand(true);
     else if (isClients) setNewCustomer(true);
     else if (isCash) setNewCashEntry(true);
+    else if (location.pathname.endsWith('/agenda')) window.dispatchEvent(new Event('agenda:create'));
     else setNewAppointment(true);
   };
   useEffect(() => {
@@ -240,7 +241,7 @@ export function AdminLayout() {
         </button>
       )}
       {newAppointment && (
-        <AppointmentModal close={() => setNewAppointment(false)} />
+        <AgendaCreateModal close={() => setNewAppointment(false)} />
       )}
     </div>
   );

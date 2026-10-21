@@ -20,7 +20,8 @@ export default function App() {
   }, [navigate])
   return <CatalogProvider><Suspense fallback={<main className="auth-shell"><p role="status">Carregando…</p></main>}><Routes>
     <Route path="/" element={native ? <Navigate to="/admin" replace /> : <PublicLanding />} />
-    <Route path="/agendar" element={native ? <Navigate to="/admin" replace /> : <PublicBooking />} />
+    <Route path="/agendar" element={native ? <Navigate to="/admin" replace /> : <PublicLanding />} />
+    <Route path="/agendar/horarios" element={native ? <Navigate to="/admin" replace /> : <PublicBooking />} />
     <Route path="/privacidade" element={<Privacy />} />
     <Route path="/recuperar-acesso" element={native ? <Navigate to="/admin" replace /> : <RecoveryPage />} />
     <Route path="/admin/*" element={<AdminApp />} />

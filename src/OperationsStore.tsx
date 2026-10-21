@@ -101,7 +101,11 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
     setError("");
     try {
       const result =
-        action === "reset_operational_data"
+        action === "create_recurring_block"
+          ? await backend.rpc('create_recurring_schedule_block', { payload: payload.payload })
+          : action === "delete_recurring_block"
+            ? await backend.rpc('delete_recurring_schedule_block', { block_id: String(payload.id ?? '') })
+          : action === "reset_operational_data"
           ? await backend.rpc("reset_operational_data", {
               confirmation: String(payload.confirmation ?? ""),
             })

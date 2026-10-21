@@ -11,6 +11,7 @@ import './readiness.css'
 import './booking-layout.css'
 import './navigation-119.css'
 import './dialog-layout.css'
+import './public-compact.css'
 
 const queryClient = new QueryClient()
 

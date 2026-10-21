@@ -23,6 +23,7 @@ export function ServicesV2() {
     cor: "#203F20",
     ativo: true,
     comissaoPadrao: 50,
+    modoComissao: 'professional',
     comissoes: {},
   });
   const edit = (service: Servico) => {
@@ -59,7 +60,7 @@ export function ServicesV2() {
                 {activeProfessionals.map((professional) => (
                   <span key={professional.id}>
                     {professional.nome}:{" "}
-                    {service.comissoes?.[professional.id] ?? service.comissaoPadrao ?? 50}%
+                    {service.modoComissao === 'professional' ? professional.comissaoServicos ?? 50 : service.modoComissao === 'uniform' ? service.comissaoPadrao ?? 50 : service.comissoes?.[professional.id] ?? service.comissaoPadrao ?? 50}%
                   </span>
                 ))}
               </div>
@@ -146,7 +147,8 @@ export function ServicesV2() {
                 }
               />
             </label>
-            <CommissionFields rate={draft.comissaoPadrao ?? 50} overrides={draft.comissoes ?? {}}
+            <CommissionFields rate={draft.comissaoPadrao ?? 50} overrides={draft.comissoes ?? {}} mode={draft.modoComissao ?? 'custom'}
+              onModeChange={mode => setDraft({ ...draft, modoComissao: mode })}
               onChange={(rate, overrides) => setDraft({ ...draft, comissaoPadrao: rate, comissoes: overrides })} />
             <label className="check">
               <input
@@ -188,6 +190,7 @@ export function ProfessionalsV2() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [commissionOpen, setCommissionOpen] = useState(false);
   const fresh: Profissional = {
     id: "",
     nome: "",
@@ -196,6 +199,8 @@ export function ProfessionalsV2() {
     iniciais: "",
     cor: "#203F20",
     ativo: true,
+    comissaoServicos: 50,
+    comissaoProdutos: 20,
   };
   const remove = async () => {
     if (
@@ -225,6 +230,7 @@ export function ProfessionalsV2() {
           className="primary"
           onClick={() => {
             setDraft(fresh);
+            setCommissionOpen(false);
             setPhoto(null);
             setError("");
           }}
@@ -257,6 +263,7 @@ export function ProfessionalsV2() {
               className="outline small"
               onClick={() => {
                 setDraft({ ...professional });
+                setCommissionOpen(false);
                 setPhoto(null);
                 setError("");
               }}
@@ -348,9 +355,12 @@ export function ProfessionalsV2() {
                 }
               />
             </label>
-            <p className="commission-location-note">
-              As comissões são definidas em cada serviço ou produto, com percentual específico por profissional.
-            </p>
+            <button type="button" className="outline" aria-expanded={commissionOpen} onClick={() => setCommissionOpen(!commissionOpen)}>Configurar comissões</button>
+            {commissionOpen && <fieldset className="service-commission-fields"><legend>Comissões do profissional</legend>
+              <p>Valem para os itens que usam o percentual do perfil. Itens com regra própria mantêm a configuração escolhida.</p>
+              <label className="field"><span>Comissão em serviços (%)</span><input type="number" required min="0" max="100" step="0.01" value={draft.comissaoServicos ?? 50} onChange={event => setDraft({ ...draft, comissaoServicos: Number(event.target.value) })} /></label>
+              <label className="field"><span>Comissão em produtos (%)</span><input type="number" required min="0" max="100" step="0.01" value={draft.comissaoProdutos ?? 20} onChange={event => setDraft({ ...draft, comissaoProdutos: Number(event.target.value) })} /></label>
+            </fieldset>}
             <label className="check">
               <input
                 type="checkbox"

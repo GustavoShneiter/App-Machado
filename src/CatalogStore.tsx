@@ -44,6 +44,7 @@ const mapService = (
   ativo: Boolean(row.active),
   comissoes: commissions,
   comissaoPadrao: Number(row.default_commission_percent ?? 50),
+  modoComissao: (row.commission_mode ?? 'custom') as Servico['modoComissao'],
 });
 const mapProfessional = (row: Record<string, unknown>): Profissional => ({
   id: String(row.id),
@@ -59,6 +60,8 @@ const mapProfessional = (row: Record<string, unknown>): Profissional => ({
   cor: "#203F20",
   ativo: Boolean(row.active),
   foto_url: typeof row.photo_url === "string" ? row.photo_url : null,
+  comissaoServicos: Number(row.default_commission_percent ?? 50),
+  comissaoProdutos: Number(row.default_product_commission_percent ?? 20),
 });
 export function CatalogProvider({ children }: { children: ReactNode }) {
   const [services, setServices] = useState<Servico[]>([]);
@@ -145,6 +148,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       color: s.cor,
       active: s.ativo,
       commission: s.comissaoPadrao ?? 50,
+      commission_mode: s.modoComissao ?? 'custom',
       commissions: Object.entries(s.comissoes ?? {}).map(
         ([professional_id, commission_percent]) => ({
           professional_id,
@@ -162,6 +166,8 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       specialties: p.especialidades,
       photo_url: p.foto_url ?? null,
       active: p.ativo,
+      service_commission: p.comissaoServicos ?? 50,
+      product_commission: p.comissaoProdutos ?? 20,
     });
   };
   return (

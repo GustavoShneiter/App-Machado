@@ -8,7 +8,7 @@ BEGIN
     pro:=(public.save_professional_profile('{"name":"QA Final Araújo","service_commission":99,"product_commission":99}')->>'id')::uuid;
     pro2:=(public.save_professional_profile('{"name":"QA Final outro"}')->>'id')::uuid;
     zero_pro:=(public.save_professional_profile('{"name":"QA Final zero"}')->>'id')::uuid;
-    IF EXISTS(SELECT 1 FROM public.professionals WHERE id=pro AND (default_commission_percent IS NOT NULL OR default_product_commission_percent IS NOT NULL)) THEN RAISE EXCEPTION 'TEST: perfil ainda recebe comissão geral'; END IF;
+    IF NOT EXISTS(SELECT 1 FROM public.professionals WHERE id=pro AND default_commission_percent=99 AND default_product_commission_percent=99) THEN RAISE EXCEPTION 'TEST: percentuais do perfil não foram salvos'; END IF;
     service:=(public.save_service_profile(jsonb_build_object('name','QA Final corte','price',4000,'duration',30,'commission',50,'commissions',jsonb_build_array(jsonb_build_object('professional_id',pro,'commission_percent',50),jsonb_build_object('professional_id',pro2,'commission_percent',60),jsonb_build_object('professional_id',zero_pro,'commission_percent',0))))->>'id')::uuid;
     IF (SELECT commission_percent FROM public.professional_services WHERE professional_id=pro2 AND service_id=service)<>60 THEN RAISE EXCEPTION 'TEST: comissão por serviço não salvou'; END IF;
     -- Editing basic fields without the commissions key preserves the rules.

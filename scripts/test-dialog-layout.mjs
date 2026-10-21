@@ -44,6 +44,7 @@ try{
       assert.equal(await dialog.evaluate(element=>element.scrollWidth>element.clientWidth+1),false,`${title}: rolagem horizontal`)
       if(section==='Serviços'){
         await dialog.getByLabel('Nome',{exact:true}).fill('Corte QA')
+        await dialog.getByLabel('Como calcular a comissão?').selectOption('custom')
         await dialog.getByLabel('Percentual padrão (%)',{exact:true}).fill('50')
         await dialog.getByLabel('Araújo (%)',{exact:true}).fill('60')
         await dialog.getByLabel('Machado (%)',{exact:true}).fill('0')

@@ -35,6 +35,8 @@ import {
   WalletCards,
 } from "lucide-react";
 import { registerDismissibleLayer } from "./dismissibleLayers";
+import { AgendaCreateModal } from './AgendaScheduling';
+import { agendaTimes, recurringForDay } from './schedule';
 
 export function Page({
   title,
@@ -353,11 +355,13 @@ export function AppointmentModal({
   initialDate = dayKey(),
   initialTime = "",
   initialProfessional = "",
+  fitIn = false,
 }: {
   close: () => void;
   initialDate?: string;
   initialTime?: string;
   initialProfessional?: string;
+  fitIn?: boolean;
 }) {
   const { services, professionals } = useCatalog();
   const { run, busy, error } = useOperations();
@@ -374,14 +378,16 @@ export function AppointmentModal({
   const [price, setPrice] = useState(
     String(services.find((s) => s.id === service)?.preco ?? 0),
   );
+  const [duration, setDuration] = useState(services.find(s => s.id === service)?.duracao ?? 40);
   const [slots, setSlots] = useState<
     Array<{ time: string; available: boolean }>
   >([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   useEffect(() => {
     let alive = true;
-    if (!backend || !service || !professional) {
+    if (fitIn || !backend || !service || !professional) {
       setSlots([]);
+      setLoadingSlots(false);
       return;
     }
     setLoadingSlots(true);
@@ -414,9 +420,9 @@ export function AppointmentModal({
     return () => {
       alive = false;
     };
-  }, [service, professional, date, time]);
+  }, [service, professional, date, time, fitIn]);
   return (
-    <Modal title="Novo agendamento" close={close}>
+    <Modal title={fitIn ? 'Criar encaixe' : 'Novo agendamento'} close={close}>
       <form
         onSubmit={async (e) => {
           e.preventDefault();
@@ -428,6 +434,8 @@ export function AppointmentModal({
               service_id: service,
               starts_at: `${date}T${time}:00-03:00`,
               amount: Math.round(Number(price) * 100),
+              fit_in: fitIn,
+              duration,
             })
           )
             close();
@@ -457,6 +465,7 @@ export function AppointmentModal({
             <span>Profissional</span>
             <select
               required
+              aria-label="Profissional"
               value={professional}
               onChange={(e) => setProfessional(e.target.value)}
             >
@@ -474,9 +483,11 @@ export function AppointmentModal({
             <span>Serviço</span>
             <select
               required
+              aria-label="Serviço"
               value={service}
               onChange={(e) => {
                 setService(e.target.value);
+                setDuration(services.find(s => s.id === e.target.value)?.duracao ?? 40);
                 setPrice(
                   String(
                     services.find((s) => s.id === e.target.value)?.preco ?? 0,
@@ -516,7 +527,7 @@ export function AppointmentModal({
             />
           </label>
         </div>
-        <div className="admin-slot-picker">
+        {fitIn ? <><div className="schedule-time-pair"><label className="field"><span>Horário do encaixe</span><input type="time" min="06:00" max="22:59" required value={time} onChange={event => setTime(event.target.value)} /></label><label className="field"><span>Duração do encaixe (minutos)</span><input type="number" min="5" max="480" required value={duration} onChange={event => setDuration(Number(event.target.value))} /></label></div><p className="form-hint">Escolha um horário entre 06h e 23h. O encaixe respeita os outros atendimentos e os bloqueios.</p></> : <div className="admin-slot-picker">
           <span>Horário</span>
           {loadingSlots ? (
             <p>Buscando horários…</p>
@@ -536,8 +547,8 @@ export function AppointmentModal({
               ))}
             </div>
           )}
-        </div>
-        {!loadingSlots &&
+        </div>}
+        {!fitIn && !loadingSlots &&
           professional &&
           service &&
           !slots.some((slot) => slot.available) && (
@@ -567,12 +578,8 @@ export function Agenda() {
   const [focused, setFocused] = useState<Appointment | null>(null);
   const [focusedBlock, setFocusedBlock] = useState<ScheduleBlock | null>(null);
   const [slotChoice, setSlotChoice] = useState("");
-  const [slotAppointment, setSlotAppointment] = useState("");
-  const [blockDraft, setBlockDraft] = useState<{
-    time: string;
-    duration: number;
-    reason: string;
-  } | null>(null);
+  const [blocksOpen, setBlocksOpen] = useState(false);
+  useEffect(() => { const open = () => setSlotChoice('new'); window.addEventListener('agenda:create',open); return () => window.removeEventListener('agenda:create',open); }, []);
   const [confirmation, setConfirmation] = useState<{
     appointment: Appointment;
     status: string;
@@ -609,13 +616,11 @@ export function Agenda() {
         (!professional || a.professional_id === professional),
     )
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
-  const dayBlocks = data.blocks
-    .filter(
-      (block) =>
-        dayKey(block.starts_at) === date &&
-        (!professional || block.professional_id === professional),
-    )
-    .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  const dayStart = new Date(date+'T00:00:00-03:00').getTime();
+  const dayEnd = dayStart+86400000;
+  const dayBlocks = [...data.blocks,...recurringForDay(data.recurringBlocks ?? [],date)]
+    .filter(block => new Date(block.starts_at).getTime()<dayEnd-3600000 && new Date(block.ends_at).getTime()>dayStart+6*3600000 && (!professional || block.professional_id===professional))
+    .sort((a,b)=>a.starts_at.localeCompare(b.starts_at));
   const shiftDate = (amount: number) => {
     const next = new Date(selectedDate);
     next.setDate(next.getDate() + amount);
@@ -625,60 +630,20 @@ export function Agenda() {
     month: "long",
     year: "numeric",
   });
-  const firstHour = 8;
-  const lastHour = 20;
-  const hourHeight = 72;
-  const hours = Array.from(
-    { length: lastHour - firstHour + 1 },
-    (_, index) => firstHour + index,
-  );
-  const slots = Array.from(
-    { length: (lastHour - firstHour) * 4 },
-    (_, index) => {
-      const minutes = firstHour * 60 + index * 15;
-      return {
-        time: `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`,
-        top: (index * hourHeight) / 4,
-        major: index % 4 === 0,
-      };
-    },
-  );
-  const position = (entry: { starts_at: string; ends_at: string }) => {
-    const start = new Date(entry.starts_at);
-    const end = new Date(entry.ends_at);
-    const startMinutes = start.getHours() * 60 + start.getMinutes();
-    const endMinutes = end.getHours() * 60 + end.getMinutes();
-    return {
-      top: Math.max(0, ((startMinutes - firstHour * 60) / 60) * hourHeight),
-      height: Math.max(
-        hourHeight / 4,
-        ((endMinutes - startMinutes) / 60) * hourHeight,
-      ),
-    };
+  const firstHour = 6, lastHour = 23, hourHeight = 108;
+  const gridHeight=(lastHour-firstHour)*hourHeight;
+  const slots=agendaTimes.map(time=>{const [h,m]=time.split(':').map(Number);return {time,top:((h*60+m-360)/60)*hourHeight,major:true};});
+  const hours=[...slots.map(slot=>({time:slot.time,top:slot.top})),{time:'23:00',top:gridHeight}];
+  const position=(entry:{starts_at:string;ends_at:string})=>{
+    const gridStart=new Date(date+'T06:00:00-03:00').getTime();
+    const start=Math.max(gridStart,new Date(entry.starts_at).getTime());
+    const end=Math.min(gridStart+17*3600000,new Date(entry.ends_at).getTime());
+    return {top:Math.max(0,(start-gridStart)/3600000*hourHeight),height:Math.max(24,(end-start)/3600000*hourHeight)};
   };
-  const slotDate = (time: string) => new Date(`${date}T${time}:00-03:00`);
-  const occupied = (time: string) => {
-    const start = slotDate(time).getTime();
-    const end = start + 15 * 60_000;
-    return [...rows, ...dayBlocks].some(
-      (entry) =>
-        new Date(entry.starts_at).getTime() < end &&
-        new Date(entry.ends_at).getTime() > start,
-    );
-  };
-  const saveBlock = async () => {
-    if (!blockDraft || !professional) return;
-    const start = slotDate(blockDraft.time);
-    const end = new Date(start.getTime() + blockDraft.duration * 60_000);
-    if (
-      await run("create_schedule_block", {
-        professional_id: professional,
-        starts_at: start.toISOString(),
-        ends_at: end.toISOString(),
-        reason: blockDraft.reason.trim() || "Agenda bloqueada",
-      })
-    )
-      setBlockDraft(null);
+  const slotDate=(time:string)=>new Date(date+'T'+time+':00-03:00');
+  const occupied=(time:string)=>{
+    const start=slotDate(time).getTime(),end=start+Math.min(40,(23*60-(Number(time.slice(0,2))*60+Number(time.slice(3)))))*60000;
+    return [...rows.filter(row=>row.status!=='no_show'),...dayBlocks].some(entry=>new Date(entry.starts_at).getTime()<end&&new Date(entry.ends_at).getTime()>start);
   };
   const nextStatus = (status: string) =>
     status === "arrived"
@@ -693,7 +658,7 @@ export function Agenda() {
         ? "Pronto"
         : "Chegou";
   return (
-    <section className="page agenda-page">
+    <section className="page agenda-page"><div className="agenda-create-toolbar"><label>Data da agenda<input aria-label="Data da agenda" type="date" value={date} onChange={event=>{if(event.target.value)setDate(event.target.value)}} /></label><button className="primary" onClick={()=>setSlotChoice('new')}>Novo agendamento</button><button className="outline" onClick={()=>setBlocksOpen(true)}>Bloqueios</button></div>
       <section
         className="agenda-professionals"
         aria-label="Selecionar profissional"
@@ -748,9 +713,9 @@ export function Agenda() {
           className="agenda-time-axis"
           style={{ height: (lastHour - firstHour) * hourHeight }}
         >
-          {hours.map((hour, index) => (
-            <time style={{ top: index * hourHeight }} key={hour}>
-              {String(hour).padStart(2, "0")}:00
+          {hours.map((hour) => (
+            <time style={{ top: hour.top }} key={hour.time}>
+              {hour.time}
             </time>
           ))}
         </div>
@@ -767,7 +732,7 @@ export function Agenda() {
                 occupied(slot.time) ||
                 slotDate(slot.time).getTime() < Date.now()
               }
-              style={{ top: slot.top, height: hourHeight / 4 }}
+              style={{ top: slot.top, height: Math.min(40,23*60-Number(slot.time.slice(0,2))*60-Number(slot.time.slice(3)))/60*hourHeight }}
               key={slot.time}
               onClick={() => setSlotChoice(slot.time)}
             >
@@ -791,12 +756,12 @@ export function Agenda() {
                 <small>
                   {new Date(block.starts_at).toLocaleTimeString("pt-BR", {
                     hour: "2-digit",
-                    minute: "2-digit",
+                    minute: "2-digit", timeZone: "America/Sao_Paulo",
                   })}
                   –
                   {new Date(block.ends_at).toLocaleTimeString("pt-BR", {
                     hour: "2-digit",
-                    minute: "2-digit",
+                    minute: "2-digit", timeZone: "America/Sao_Paulo",
                   })}
                 </small>
                 <strong>
@@ -828,119 +793,41 @@ export function Agenda() {
                 <small>
                   {new Date(appointment.starts_at).toLocaleTimeString("pt-BR", {
                     hour: "2-digit",
-                    minute: "2-digit",
+                    minute: "2-digit", timeZone: "America/Sao_Paulo",
                   })}
                   –
                   {new Date(appointment.ends_at).toLocaleTimeString("pt-BR", {
                     hour: "2-digit",
-                    minute: "2-digit",
+                    minute: "2-digit", timeZone: "America/Sao_Paulo",
                   })}
                 </small>
                 <strong>
-                  {appointment.service_name} · {appointment.customer_name}
+                  {appointment.is_fit_in ? "Encaixe · " : ""}{appointment.service_name} · {appointment.customer_name}
                 </strong>
               </button>
             );
           })}
         </div>
       </section>
-      {slotChoice && (
-        <Modal title={`Horário ${slotChoice}`} close={() => setSlotChoice("")}>
-          <p className="slot-choice-copy">O que deseja fazer neste horário?</p>
-          <div className="slot-choice-actions">
-            <button
-              className="primary"
-              onClick={() => {
-                setSlotAppointment(slotChoice);
-                setSlotChoice("");
-              }}
-            >
-              Agendar horário
-            </button>
-            <button
-              className="outline"
-              onClick={() => {
-                setBlockDraft({ time: slotChoice, duration: 15, reason: "" });
-                setSlotChoice("");
-              }}
-            >
-              Bloquear horário
-            </button>
-          </div>
-        </Modal>
-      )}
-      {slotAppointment && (
-        <AppointmentModal
-          initialDate={date}
-          initialTime={slotAppointment}
-          initialProfessional={professional}
-          close={() => setSlotAppointment("")}
-        />
-      )}
-      {blockDraft && (
-        <Modal title="Bloquear horário" close={() => setBlockDraft(null)}>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              void saveBlock();
-            }}
-          >
-            <div className="block-summary">
-              <strong>{blockDraft.time}</strong>
-              <span>
-                {
-                  activeProfessionals.find((item) => item.id === professional)
-                    ?.nome
-                }{" "}
-                · {selectedDate.toLocaleDateString("pt-BR")}
-              </span>
-            </div>
-            <label className="field">
-              <span>Duração</span>
-              <select
-                value={blockDraft.duration}
-                onChange={(event) =>
-                  setBlockDraft({
-                    ...blockDraft,
-                    duration: Number(event.target.value),
-                  })
-                }
-              >
-                <option value={15}>15 minutos</option>
-                <option value={30}>30 minutos</option>
-                <option value={45}>45 minutos</option>
-                <option value={60}>1 hora</option>
-              </select>
-            </label>
-            <label className="field">
-              <span>Motivo (opcional)</span>
-              <input
-                value={blockDraft.reason}
-                onChange={(event) =>
-                  setBlockDraft({ ...blockDraft, reason: event.target.value })
-                }
-                placeholder="Ex.: intervalo"
-              />
-            </label>
-            {error && <p className="form-error">{error}</p>}
-            <button className="primary" disabled={busy}>
-              {busy ? "Bloqueando…" : "Bloquear horário"}
-            </button>
-          </form>
-        </Modal>
-      )}
+      {slotChoice && <AgendaCreateModal initialDate={date} initialTime={slotChoice==='new'?'':slotChoice} initialProfessional={professional} close={()=>setSlotChoice('')} />}
+      {blocksOpen && <Modal title="Bloqueios da agenda" close={()=>setBlocksOpen(false)}><div className="schedule-block-list">
+        <button className="primary" onClick={()=>{setBlocksOpen(false);setSlotChoice('new')}}>Novo bloqueio ou agendamento</button>
+        {(data.recurringBlocks??[]).filter(rule=>rule.professional_id===professional).map(rule=><article key={rule.id}><strong>{rule.reason||'Bloqueio recorrente'}</strong><p>{rule.weekdays.map(day=>['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'][day-1]).join(', ')} · {rule.start_time.slice(0,5)}–{rule.end_time.slice(0,5)}</p><small>{rule.starts_on} até {rule.until_on||'sempre'}</small><button className="danger-button" disabled={busy} onClick={async()=>{if(window.confirm('Excluir toda esta recorrência?') )await run('delete_recurring_block',{id:rule.id})}}>Excluir recorrência</button></article>)}
+        {data.blocks.filter(block=>block.professional_id===professional&&new Date(block.ends_at).getTime()>=Date.now()).map(block=><article key={block.id}><strong>{block.reason||'Agenda bloqueada'}</strong><p>{dateTime(block.starts_at)} até {dateTime(block.ends_at)}</p><button className="danger-button" disabled={busy} onClick={async()=>{if(window.confirm('Excluir este período de bloqueio?'))await run('delete_schedule_block',{id:block.id})}}>Excluir período</button></article>)}
+        {error&&<p className="form-error" role="alert">{error}</p>}
+      </div></Modal>}
       {focusedBlock && (
         <Modal title="Agenda bloqueada" close={() => setFocusedBlock(null)}>
           <div className="block-summary">
             <strong>
               {new Date(focusedBlock.starts_at).toLocaleTimeString("pt-BR", {
                 hour: "2-digit",
-                minute: "2-digit",
+                minute: "2-digit", timeZone: "America/Sao_Paulo",
               })}
               –
               {new Date(focusedBlock.ends_at).toLocaleTimeString("pt-BR", {
                 hour: "2-digit",
-                minute: "2-digit",
+                minute: "2-digit", timeZone: "America/Sao_Paulo",
               })}
             </strong>
             <span>{focusedBlock.reason || "Agenda bloqueada"}</span>
@@ -950,7 +837,7 @@ export function Agenda() {
             className="danger-button"
             disabled={busy}
             onClick={async () => {
-              if (await run("delete_schedule_block", { id: focusedBlock.id }))
+              if (window.confirm(focusedBlock.rule_id ? "Excluir toda esta recorrência?" : "Excluir este período de bloqueio?") && await run(focusedBlock.rule_id ? "delete_recurring_block" : "delete_schedule_block", { id: focusedBlock.rule_id ?? focusedBlock.id }))
                 setFocusedBlock(null);
             }}
           >
@@ -2724,6 +2611,7 @@ export function Products() {
     active: true,
     photo_url: null,
     commission_percent: 20,
+    commission_mode: 'professional',
     commissions: {},
   };
   const visibleProducts = data.products.filter((product) => product.active);
@@ -2760,7 +2648,7 @@ export function Products() {
                 {p.quantity} un. · mín. {p.minimum_quantity}
               </span>
               <div className="service-commission-summary">
-                {professionals.filter(pro => pro.ativo).map(pro => <span key={pro.id}>{pro.nome}: {p.commissions?.[pro.id] ?? p.commission_percent ?? 20}%</span>)}
+                {professionals.filter(pro => pro.ativo).map(pro => <span key={pro.id}>{pro.nome}: {p.commission_mode === 'professional' ? pro.comissaoProdutos ?? 20 : p.commission_mode === 'uniform' ? p.commission_percent ?? 20 : p.commissions?.[pro.id] ?? p.commission_percent ?? 20}%</span>)}
               </div>
               <div className="row-actions">
                 <button
@@ -2812,6 +2700,7 @@ export function Products() {
                     active: draft.active,
                     photo_url: photoUrl,
                     commission: draft.commission_percent ?? 20,
+                    commission_mode: draft.commission_mode ?? 'custom',
                     commissions: Object.entries(draft.commissions ?? {}).map(([professional_id, commission_percent]) => ({ professional_id, commission_percent })),
                   })
                 )
@@ -2885,7 +2774,8 @@ export function Products() {
                 />
               </label>
             ))}
-            <CommissionFields rate={draft.commission_percent ?? 20} overrides={draft.commissions ?? {}}
+            <CommissionFields rate={draft.commission_percent ?? 20} overrides={draft.commissions ?? {}} mode={draft.commission_mode ?? 'custom'}
+              onModeChange={mode => setDraft({ ...draft, commission_mode: mode })}
               onChange={(rate, overrides) => setDraft({ ...draft, commission_percent: rate, commissions: overrides })} />
             <label className="check">
               <input

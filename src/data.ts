@@ -17,6 +17,7 @@ export type Servico = {
   ativo: boolean;
   comissoes?: Record<string, number>;
   comissaoPadrao?: number;
+  modoComissao?: 'professional' | 'uniform' | 'custom';
 };
 export type Profissional = {
   id: string;
@@ -27,6 +28,8 @@ export type Profissional = {
   cor: string;
   ativo: boolean;
   foto_url?: string | null;
+  comissaoServicos?: number;
+  comissaoProdutos?: number;
 };
 export type Cliente = {
   id: string;
