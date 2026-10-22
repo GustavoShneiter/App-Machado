@@ -21,3 +21,8 @@ android/native-access.properties
 *.jks
 *.keystore
 supabase/.temp/
+ios/App/App/ManagedAccess.private.plist
+*.ipa
+*.xcarchive/
+*.xcresult/
+.DS_Store

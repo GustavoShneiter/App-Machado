@@ -1,6 +1,6 @@
 # Machado Gestão
 
-Sistema de gestão e agendamento da Barbearia Machado, em Toledo/PR. Base administrativa 1.19 ajustada: site React/Vite e aplicativo Android Capacitor, com publicações separadas, compartilhando a API na Vercel, PostgreSQL Neon, Better Auth e Vercel Blob.
+Sistema de gestão e agendamento da Barbearia Machado, em Toledo/PR. Base administrativa 1.19 ajustada: site React/Vite e aplicativos Capacitor para Android e iOS, com publicações separadas, compartilhando a API na Vercel, PostgreSQL Neon, Better Auth e Vercel Blob.
 
 - Site: https://barbearia-machado-rose.vercel.app
 - Agendamento: `/agendar`
@@ -37,3 +37,11 @@ O cron `/api/backup-daily` é protegido por `CRON_SECRET` e gera uma cópia no B
 Execute `npm run android:prepare-access`, `npm run android:sync` e depois `android/gradlew.bat assembleRelease`. A chave e o acesso automático ficam fora do Git; `android/keystore.properties` e `android/native-access.properties` configuram o Gradle. O APK da distribuição privada dá acesso direto à gestão e não deve ser publicado em repositórios ou canais abertos. Alterações do site precisam ser incorporadas em um novo APK para chegar aos aparelhos instalados.
 
 Consulte `docs/ENTREGA-1.19-AJUSTADA.md` para instalação, acesso, operação, suporte e homologação.
+
+## iPhone e iPad
+
+O projeto nativo está em `ios/App/App.xcodeproj`, baseado na versão 1.19.4. Ele usa o mesmo aplicativo, com acesso automático da distribuição privada, ícone e abertura próprios, seleção de fotos e compartilhamento de arquivos pelo iOS. Compatível com iOS/iPadOS 15 ou mais recente; a compilação exige Xcode 26 ou mais recente.
+
+Execute `npm run ios:prepare-access` e `npm run ios:sync`. No Mac, `npm run ios:open` abre o projeto no Xcode. Selecione a equipe Apple Developer para assinar e instalar no aparelho ou distribuir pelo TestFlight. O acesso privado fica em `ios/App/App/ManagedAccess.private.plist`, ignorado pelo Git e excluído da hospedagem web.
+
+`npm run ios:check` verifica a integração do projeto. O workflow **Verificar iPhone** compila para simulador e dispositivo em um Mac do GitHub, sem assinatura e sem acesso à barbearia. Ele não distribui um instalador. Consulte [a entrega para iPhone](docs/IPHONE-1.19.4.md) para concluir a assinatura no Xcode.

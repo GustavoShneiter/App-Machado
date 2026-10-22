@@ -1,0 +1,44 @@
+name: Verificar iPhone
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'ios/**'
+      - 'src/**'
+      - 'package*.json'
+      - 'capacitor.config.ts'
+      - 'scripts/*ios*.mjs'
+      - '.github/workflows/ios-check.yml'
+permissions:
+  contents: read
+concurrency:
+  group: ios-check-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Conferir Xcode
+        run: xcodebuild -version
+      - run: npm ci
+      - name: Preparar verificação sem acesso à barbearia
+        run: node scripts/prepare-ios-access.mjs --ci
+      - run: npm run ios:sync
+      - name: Compilar para simulador
+        run: xcodebuild -quiet -project ios/App/App.xcodeproj -scheme App -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/DerivedData CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+      - name: Compilar para iPhone
+        run: xcodebuild -quiet -project ios/App/App.xcodeproj -scheme App -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath ios/DerivedData CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+      - name: Resumo
+        run: |
+          echo '### Machado Gestão para iPhone' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Compilações de simulador e iPhone verificadas. Nenhuma credencial da barbearia ou assinatura Apple foi utilizada.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'A distribuição instalável precisa do acesso privado local e da assinatura Apple Developer.' >> "$GITHUB_STEP_SUMMARY"
