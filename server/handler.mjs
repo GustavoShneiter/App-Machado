@@ -5,7 +5,8 @@ import { put } from '@vercel/blob'
 import { getAuth, getProfessionalAuth, origins } from './auth.mjs'
 import { pool, transaction } from './db.mjs'
 import { createBackup, archiveBackup } from './backups.mjs'
-import { ensureProfessionalAccess, professionalDirectory, professionalFor, professionalCatalog, professionalSnapshot, professionalCash, professionalPreferences, professionalAction } from './professionals.mjs'
+import { ensureProfessionalAccess, professionalDirectory, professionalFor, professionalCatalog, professionalSnapshot, professionalCash, professionalPreferences, readProfessionalPreferences, professionalAction } from './professionals.mjs'
+import { saveProfessionalPhoto } from './professional-photo.mjs'
 
 const publicRpcs = new Set(['public_booking_slots','public_available_slots','create_public_appointment'])
 const rpcArguments = {
@@ -80,7 +81,7 @@ export default async function handler(req,res) {
       const cookies=response.headers.getSetCookie(); if(cookies.length)res.setHeader('Set-Cookie',cookies)
       res.statusCode=response.status; res.end(Buffer.from(await response.arrayBuffer())); return
     }
-    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.19.6',professionalVersion:'1.0.1',backend:'vercel',database:'neon'}); return }
+    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.19.6',professionalVersion:'1.1.0',backend:'vercel',database:'neon'}); return }
     if(path==='/api/professional/manifest'&&req.method==='GET') {
       send(res,200,{id:'/profissional/',name:'Machado Profissional',short_name:'Machado Pro',lang:'pt-BR',start_url:'/profissional/agenda',scope:'/profissional/',display:'standalone',background_color:'#f4f7f5',theme_color:'#177245',icons:[{src:'/professional-icon-192.png',sizes:'192x192',type:'image/png'},{src:'/professional-icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'}]}); return
     }
@@ -101,12 +102,14 @@ export default async function handler(req,res) {
     }
     if(path.startsWith('/api/professional/')) {
       const session=await sessionFor(req,true)
-      const body=req.method==='POST'?await readBody(req):{}
+      const body=req.method==='POST'?await readBody(req,path==='/api/professional/photo'?5*1024*1024:1024*1024):{}
       const requestedId=req.method==='POST'?body.professional_id:url.searchParams.get('professional_id')
-      const known=path==='/api/professional/access'||path==='/api/professional/catalog'||path==='/api/professional/snapshot'||path==='/api/professional/cash'||path==='/api/professional/action'||path==='/api/professional/preferences'
+      const known=['access','catalog','snapshot','cash','action','preferences','photo'].some(route=>path==='/api/professional/'+route)
       if(!known)throw fail('Página não encontrada.',404)
-      if((['/api/professional/action','/api/professional/preferences'].includes(path)?'POST':'GET')!==req.method)throw fail('Operação inválida.',405)
+      const allowedMethods=path==='/api/professional/preferences'?['GET','POST']:['/api/professional/action','/api/professional/photo'].includes(path)?['POST']:['GET']
+      if(!allowedMethods.includes(req.method))throw fail('Operação inválida.',405)
       if(req.method==='POST')await rateLimit(req,'professional-action',90)
+      if(path==='/api/professional/photo')await rateLimit(req,'professional-photo',10,300)
       const data=await transaction(session?.user.id,async client=>{
         const access=await professionalFor(client,session,requestedId)
         const id=access.profile.id
@@ -115,9 +118,11 @@ export default async function handler(req,res) {
         if(path==='/api/professional/snapshot')return professionalSnapshot(client,id)
         if(path==='/api/professional/cash')return professionalCash(client,id,url.searchParams.get('from'),url.searchParams.get('to'))
         let result
+        if(path==='/api/professional/preferences'&&req.method==='GET')return readProfessionalPreferences(client,id)
         if(path==='/api/professional/preferences')result=await professionalPreferences(client,id,body.preferences??{})
+        else if(path==='/api/professional/photo')result=await saveProfessionalPhoto(client,id,body)
         else result=await professionalAction(client,id,body.action,body.payload??{})
-        await client.query("insert into audit_logs(actor_profile_id,operation,entity_type,request_summary,result) values($1,$2,'professional',jsonb_build_object('professional_id',$3::text),'success')",[session.user.id,path.endsWith('/preferences')?'professional:preferences':`professional:${String(body.action).slice(0,60)}`,id])
+        await client.query("insert into audit_logs(actor_profile_id,operation,entity_type,request_summary,result) values($1,$2,'professional',jsonb_build_object('professional_id',$3::text),'success')",[session.user.id,path.endsWith('/preferences')?'professional:preferences':path.endsWith('/photo')?'professional:photo':`professional:${String(body.action).slice(0,60)}`,id])
         return result
       },{readOnly:req.method==='GET'})
       send(res,200,{data,error:null});return
@@ -200,7 +205,7 @@ export default async function handler(req,res) {
     }
     if(path==='/api/system-status' && req.method==='GET') {
       await officeSession(req)
-      send(res,200,{version:'1.19.6',professionalVersion:'1.0.1',backend:'Vercel',database:'Neon',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs order by created_at desc limit 1')).rows[0]??null});return
+      send(res,200,{version:'1.19.6',professionalVersion:'1.1.0',backend:'Vercel',database:'Neon',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs order by created_at desc limit 1')).rows[0]??null});return
     }
     throw fail('Página não encontrada.',404)
   } catch(error) {

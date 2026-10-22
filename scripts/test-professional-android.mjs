@@ -19,7 +19,7 @@ if(process.argv.includes('--launch-only')){
  await writeFile('.private/screenshots/professional-android-login.png',run(['exec-out','screencap','-p'],true))
  console.log('PASS APK profissional: instalado com pacote e nome próprios, abre login individual sem acesso automático administrativo.')
 }else{
- const account=JSON.parse(await readFile('.private/professional-delivery.json','utf8')).find(value=>value.password)
+ const account=JSON.parse(await readFile(process.env.TEST_ACCOUNT_FILE||'.private/professional-delivery.json','utf8')).find(value=>value.password)
  if(xml.includes('Entrar')){
   const fields=(xml.match(/<node\b[^>]*>/g)||[]).filter(node=>node.includes('class="android.widget.EditText"'))
   assert.equal(fields.length,2)
@@ -30,7 +30,9 @@ if(process.argv.includes('--launch-only')){
  button(xml,'Meu Caixa');await waitFor('Meu saldo a receber')
  await writeFile('.private/screenshots/professional-android-caixa.png',run(['exec-out','screencap','-p'],true))
  run(['shell','input','keyevent','4']);await waitFor('06:40')
+ button(tree(),'Menu');xml=await waitFor('Meu Menu');assert.ok(xml.includes('Foto de perfil'))
+ button(xml,'Foto de perfil');await waitFor('Minha foto de perfil');run(['shell','input','keyevent','4']);await waitFor('Meu Menu');run(['shell','input','keyevent','4']);await waitFor('06:40')
  run(['shell','am','force-stop',app]);run(['shell','am','start','-n',`${app}/com.barbeariamachado.gestao.MainActivity`]);xml=await waitFor('Minha Agenda');assert.ok(!xml.includes('E-mail de acesso'))
- await writeFile('.private/professional-android-verification.json',JSON.stringify({date:new Date().toISOString(),device,applicationId:app,login:'individual',productionApi:true,twoSections:true,ownProfile:true,cash:true,androidBack:true,persistedSession:true},null,2))
- console.log('PASS APK profissional em Android: login individual na API publicada, duas seções, próprio perfil, Caixa só de comissões, botão voltar e sessão ao reabrir.')
+ await writeFile('.private/professional-android-verification.json',JSON.stringify({date:new Date().toISOString(),device,version:metadata.version,applicationId:app,login:'individual',productionApi:true,threeSections:true,ownProfile:true,cash:true,menu:true,photoDialog:true,androidBack:true,persistedSession:true},null,2))
+ console.log('PASS APK profissional em Android: login individual, três seções, Caixa, Menu, pop-up de foto, botão voltar e sessão ao reabrir.')
 }

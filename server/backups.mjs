@@ -12,7 +12,7 @@ export async function createBackup() {
     for (const table of [...businessTables,...identityTables]) {
       tables[table] = (await client.query(`select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) as rows from public."${table}" t`)).rows[0].rows
     }
-    return { format: 'machado-backup', version: 1, schemaVersion: 9, createdAt: new Date().toISOString(), tables }
+    return { format: 'machado-backup', version: 1, schemaVersion: 10, createdAt: new Date().toISOString(), tables }
   }, { readOnly: true })
 }
 

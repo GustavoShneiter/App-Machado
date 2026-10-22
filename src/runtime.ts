@@ -1,6 +1,6 @@
 import { Capacitor } from '@capacitor/core'
 
-export const professionalVersion = '1.0.1'
+export const professionalVersion = '1.1.0'
 export const professionalApkUrl = `https://github.com/GustavoShneiter/App-Machado/releases/download/profissional-v${professionalVersion}/Machado-Profissional-v${professionalVersion}.apk`
 export const appVersion = import.meta.env.VITE_APP_EDITION === 'professional' ? professionalVersion : '1.19.6'
 export const publicSiteUrl = 'https://barbearia-machado-rose.vercel.app'

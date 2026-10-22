@@ -14,6 +14,6 @@ export default defineConfig({
         .replace('/icon.svg', '/professional-icon.svg')
     } },
   }],
-  server: { proxy: { '/api': 'http://127.0.0.1:3000' } },
+  server: { proxy: { '/api': 'http://127.0.0.1:3000' }, watch: { ignored: ['**/android/**', '**/ios/**', '**/dist-professional/**', '**/.private/**'] } },
   build: { rollupOptions: { output: { manualChunks: { react: ['react','react-dom','react-router-dom'] } } } },
 })

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { CalendarDays, Download, KeyRound, Plus, RefreshCw, Smartphone, WalletCards } from 'lucide-react'
+import { CalendarDays, Download, KeyRound, Menu, Plus, RefreshCw, Smartphone, WalletCards } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
 import { App as CapacitorApp } from '@capacitor/app'
 import { apiRequest, backend } from '../dataClient'
@@ -11,6 +11,7 @@ import { dismissTopLayer } from '../dismissibleLayers'
 import { professionalApkUrl } from '../runtime'
 import { ProfessionalCash } from './ProfessionalCash'
 import { ProfessionalAccountModal } from './ProfessionalAccount'
+import { ProfessionalMenu } from './ProfessionalMenu'
 import type { ProfessionalAccess } from './types'
 
 export default function ProfessionalApp() {
@@ -71,13 +72,15 @@ function ProfessionalGate() {
     {!Capacitor.isNativePlatform() && <div className="pro-install-links"><a href={professionalApkUrl}><Download size={17} /><span>Baixar para Android</span></a><Link to="/profissional/instalar"><Smartphone size={17} /><span>Instalar no iPhone</span></Link></div>}
     <p className="pro-login-footer">Esqueceu seu acesso? Peça à administração para definir uma nova senha.</p>
   </div></main>
-  return <CatalogProvider professionalId={access.profile.id} key={access.profile.id}><OperationsProvider professionalId={access.profile.id}><ProfessionalLayout access={access} signedOut={() => setAttempt(value => value + 1)} /></OperationsProvider></CatalogProvider>
+  return <CatalogProvider professionalId={access.profile.id} key={access.profile.id}><OperationsProvider professionalId={access.profile.id}><ProfessionalLayout access={access} signedOut={() => setAttempt(value => value + 1)} photoUpdated={url => setAccess(previous => previous?.profile.id === access.profile.id ? { ...previous, profile: { ...previous.profile, photo_url: url } } : previous)} /></OperationsProvider></CatalogProvider>
 }
-function ProfessionalLayout({ access, signedOut }: { access: ProfessionalAccess; signedOut: () => void }) {
+function ProfessionalLayout({ access, signedOut, photoUpdated }: { access: ProfessionalAccess; signedOut: () => void; photoUpdated: (url: string | null) => void }) {
   const { profile } = access
   const { busy, loading, error, refresh, clearError } = useOperations()
   const location = useLocation(), navigate = useNavigate()
   const cash = location.pathname.endsWith('/caixa')
+  const menu = location.pathname.endsWith('/menu')
+  const section = cash ? 'cash' : menu ? 'menu' : 'agenda'
   const [accountOpen, setAccountOpen] = useState(false)
   const locationRef = useRef(location); locationRef.current = location
   useEffect(() => { clearError() }, [location.pathname, clearError])
@@ -87,7 +90,7 @@ function ProfessionalLayout({ access, signedOut }: { access: ProfessionalAccess;
     let remove: (() => Promise<void>) | undefined
     void CapacitorApp.addListener('backButton', () => {
       if (dismissTopLayer()) return
-      if (locationRef.current.pathname.endsWith('/caixa')) navigate('/profissional/agenda', { replace: true })
+      if (!locationRef.current.pathname.endsWith('/agenda')) navigate('/profissional/agenda', { replace: true })
       else void CapacitorApp.exitApp()
     }).then(handle => { if (disposed) void handle.remove(); else remove = () => handle.remove() })
     return () => { disposed = true; if (remove) void remove() }
@@ -96,10 +99,10 @@ function ProfessionalLayout({ access, signedOut }: { access: ProfessionalAccess;
     <main className="main">
       <header className="topbar"><div className="pro-header-identity"><span className="pro-header-avatar">{profile.photo_url ? <img src={profile.photo_url} alt="" /> : profile.name.trim().split(/\s+/).map(part => part[0]).slice(0, 2).join('')}</span><div><span className="eyebrow">Machado Profissional</span><strong>{profile.name}</strong></div></div><div className="top-actions"><button className="icon-btn" aria-label="Atualizar meus dados" title="Atualizar" disabled={busy} onClick={() => void refresh()}><RefreshCw size={18} /></button><button className="icon-btn" aria-label="Minha conta" title="Minha conta" onClick={() => setAccountOpen(true)}><KeyRound size={18} /></button></div></header>
       {error && <div className="pro-load-error" role="alert">{error}<button className="outline small" onClick={() => void refresh()}>Tentar novamente</button></div>}
-      {loading ? <p className="pro-loading" role="status">Carregando seus dados…</p> : <div className="section-transition" key={cash ? 'cash' : 'agenda'}><Routes><Route path="agenda" element={<Agenda professionalOnly />} /><Route path="caixa" element={<ProfessionalCash professionalId={profile.id} />} /><Route path="*" element={<Navigate to="/profissional/agenda" replace />} /></Routes></div>}
+      {loading ? <p className="pro-loading" role="status">Carregando seus dados…</p> : <div className="section-transition" key={section}><Routes><Route path="agenda" element={<Agenda professionalOnly />} /><Route path="caixa" element={<ProfessionalCash professionalId={profile.id} />} /><Route path="menu" element={<ProfessionalMenu profile={profile} photoUpdated={photoUpdated} account={() => setAccountOpen(true)} />} /><Route path="*" element={<Navigate to="/profissional/agenda" replace />} /></Routes></div>}
     </main>
-    <nav className="mobile-nav mobile-nav-animated pro-nav" aria-label="Navegação do profissional" style={{ '--nav-index': cash ? 1 : 0, '--nav-visible': 1 } as CSSProperties}><span className="mobile-nav-highlight" aria-hidden="true" /><NavLink to="/profissional/agenda"><CalendarDays size={22} /><span>Minha Agenda</span></NavLink><NavLink to="/profissional/caixa"><WalletCards size={22} /><span>Meu Caixa</span></NavLink></nav>
-    {!cash && <button className="mobile-create agenda-create-fab" aria-label="Novo agendamento, encaixe ou bloqueio" onClick={() => window.dispatchEvent(new Event('agenda:create'))}><Plus size={24} /></button>}
+    <nav className="mobile-nav mobile-nav-animated pro-nav" aria-label="Navegação do profissional" style={{ '--nav-index': cash ? 1 : menu ? 2 : 0, '--nav-visible': 1 } as CSSProperties}><span className="mobile-nav-highlight" aria-hidden="true" /><NavLink to="/profissional/agenda"><CalendarDays size={22} /><span>Minha Agenda</span></NavLink><NavLink to="/profissional/caixa"><WalletCards size={22} /><span>Meu Caixa</span></NavLink><NavLink to="/profissional/menu"><Menu size={22} /><span>Menu</span></NavLink></nav>
+    {!cash && !menu && <button className="mobile-create agenda-create-fab" aria-label="Novo agendamento, encaixe ou bloqueio" onClick={() => window.dispatchEvent(new Event('agenda:create'))}><Plus size={24} /></button>}
     {accountOpen && <ProfessionalAccountModal profile={profile} close={() => setAccountOpen(false)} signedOut={signedOut} />}
   </div>
 }

@@ -14,8 +14,8 @@
 .professional-app .page-head h2 { font-size:23px; }
 .professional-app .page-head p { font-size:12px; }
 .professional-app button.outline,.professional-app a.outline { display:inline-flex; align-items:center; justify-content:center; gap:7px; }
-.professional-app .pro-nav { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); position:fixed; left:50%; transform:translateX(-50%); bottom:12px; width:min(440px,calc(100% - 24px)); border:1px solid #dbe9df; border-radius:20px; background:#fffffff5; backdrop-filter:blur(14px); box-shadow:0 5px 24px #173b2420; z-index:30; }
-.professional-app .pro-nav .mobile-nav-highlight { width:calc((100% - 16px) / 2); }
+.professional-app .pro-nav { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); position:fixed; left:50%; transform:translateX(-50%); bottom:12px; width:min(480px,calc(100% - 24px)); border:1px solid #dbe9df; border-radius:20px; background:#fffffff5; backdrop-filter:blur(14px); box-shadow:0 5px 24px #173b2420; z-index:30; }
+.professional-app .pro-nav .mobile-nav-highlight { width:calc((100% - 16px) / 3); }
 .professional-app .agenda-create-fab { display:grid; place-items:center; position:fixed; right:24px; bottom:110px; width:50px; height:50px; border-radius:16px; background:#177245; color:white; box-shadow:0 8px 24px #176b4330; z-index:15; }
 .pro-loading,.pro-load-error { max-width:1000px; padding:16px 20px; margin:0 auto; font-size:13px; }
 .pro-load-error { color:#9c3935; display:flex; gap:12px; align-items:center; justify-content:space-between; background:#fff3f0; }

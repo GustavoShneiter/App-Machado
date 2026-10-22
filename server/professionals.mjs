@@ -76,10 +76,14 @@ export async function professionalSnapshot(client,id) {
 }
 
 const cards=['earned','pending','paid','services','customers']
+export async function readProfessionalPreferences(client,id) {
+  return (await client.query('select * from professional_preferences where professional_id=$1',[id])).rows[0]||{weekly_commission_goal_cents:0,weekly_service_goal:0,weekly_customer_goal:0,visible_cards:cards,show_goals:true}
+}
 export async function professionalPreferences(client,id,payload) {
   const amount=Number(payload.weekly_commission_goal_cents),services=Number(payload.weekly_service_goal),customers=Number(payload.weekly_customer_goal)
   if(!Number.isInteger(amount)||amount<0||amount>100000000||!Number.isInteger(services)||services<0||services>10000||!Number.isInteger(customers)||customers<0||customers>10000||!Array.isArray(payload.visible_cards)||payload.visible_cards.length>cards.length||!payload.visible_cards.length||payload.visible_cards.some(value=>!cards.includes(value))||new Set(payload.visible_cards).size!==payload.visible_cards.length)throw fail('Confira as metas e escolha pelo menos um indicador.')
-  return (await client.query('insert into professional_preferences(professional_id,weekly_commission_goal_cents,weekly_service_goal,weekly_customer_goal,visible_cards) values($1,$2,$3,$4,$5) on conflict(professional_id) do update set weekly_commission_goal_cents=$2,weekly_service_goal=$3,weekly_customer_goal=$4,visible_cards=$5,updated_at=now() returning *',[id,amount,services,customers,payload.visible_cards])).rows[0]
+  if(payload.show_goals!==undefined&&typeof payload.show_goals!=='boolean')throw fail('Confira a opção de exibir metas.')
+  return (await client.query('insert into professional_preferences(professional_id,weekly_commission_goal_cents,weekly_service_goal,weekly_customer_goal,visible_cards,show_goals) values($1,$2,$3,$4,$5,coalesce($6,true)) on conflict(professional_id) do update set weekly_commission_goal_cents=$2,weekly_service_goal=$3,weekly_customer_goal=$4,visible_cards=$5,show_goals=coalesce($6,professional_preferences.show_goals),updated_at=now() returning *',[id,amount,services,customers,payload.visible_cards,payload.show_goals??null])).rows[0]
 }
 export async function professionalCash(client,id,from,to) {
   const validDate=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value+'T12:00:00Z'))&&new Date(value+'T12:00:00Z').toISOString().slice(0,10)===value
@@ -97,7 +101,7 @@ export async function professionalCash(client,id,from,to) {
     from command_items i join commands c on c.id=i.command_id left join appointments a on a.id=c.appointment_id
     where i.professional_id=$1 and c.status in ('awaiting_payment','closed') and coalesce(a.starts_at,c.closed_at,c.created_at)>=$2::timestamptz and coalesce(a.starts_at,c.closed_at,c.created_at)<=$3::timestamptz`,[id,start,end])).rows[0]
   const pending=(await client.query("select coalesce(sum(e.commission_cents),0)::bigint amount from commission_entries e join command_items i on i.id=e.command_item_id join commands c on c.id=i.command_id where e.professional_id=$1 and i.professional_id=$1 and e.status='pending' and c.status in ('awaiting_payment','closed')",[id])).rows[0]
-  const preferences=(await client.query('select * from professional_preferences where professional_id=$1',[id])).rows[0]||{weekly_commission_goal_cents:0,weekly_service_goal:0,weekly_customer_goal:0,visible_cards:cards}
+  const preferences=await readProfessionalPreferences(client,id)
   const value=status=>entries.filter(entry=>entry.status===status).reduce((sum,entry)=>sum+entry.commission_cents,0)
   return {from,to,earned:entries.reduce((sum,entry)=>sum+entry.commission_cents,0),pending:value('pending'),paid:value('paid'),totalPending:Number(pending.amount),...summary,preferences,entries}
 }

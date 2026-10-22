@@ -632,7 +632,7 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
     month: "long",
     year: "numeric",
   });
-  const firstHour = 6, lastHour = 23, hourHeight = 108;
+  const firstHour = 6, lastHour = 23, hourHeight = professionalOnly ? 66 : 108;
   const gridHeight=(lastHour-firstHour)*hourHeight;
   const slots=agendaTimes.map(time=>{const [h,m]=time.split(':').map(Number);return {time,top:((h*60+m-360)/60)*hourHeight,major:true};});
   const hours=[...slots.map(slot=>({time:slot.time,top:slot.top})),{time:'23:00',top:gridHeight}];
@@ -784,7 +784,8 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
             return (
               <button
                 type="button"
-                className={`agenda-event ${appointment.status}`}
+                className={`agenda-event ${appointment.status}${professionalOnly && layout.height < 40 ? ' compact' : ''}`}
+                aria-label={professionalOnly ? `${appointment.customer_name}, ${appointment.service_name}, ${dateTime(appointment.starts_at)}` : undefined}
                 style={{ top: layout.top, height: layout.height }}
                 key={appointment.id}
                 onClick={() =>

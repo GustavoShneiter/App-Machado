@@ -15,6 +15,7 @@ import './public-compact.css'
 import './admin-polish.css'
 import './web-app-install.css'
 import './professional/professional.css'
+import './professional/professional-space.css'
 import { WebAppMetadata } from './AdminWebApp'
 import { isWebApp, webAppBase } from './appExperience'
 

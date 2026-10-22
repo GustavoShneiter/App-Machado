@@ -26,7 +26,7 @@ A edição administrativa web e a edição para iPhone usam o mesmo endereço. N
 | Web / iPhone | [Machado Profissional](https://barbearia-machado-rose.vercel.app/profissional) |
 | Instalação no iPhone | [Adicionar à Tela de Início](https://barbearia-machado-rose.vercel.app/profissional/instalar) |
 
-**Android profissional:** [baixar Machado Profissional 1.0.1](https://github.com/GustavoShneiter/App-Machado/releases/download/profissional-v1.0.1/Machado-Profissional-v1.0.1.apk). É o mesmo APK para a equipe; cada profissional entra com a própria conta. A conta administrativa permanece no aplicativo Machado Gestão.
+**Android profissional:** [baixar Machado Profissional 1.1.0](https://github.com/GustavoShneiter/App-Machado/releases/download/profissional-v1.1.0/Machado-Profissional-v1.1.0.apk). É o mesmo APK para a equipe; cada profissional entra com a própria conta. A conta administrativa permanece no aplicativo Machado Gestão.
 
 O login determina a agenda e as comissões exibidas. Não há site nem APK diferente para cada barbeiro. Endereços pessoais antigos redirecionam ao portal comum e respeitam a conta conectada.
 
@@ -40,7 +40,8 @@ No iPhone: **Safari → Compartilhar → Adicionar à Tela de Início**; habilit
 
 - [Edição profissional](../apps/profissional/README.md).
 - [Edição administrativa](../apps/administracao/README.md).
-- [Verificações da atualização e arquivos de entrega](VERIFICACOES-PROFISSIONAIS-1.0.1.md).
-- [Release do Android profissional](https://github.com/GustavoShneiter/App-Machado/releases/tag/profissional-v1.0.1).
+- [Novidades e configuração do profissional 1.1.0](PROFISSIONAL-1.1.0.md).
+- [Histórico de verificações da versão 1.0.1](VERIFICACOES-PROFISSIONAIS-1.0.1.md).
+- [Release do Android profissional](https://github.com/GustavoShneiter/App-Machado/releases/tag/profissional-v1.1.0).
 
 As edições têm navegação, sessões e pacotes distintos e compartilham o mesmo banco operacional para manter o trabalho sincronizado.
