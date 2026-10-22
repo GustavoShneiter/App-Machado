@@ -10,12 +10,12 @@ Sistema de gestão e agendamento da Barbearia Machado, em Toledo/PR. Base admini
 - Recuperação de acesso: `/recuperar-acesso`
 - [Guia de entrega e operação](docs/ENTREGA-1.19-AJUSTADA.md)
 - [Central de links: clientes, administração e equipe](docs/CENTRAL-DE-ACESSOS.md)
-- [Machado Profissional 1.0.0 — web, iPhone e APK separados](apps/profissional/README.md)
-- [Machado Gestão 1.19.5 — administração](apps/administracao/README.md)
+- [Machado Profissional 1.0.1 — web, iPhone e APK da equipe](apps/profissional/README.md)
+- [Machado Gestão 1.19.6 — administração](apps/administracao/README.md)
 
 ## Aplicativo dos profissionais
 
-Cada profissional tem conta e link próprios em `/profissional/p/<id>/agenda`, com somente **Minha Agenda** e **Meu Caixa**. O cadastro administrativo cria o acesso automaticamente e exibe a senha inicial uma vez. Metas e indicadores são pessoais; o extrato inclui apenas a comissão do profissional. Sessões web profissionais e administrativas usam cookies separados.
+Todos os profissionais usam o mesmo site `/profissional` e o mesmo APK. Cada login abre somente **Minha Agenda** e **Meu Caixa** do perfil conectado. O administrador define e altera o e-mail e a senha em **Menu → Profissionais**. Metas e indicadores são pessoais; o extrato inclui apenas a comissão do profissional. Sessões web profissionais e administrativas usam cookies separados. Os acessos existentes são preservados.
 
 Os componentes profissionais estão em `src/professional/`, a API limitada em `server/professionals.mjs` e a migração em `database/008_professional_workspace.sql`. O APK `Machado Profissional` tem identificador próprio e login individual, permitindo instalar junto do administrador. Veja os guias em `apps/` para compilar cada edição. O sistema mantém o banco operacional compartilhado para sincronizar a Agenda com a barbearia.
 

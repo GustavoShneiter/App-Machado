@@ -9,8 +9,7 @@ export function WebAppMetadata() {
   useEffect(() => {
     const app = isWebApp()
     if (isProfessionalExperience()) {
-      const id = pathname.match(/^\/profissional\/p\/([0-9a-f-]{36})(?:\/|$)/i)?.[1]
-      document.querySelector('link[rel="manifest"]')?.setAttribute('href', id ? '/api/professional/manifest?profile=' + id : '/professional.webmanifest')
+      document.querySelector('link[rel="manifest"]')?.setAttribute('href', '/professional.webmanifest')
       document.querySelector('link[rel="apple-touch-icon"]')?.setAttribute('href', '/professional-icon-192.png')
       document.querySelector('meta[name="apple-mobile-web-app-title"]')?.setAttribute('content', 'Machado Pro')
       document.title = 'Machado Profissional'

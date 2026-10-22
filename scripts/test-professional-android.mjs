@@ -4,7 +4,8 @@ import { spawnSync } from 'node:child_process'
 const adb=process.env.ADB_PATH||'C:/Users/gusta/AppData/Local/Android/Sdk/platform-tools/adb.exe'
 const device=process.env.ANDROID_DEVICE||'emulator-5554'
 const app='com.barbeariamachado.profissional'
-const apk='../entrega/Profissionais/Machado-Profissional-v1.0.0.apk'
+const metadata=JSON.parse(await readFile('apps/profissional/app.json','utf8'))
+const apk=`../entrega/Profissionais/Machado-Profissional-v${metadata.version}.apk`
 const run=(args,binary=false)=>{const result=spawnSync(adb,['-s',device,...args],{encoding:binary?undefined:'utf8',timeout:30000,maxBuffer:12*1024*1024});assert.equal(result.status,0,'Falha ao operar o Android de teste.');return result.stdout}
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms))
 function tree(){run(['shell','uiautomator','dump','/sdcard/machado-professional-qa.xml']);return run(['shell','cat','/sdcard/machado-professional-qa.xml'])}

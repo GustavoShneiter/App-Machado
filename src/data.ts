@@ -30,6 +30,7 @@ export type Profissional = {
   foto_url?: string | null;
   comissaoServicos?: number;
   comissaoProdutos?: number;
+  acesso?: { email: string; password: string };
 };
 export type Cliente = {
   id: string;

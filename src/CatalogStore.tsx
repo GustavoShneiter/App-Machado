@@ -173,6 +173,7 @@ export function CatalogProvider({ children, professionalId }: { children: ReactN
       active: p.ativo,
       service_commission: p.comissaoServicos ?? 50,
       product_commission: p.comissaoProdutos ?? 20,
+      ...(update.acesso ? { access: update.acesso } : {}),
     });
   };
   return (

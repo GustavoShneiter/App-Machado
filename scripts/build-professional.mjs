@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto'
 import assert from 'node:assert/strict'
 
 const env={...process.env,VITE_APP_EDITION:'professional',MACHADO_APP_EDITION:'professional'}
+const metadata=JSON.parse(await readFile('apps/profissional/app.json','utf8'))
 function run(command,args,options={}) {
   const result=spawnSync(command,args,{env,stdio:'inherit',...options})
   if(result.status!==0)throw new Error('A compilação profissional não foi concluída.')
@@ -26,8 +27,8 @@ try {
   const data=await readFile(output)
   const delivery='../entrega/Profissionais'
   await mkdir(delivery,{recursive:true})
-  await copyFile(output,delivery+'/Machado-Profissional-v1.0.0.apk')
-  await writeFile('.private/professional-apk-verification.json',JSON.stringify({version:'1.0.0',applicationId:'com.barbeariamachado.profissional',bytes:data.length,sha256:createHash('sha256').update(data).digest('hex'),administrativeCredentials:false,login:'individual'},null,2))
+  await copyFile(output,delivery+`/Machado-Profissional-v${metadata.version}.apk`)
+  await writeFile('.private/professional-apk-verification.json',JSON.stringify({version:metadata.version,applicationId:metadata.applicationId,bytes:data.length,sha256:createHash('sha256').update(data).digest('hex'),administrativeCredentials:false,login:'individual'},null,2))
   console.log('APK profissional assinado entregue em entrega/Profissionais. Login individual; sem acesso administrativo embutido.')
 } finally {
   await writeFile(configPath,original)

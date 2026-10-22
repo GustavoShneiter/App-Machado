@@ -8,9 +8,9 @@ import type { Preferences, ProfessionalCashData } from './types'
 import { estimatedServices, progress, remaining, shortDate, weekRange } from './periods'
 
 const indicators = [
-  { id: 'earned', title: 'Minha comissão no período', icon: TrendingUp },
-  { id: 'pending', title: 'Destas, a receber', icon: WalletCards },
-  { id: 'paid', title: 'Destas, já repassadas', icon: CheckCircle2 },
+  { id: 'earned', title: 'Comissão no período', icon: TrendingUp },
+  { id: 'pending', title: 'Do período, a receber', icon: WalletCards },
+  { id: 'paid', title: 'Do período, já recebida', icon: CheckCircle2 },
   { id: 'services', title: 'Serviços realizados', icon: Scissors },
   { id: 'customers', title: 'Clientes atendidos', icon: Users },
 ]
@@ -59,10 +59,11 @@ export function ProfessionalCash({ professionalId }: { professionalId: string })
       <small>{shortDate(range.from)} a {shortDate(range.to)} · semanas de segunda a domingo</small>
     </section>
     {error && <p className="form-error" role="alert">{error}<button className="outline small" onClick={() => setReload(value => value + 1)}>Tentar novamente</button></p>}
-    {loading && !selected && !error && <p role="status">Carregando suas comissões…</p>}
+    {loading && !error && <p className="pro-updating" role="status">{selected ? 'Atualizando período…' : 'Carregando suas comissões…'}</p>}
     {selected && current && prefs && <>
+      <div className="pro-cash-content" aria-busy={loading}>
       <section className="pro-receivable panel" aria-label="Comissão total a receber"><div><small>Meu saldo a receber · todos os períodos</small><strong>{money(selected.totalPending)}</strong><p>Comissões pendentes de repasse pela barbearia.</p></div><WalletCards aria-hidden="true" /></section>
-      <section className="pro-metrics" aria-label="Meus indicadores">{indicators.filter(item => prefs.visible_cards.includes(item.id)).map(item => <article className="panel" key={item.id}><item.icon size={18} aria-hidden="true" /><span>{item.title}</span><strong>{['services', 'customers'].includes(item.id) ? selected[item.id as 'services' | 'customers'] : money(selected[item.id as 'earned' | 'pending' | 'paid'])}</strong></article>)}</section>
+      <section className="pro-metrics" aria-label="Meus indicadores">{indicators.filter(item => prefs.visible_cards.includes(item.id)).map(item => <article className={'panel pro-metric-' + item.id} key={item.id}><item.icon size={18} aria-hidden="true" /><span>{item.title}</span><strong>{['services', 'customers'].includes(item.id) ? selected[item.id as 'services' | 'customers'] : money(selected[item.id as 'earned' | 'pending' | 'paid'])}</strong></article>)}</section>
       <section className="panel pro-goals"><div className="pro-section-heading"><div><h3><Target size={18} />Minhas metas da semana</h3><p>{shortDate(current.from)} a {shortDate(current.to)}</p></div><button className="text-button" onClick={() => setSettings(true)}>Editar metas</button></div>
         {prefs.weekly_commission_goal_cents > 0 ? <><Goal label="Meta de comissão" goal={prefs.weekly_commission_goal_cents} actual={current.earned} monetary /><p className="pro-goal-tip">{missing === 0 ? 'Meta de comissão alcançada nesta semana.' : <>Faltam <strong>{money(missing)}</strong>{estimate !== null ? <> · cerca de <strong>{estimate} serviços</strong> pela sua média de comissão.</> : '. Conclua atendimentos para calcular uma estimativa de serviços.'}</>}</p>{estimate !== null && missing > 0 && <small>Estimativa por serviço; o resultado varia conforme o serviço e a comissão configurada.</small>}</> : <p className="pro-empty-goal">Defina quanto quer ganhar em comissões por semana para acompanhar o que falta.</p>}
         {prefs.weekly_service_goal > 0 && <Goal label="Serviços" goal={prefs.weekly_service_goal} actual={current.services} />}
@@ -75,6 +76,7 @@ export function ProfessionalCash({ professionalId }: { professionalId: string })
         {!visibleEntries.length && <p className="empty">Nenhuma comissão neste período e situação.</p>}
       </section>
       <p className="pro-data-note">Os valores são suas comissões de serviços e produtos concluídos, conforme as regras da barbearia. A receber e repassadas mostram a situação atual dessas comissões. Clientes são pessoas distintas no período.</p>
+      </div>
     </>}
     {settings && prefs && <PreferencesModal professionalId={professionalId} preferences={prefs} close={() => setSettings(false)} saved={() => { setSettings(false); setReload(value => value + 1) }} />}
   </Page>

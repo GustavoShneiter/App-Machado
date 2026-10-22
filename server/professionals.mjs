@@ -1,52 +1,62 @@
 import { randomBytes, randomUUID } from 'node:crypto'
 import { hashPassword } from 'better-auth/crypto'
+import { z } from 'zod'
 
 const fail=(message,status=400)=>Object.assign(new Error(message),{status})
 const uuid=value=>typeof value==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
-export const professionalLink=id=>`/profissional/p/${id}/agenda`
+export const professionalLink=()=>'/profissional'
 
 // Called in the same transaction that saves the professional. Password is returned once, never stored as plain text.
-export async function ensureProfessionalAccess(client,id,{reset=false}={}) {
+export async function ensureProfessionalAccess(client,id,{reset=false,email:chosenEmail,password:chosenPassword}={}) {
   if(!uuid(id))throw fail('Profissional inválido.')
   const pro=(await client.query('select p.*,r.role from professionals p left join profiles r on r.id=p.profile_id where p.id=$1 for update of p',[id])).rows[0]
   if(!pro)throw fail('Profissional não encontrado.',404)
-  if(pro.profile_id&&['owner','admin'].includes(pro.role))return {id:pro.id,administrative:true,link:professionalLink(pro.id)}
-  let userId=pro.profile_id
-  if(userId) {
-    const account=(await client.query('select u.email from auth_user u join auth_account a on a."userId"=u.id and a."providerId"=\'credential\' where u.id=$1',[userId])).rows[0]
-    if(account&&!reset)return null
+  const manual=chosenEmail!==undefined||chosenPassword!==undefined
+  if(pro.profile_id&&['owner','admin'].includes(pro.role)) {
+    if(manual||reset)throw fail('Este perfil tem acesso administrativo. Use uma conta profissional separada.',403)
+    return {id:pro.id,administrative:true,link:professionalLink()}
   }
+  let userId=pro.profile_id
+  const account=userId?(await client.query('select u.email from auth_user u join auth_account a on a."userId"=u.id and a."providerId"=\'credential\' where u.id=$1',[userId])).rows[0]:null
+  if(account&&!reset&&!manual)return null
+  if(chosenEmail!==undefined&&(typeof chosenEmail!=='string'||!z.string().email().max(254).safeParse(chosenEmail.trim()).success))throw fail('Informe um e-mail de login válido.')
+  if(chosenPassword!==undefined&&(typeof chosenPassword!=='string'||chosenPassword.length<12||chosenPassword.length>128))throw fail('A senha deve ter entre 12 e 128 caracteres.')
+  if(manual&&!account&&chosenEmail===undefined)throw fail('Defina o e-mail de login deste profissional.')
+  if(manual&&!account&&chosenPassword===undefined)throw fail('Defina a senha inicial deste profissional.')
   userId??=randomUUID()
   const slug=pro.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'.').replace(/^\.|\.$/g,'').slice(0,36)||'profissional'
-  const email=(await client.query('select email from auth_user where id=$1',[userId])).rows[0]?.email||`${slug}.${id.slice(0,8)}@profissionais.machado.invalid`
-  const password=`Mp!${randomBytes(18).toString('base64url')}`
-  const passwordHash=await hashPassword(password)
-  await client.query('insert into auth.users(id,email) values($1,$2) on conflict(id) do nothing',[userId,email])
+  const email=chosenEmail!==undefined?chosenEmail.trim().toLowerCase():account?.email||`${slug}.${id.slice(0,8)}@profissionais.machado.invalid`
+  await client.query('select pg_advisory_xact_lock(hashtextextended($1,9))',[email.toLowerCase()])
+  if((await client.query('select 1 from auth_user where lower(email)=lower($1) and id<>$2',[email,userId])).rowCount)throw fail('Este e-mail já está sendo usado em outra conta.',409)
+  const password=chosenPassword??(reset||!account?`Mp!${randomBytes(18).toString('base64url')}`:undefined)
+  const passwordHash=password===undefined?null:await hashPassword(password)
+  await client.query('insert into auth.users(id,email) values($1,$2) on conflict(id) do update set email=excluded.email',[userId,email])
   await client.query("insert into profiles(id,name,role,active) values($1,$2,'professional',true) on conflict(id) do update set name=excluded.name",[userId,pro.name])
-  await client.query('insert into auth_user(id,name,email,"emailVerified","createdAt","updatedAt") values($1,$2,$3,true,now(),now()) on conflict(id) do update set name=excluded.name,"updatedAt"=now()',[userId,pro.name,email])
-  await client.query('delete from auth_session where "userId"=$1',[userId])
-  const updated=await client.query('update auth_account set password=$2,"updatedAt"=now() where "userId"=$1 and "providerId"=\'credential\' returning id',[userId,passwordHash])
-  if(!updated.rowCount)await client.query('insert into auth_account(id,"accountId","providerId","userId",password,"createdAt","updatedAt") values($1,$2,\'credential\',$2,$3,now(),now())',[randomUUID(),userId,passwordHash])
+  await client.query('insert into auth_user(id,name,email,"emailVerified","createdAt","updatedAt") values($1,$2,$3,true,now(),now()) on conflict(id) do update set name=excluded.name,email=excluded.email,"updatedAt"=now()',[userId,pro.name,email])
+  if(password!==undefined||email!==account?.email)await client.query('delete from auth_session where "userId"=$1',[userId])
+  if(passwordHash!==null) {
+    const updated=await client.query('update auth_account set password=$2,"updatedAt"=now() where "userId"=$1 and "providerId"=\'credential\' returning id',[userId,passwordHash])
+    if(!updated.rowCount)await client.query('insert into auth_account(id,"accountId","providerId","userId",password,"createdAt","updatedAt") values($1,$2,\'credential\',$2,$3,now(),now())',[randomUUID(),userId,passwordHash])
+  }
   await client.query('update professionals set profile_id=$2 where id=$1',[id,userId])
-  return {id:pro.id,name:pro.name,email,password,link:professionalLink(pro.id),reset}
+  return {id:pro.id,name:pro.name,email,password,link:professionalLink(),reset:reset||Boolean(account),passwordChanged:password!==undefined}
 }
 
-export async function professionalDirectory(client) {
-  return (await client.query('select p.id,p.name,p.active,p.photo_url,u.email,r.role,coalesce(r.active,false) account_active from professionals p left join profiles r on r.id=p.profile_id left join auth_user u on u.id=p.profile_id::text order by p.name')).rows.map(row=>({...row,link:professionalLink(row.id)}))
+export async function professionalDirectory(client,id) {
+  if(id&&!uuid(id))throw fail('Profissional inválido.')
+  return (await client.query('select p.id,p.name,p.active,p.photo_url,u.email,r.role,coalesce(r.active,false) account_active from professionals p left join profiles r on r.id=p.profile_id left join auth_user u on u.id=p.profile_id::text where ($1::uuid is null or p.id=$1) order by p.name',[id||null])).rows.map(row=>({...row,link:professionalLink()}))
 }
 
 export async function professionalFor(client,session,requestedId) {
   if(!session)throw fail('Entre com seu acesso profissional.',401)
-  const administrative=['owner','admin'].includes(session.profile.role)
+  if(session.profile.role!=='professional')throw fail('Esta conta é administrativa. Use o Machado Gestão para administrar a barbearia.',403)
   if(requestedId&&!uuid(requestedId))throw fail('Link de profissional inválido.',400)
-  const rows=administrative
-    ?(await client.query('select id,name,active,photo_url from professionals where active order by name')).rows
-    :(await client.query('select id,name,active,photo_url from professionals where profile_id=$1 and active',[session.user.id])).rows
+  const rows=(await client.query('select id,name,active,photo_url from professionals where profile_id=$1 and active',[session.user.id])).rows
   if(!rows.length)throw fail('Seu acesso profissional está inativo ou não foi vinculado. Fale com a administração.',403)
   const profile=requestedId?rows.find(row=>row.id===requestedId):rows[0]
-  if(!profile)throw fail('Este acesso pertence a outro profissional. Abra seu próprio link.',403)
+  if(!profile)throw fail('Você só pode acessar os dados do profissional conectado.',403)
   await client.query('select require_schedule_access($1)',[profile.id])
-  return {profile,administrative,choices:administrative?rows:[]}
+  return {profile:{...profile,email:session.user.email},administrative:false,choices:[]}
 }
 
 export async function professionalCatalog(client,id) {

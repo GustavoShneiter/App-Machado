@@ -1,7 +1,7 @@
 {
   "name": "barbearia-machado",
   "private": true,
-  "version": "1.19.5",
+  "version": "1.19.6",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -35,6 +35,7 @@
     "professionals:provision": "node --env-file=.env.local scripts/provision-professionals.mjs",
     "test:professional-api": "node --env-file=.env.local scripts/test-professional-api.mjs",
     "test:professional-browser": "node scripts/test-professional-browser.mjs",
+    "test:professional-admin": "node --env-file=.env.local scripts/test-professional-admin-login.mjs",
     "build:professional": "node scripts/build-professional.mjs",
     "android:professional": "node scripts/build-professional.mjs --android"
   },

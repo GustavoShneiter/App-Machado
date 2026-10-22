@@ -661,7 +661,8 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
         : "Chegou";
   return (
     <section className="page agenda-page">
-      <section
+      {professionalOnly && <header className="pro-agenda-heading"><div><h2>Minha Agenda</h2><p>{selectedDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}</p></div><span>{rows.filter(row => !['no_show','cancelled'].includes(row.status)).length} agendamentos</span></header>}
+      {!professionalOnly && <section
         className="agenda-professionals"
         aria-label="Selecionar profissional"
       >
@@ -683,7 +684,7 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
             <small>{item.nome}</small>
           </button>
         ))}
-      </section>
+      </section>}
       <section className="agenda-daybar" aria-label="Navegação por semana">
         <button aria-label="Semana anterior" onClick={() => shiftDate(-7)}>
           ‹

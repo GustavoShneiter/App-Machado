@@ -80,33 +80,27 @@ export default async function handler(req,res) {
       const cookies=response.headers.getSetCookie(); if(cookies.length)res.setHeader('Set-Cookie',cookies)
       res.statusCode=response.status; res.end(Buffer.from(await response.arrayBuffer())); return
     }
-    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.19.5',professionalVersion:'1.0.0',backend:'vercel',database:'neon'}); return }
+    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.19.6',professionalVersion:'1.0.1',backend:'vercel',database:'neon'}); return }
     if(path==='/api/professional/manifest'&&req.method==='GET') {
-      const id=url.searchParams.get('profile')
-      if(!id||!/^[0-9a-f-]{36}$/i.test(id))throw fail('Profissional inválido.')
-      const pro=(await pool.query('select id,name from professionals where id=$1 and active',[id])).rows[0]
-      if(!pro)throw fail('Profissional não encontrado.',404)
-      send(res,200,{id:`/profissional/p/${pro.id}/`,name:`Machado Profissional · ${pro.name}`,short_name:pro.name,lang:'pt-BR',start_url:`/profissional/p/${pro.id}/agenda`,scope:'/profissional/',display:'standalone',background_color:'#f4f7f5',theme_color:'#177245',icons:[{src:'/professional-icon-192.png',sizes:'192x192',type:'image/png'},{src:'/professional-icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'}]}); return
+      send(res,200,{id:'/profissional/',name:'Machado Profissional',short_name:'Machado Pro',lang:'pt-BR',start_url:'/profissional/agenda',scope:'/profissional/',display:'standalone',background_color:'#f4f7f5',theme_color:'#177245',icons:[{src:'/professional-icon-192.png',sizes:'192x192',type:'image/png'},{src:'/professional-icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'}]}); return
     }
     if(path==='/api/professional-accounts'&&req.method==='GET') {
       const session=await officeSession(req)
-      const data=await transaction(session.user.id,client=>professionalDirectory(client),{readOnly:true})
+      const data=await transaction(session.user.id,client=>professionalDirectory(client,url.searchParams.get('professional_id')),{readOnly:true})
       send(res,200,{data});return
     }
     if(path==='/api/professional-accounts'&&req.method==='POST') {
       const session=await officeSession(req);await rateLimit(req,'professional-accounts',15)
-      const {professional_id,reset=false}=await readBody(req)
+      const {professional_id,reset=false,email,password}=await readBody(req)
       const data=await transaction(session.user.id,async client=>{
-        const access=await ensureProfessionalAccess(client,professional_id,{reset:reset===true})
+        const access=await ensureProfessionalAccess(client,professional_id,{reset:reset===true,email,password})
         await client.query("insert into audit_logs(actor_profile_id,operation,entity_type,result) values($1,$2,'professional_access','success')",[session.user.id,reset?'reset_professional_access':'create_professional_access'])
         return access
       })
       send(res,200,{data});return
     }
     if(path.startsWith('/api/professional/')) {
-      const professionalSession=await sessionFor(req,true)
-      const adminSession=professionalSession?null:await sessionFor(req)
-      const session=professionalSession||(adminSession&&['owner','admin'].includes(adminSession.profile.role)?adminSession:null)
+      const session=await sessionFor(req,true)
       const body=req.method==='POST'?await readBody(req):{}
       const requestedId=req.method==='POST'?body.professional_id:url.searchParams.get('professional_id')
       const known=path==='/api/professional/access'||path==='/api/professional/catalog'||path==='/api/professional/snapshot'||path==='/api/professional/cash'||path==='/api/professional/action'||path==='/api/professional/preferences'
@@ -158,7 +152,9 @@ export default async function handler(req,res) {
         const statement=tableResult?`select coalesce(jsonb_agg(to_jsonb(x)),'[]'::jsonb) as value from public."${name}"(${args}) x`:`select public."${name}"(${args}) as value`
         let result=(await client.query(statement,keys.map(key=>params[key]))).rows[0]?.value
         if(result?.id&&(name==='save_professional_profile'||(name==='office_action'&&params.action==='save_professional'))) {
-          const access=await ensureProfessionalAccess(client,result.id)
+          const credentials=params.payload?.access
+          if(credentials!==undefined&&(!credentials||typeof credentials!=='object'||Array.isArray(credentials)))throw fail('Dados de acesso inválidos.')
+          const access=await ensureProfessionalAccess(client,result.id,credentials===undefined?{}:{email:credentials.email,password:credentials.password})
           if(access)result={...result,access}
         }
         if(session && name!=='office_snapshot' && name!=='can_access_admin') await client.query("insert into audit_logs(actor_profile_id,operation,entity_type,result) values($1,$2,'operation','success')",[session.user.id,name==='office_action'?`office_action:${String(params.action).slice(0,70)}`:name])
@@ -204,7 +200,7 @@ export default async function handler(req,res) {
     }
     if(path==='/api/system-status' && req.method==='GET') {
       await officeSession(req)
-      send(res,200,{version:'1.19.5',professionalVersion:'1.0.0',backend:'Vercel',database:'Neon',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs order by created_at desc limit 1')).rows[0]??null});return
+      send(res,200,{version:'1.19.6',professionalVersion:'1.0.1',backend:'Vercel',database:'Neon',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs order by created_at desc limit 1')).rows[0]??null});return
     }
     throw fail('Página não encontrada.',404)
   } catch(error) {

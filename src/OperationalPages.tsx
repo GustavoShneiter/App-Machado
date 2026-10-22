@@ -5,7 +5,7 @@ import { type Servico, type Profissional } from "./data";
 import { Page, Modal } from "./ManagementPages";
 import { money } from "./operations";
 import { uploadCatalogPhoto } from "./media";
-import { CredentialModal, ProfessionalAccessPanel } from './professional/ProfessionalAccessPanel';
+import { CredentialModal, LoginFields, ProfessionalAccessPanel } from './professional/ProfessionalAccessPanel';
 
 export function ServicesV2() {
   const { services, professionals, updateService, addService, deleteService } = useCatalog();
@@ -194,6 +194,7 @@ export function ProfessionalsV2() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [commissionOpen, setCommissionOpen] = useState(false);
+  const [login, setLogin] = useState({ email: '', password: '', confirm: '' });
   const fresh: Profissional = {
     id: "",
     nome: "",
@@ -233,6 +234,7 @@ export function ProfessionalsV2() {
           className="primary"
           onClick={() => {
             setDraft(fresh);
+            setLogin({ email: '', password: '', confirm: '' });
             setCommissionOpen(false);
             setPhoto(null);
             setError("");
@@ -289,18 +291,19 @@ export function ProfessionalsV2() {
             onSubmit={async (event) => {
               event.preventDefault();
               if (busy) return;
+              if (!draft.id && login.password !== login.confirm) { setError('A confirmação da senha está diferente.'); return; }
               setBusy(true);
               setError("");
               try {
                 let photoUrl = draft.foto_url ?? null;
                 if (photo)
                   photoUrl = await uploadCatalogPhoto(photo, "professionals");
-                const payload = { ...draft, foto_url: photoUrl };
+                const payload = { ...draft, foto_url: photoUrl, ...(!draft.id ? { acesso: { email: login.email.trim(), password: login.password } } : {}) };
                 const saveError = await (draft.id
                   ? updateProfessional(draft.id, payload)
                   : addProfessional(payload));
                 if (saveError) setError(saveError);
-                else setDraft(null);
+                else { setDraft(null); setLogin({ email: '', password: '', confirm: '' }); }
               } catch (caught) {
                 setError(
                   caught instanceof Error
@@ -374,7 +377,7 @@ export function ProfessionalsV2() {
               />
               Ativo no agendamento
             </label>
-            {draft.id ? <ProfessionalAccessPanel professionalId={draft.id} /> : <p className="form-hint">Ao salvar, o acesso individual ao Machado Profissional será criado automaticamente. O e-mail, a senha inicial e o link serão exibidos na próxima janela.</p>}
+            {draft.id ? <ProfessionalAccessPanel professionalId={draft.id} /> : <section className="professional-access-row"><strong>Login do profissional</strong><p>Defina o e-mail e a senha que este barbeiro usará para entrar.</p><LoginFields {...login} change={values => setLogin(previous => ({ ...previous, ...values }))} /></section>}
             {error && <p className="form-error">{error}</p>}
             <div className="row-actions">
               <button className="primary" disabled={busy}>

@@ -1,9 +1,14 @@
 .professional-app { --pro-green:#177245; background:#f4f7f5; }
 .professional-app>.main { margin-left:0; min-width:0; }
 .professional-app .topbar { position:sticky; top:0; z-index:12; padding-inline:20px; }
-.pro-header-identity { display:grid; gap:3px; min-width:0; }
-.pro-header-identity>strong { font-size:15px; color:#254936; overflow-wrap:anywhere; }
-.pro-header-identity>small { color:#738278; font-size:10px; }
+.pro-header-identity { display:flex; align-items:center; gap:10px; min-width:0; }
+.pro-header-identity>div { display:grid; gap:3px; min-width:0; }
+.pro-header-identity strong { font-size:15px; color:#254936; overflow-wrap:anywhere; }
+.pro-header-identity .eyebrow { font-size:9px; letter-spacing:.09em; color:#718478; }
+.pro-header-avatar { flex-shrink:0; width:36px; height:36px; border-radius:12px; background:#e2f0e7; color:#237247; display:grid; place-items:center; font-size:12px; font-weight:700; overflow:hidden; }
+.pro-header-avatar img { width:100%; height:100%; object-fit:cover; }
+.professional-app .top-actions { gap:6px; flex-shrink:0; }
+.professional-app .top-actions .icon-btn { width:38px; height:38px; border:1px solid #e1eae4; border-radius:12px; }
 .professional-app .page { width:100%; max-width:1040px; margin-inline:auto; padding:22px 20px 118px; }
 .professional-app .page-head { gap:12px; align-items:center; margin-bottom:18px; }
 .professional-app .page-head h2 { font-size:23px; }
@@ -35,6 +40,14 @@
 .pro-metrics svg { color:#177245; }
 .pro-metrics span { color:#708176; font-size:11px; line-height:1.45; }
 .pro-metrics strong { font-size:21px; color:#264834; overflow-wrap:anywhere; }
+.pro-metric-earned { background:#eff7f2!important; }
+.pro-cash-content { transition:opacity .18s; }
+.pro-cash-content[aria-busy=true] { opacity:.45; pointer-events:none; }
+.pro-updating { font-size:12px; color:#526f5d; }
+.professional-app .pro-agenda-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+.pro-agenda-heading h2 { margin:0 0 5px; font-size:22px; color:#244b34; }
+.pro-agenda-heading p { margin:0; font-size:12px; color:#74877a; text-transform:capitalize; }
+.pro-agenda-heading>span { padding:7px 10px; background:#e7f2eb; color:#33734b; border-radius:9px; font-size:11px; white-space:nowrap; }
 .pro-section-heading { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
 .pro-goals h3,.pro-week-comparison h3,.pro-ledger h3 { display:flex; align-items:center; gap:7px; margin:0; font-size:15px; color:#2b4c37; }
 .pro-section-heading p { margin:5px 0 0; font-size:11px; color:#718177; }
@@ -76,9 +89,25 @@
 .pro-account>.outline { min-height:44px; display:flex; justify-content:center; align-items:center; gap:7px; }
 .pro-account .pro-password { padding:0; }
 .pro-account .pro-password .primary { width:100%; }
-.pro-login-icon { width:64px; height:64px; border-radius:17px; display:block; margin-bottom:16px; }
-.professional-login .auth-card h1 { font-size:24px; margin:8px 0; }
-.professional-login .auth-card>p { font-size:12px; line-height:1.6; }
+.professional-login { background:radial-gradient(ellipse at top,#e1efe6,transparent 60%),#f4f7f5; color:#284b35; min-height:100dvh; padding:28px 20px; }
+.pro-login-wrap { width:100%; max-width:410px; margin:auto; }
+.professional-login .auth-card { width:100%; max-width:none; padding:28px; color:#284b35; background:#fff; border:1px solid #dce7df; border-radius:22px; box-shadow:0 12px 42px #163f2510; }
+.pro-login-brand { display:flex; align-items:center; gap:12px; margin-bottom:28px; }
+.pro-login-icon { width:48px; height:48px; border-radius:14px; display:block; }
+.pro-login-brand>span { display:grid; gap:5px; }
+.pro-login-brand small { font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:#718578; }
+.pro-login-brand strong { font-size:15px; }
+.professional-login .auth-card h1 { color:#244b34; font-size:25px; letter-spacing:-.03em; margin:8px 0; }
+.professional-login .auth-card>p { color:#718277; font-size:13px; line-height:1.65; margin-bottom:24px; }
+.professional-login .auth-card .field span { color:#3c5b46; font-size:12px; }
+.professional-login .auth-card .field input { background:#fafcfb; color:#264d35; border:1px solid #d6e3db; border-radius:11px; min-height:46px; font-size:14px; }
+.professional-login .auth-card .primary { min-height:46px; border-radius:11px; margin-top:4px; }
+.professional-login .auth-card .pro-login-help { font-size:11px; margin:16px 0 0; text-align:center; }
+.pro-install-links { display:flex; justify-content:center; flex-wrap:wrap; gap:20px; margin:24px 0 18px; }
+.pro-install-links a { color:#326147; display:inline-flex; align-items:center; gap:7px; font-size:12px; text-decoration:none; min-height:40px; }
+.pro-install-links a:hover { text-decoration:underline; }
+.pro-login-footer { font-size:11px; line-height:1.7; text-align:center; color:#728278; padding-inline:16px; }
+.pro-install-subtitle { font-size:17px; margin-top:26px; }
 .professional-login .auth-card>a { display:block; margin-top:16px; text-align:center; color:#177245; font-size:12px; }
 .professional-login .auth-card>button { width:100%; }
 .professional-credentials { padding:18px; }
@@ -88,6 +117,23 @@
 .professional-access-row p { font-size:11px; overflow-wrap:anywhere; }
 .professional-access-row .row-actions { flex-wrap:wrap; }
 .professional-access-row .outline { min-height:40px; font-size:11px; }
+.pro-access-title { display:flex; align-items:center; gap:8px; color:#315e40; font-size:13px; margin-bottom:16px; }
+.pro-access-fields { border:0; padding:0; margin:0 0 16px; min-width:0; }
+.pro-access-hint { display:block; color:#688171; font-size:11px; line-height:1.7; }
+.pro-access-success { color:#176b43; }
+.pro-password-input { position:relative; display:flex!important; width:100%; }
+.pro-password-input input { width:100%; padding-right:44px!important; min-width:0; }
+.pro-password-input button { position:absolute; right:3px; top:3px; bottom:3px; width:38px; display:grid; place-items:center; background:transparent; border:0; border-radius:8px; color:#557361; }
+.pro-password-input button:hover { background:#e8f2eb; }
+.pro-account-heading { display:grid; gap:4px; padding-bottom:12px; border-bottom:1px solid #e2ece5; }
+.pro-account-heading strong { font-size:17px; color:#2a573a; }
+.pro-account-heading span { font-size:11px; color:#728479; }
+.pro-account .field { margin:0; }
+.pro-account .pro-password .field { margin-bottom:14px; }
+.pro-account .pro-password { padding-block:12px; border-block:1px solid #e2ece5; }
+.pro-success-icon { display:block; color:#177245; margin-bottom:12px; }
+.professional-credentials>strong { color:#2d573b; font-size:17px; }
+.professional-credentials .primary { display:flex; justify-content:center; gap:8px; align-items:center; width:100%; }
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 @media(max-width:980px) {
  .professional-app .pro-nav { width:100%; left:0; transform:none; bottom:0; border-radius:0; border-inline:0; border-bottom:0; }
@@ -102,12 +148,17 @@
  .pro-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
  .pro-metrics>article { padding:13px; }
  .pro-metrics strong { font-size:20px; }
- .pro-week-comparison>div { grid-template-columns:1fr; gap:8px; }
- .pro-week-comparison article { grid-template-columns:1fr auto; gap:4px 10px; }
- .pro-week-comparison article>strong { grid-column:2; grid-row:1 / 3; align-self:center; font-size:19px; }
- .pro-week-comparison article>p { grid-column:1 / 3; }
+ .pro-metric-earned { grid-column:1 / -1; grid-template-columns:1fr auto; align-items:center; gap:5px 12px; }
+ .pro-metric-earned svg { grid-column:1; }
+ .pro-metric-earned span { grid-column:1; }
+ .pro-metric-earned strong { grid-column:2; grid-row:1 / 3; font-size:25px; }
+ .pro-week-comparison>div { gap:6px; }
+ .pro-week-comparison article { padding:11px 8px; gap:7px; }
+ .pro-week-comparison article>span { font-size:11px; min-height:30px; }
+ .pro-week-comparison article>strong { font-size:15px; }
+ .pro-week-comparison article>p { font-size:10px; }
  .pro-period-buttons { display:grid; grid-template-columns:1fr 1fr; }
  .pro-period-buttons button { font-size:11px; padding:9px 6px; }
  .pro-preview { font-size:10px; gap:7px; }
 }
-@media(prefers-reduced-motion:reduce) { .pro-period-buttons button { transition:none; } }
+@media(prefers-reduced-motion:reduce) { .pro-period-buttons button,.pro-cash-content { transition:none; } }
