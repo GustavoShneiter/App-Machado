@@ -51,5 +51,5 @@ try{
   await page.emulateMedia({reducedMotion:'reduce'})
   assert.ok(parseFloat(await nav.locator('.mobile-nav-highlight').evaluate(element=>globalThis.getComputedStyle(element).transitionDuration))<=0.001)
   assert.deepEqual(errors,[])
-  console.log('PASS navegação: cinco seções, fundo verde acompanhando o item ativo, Agenda com ícone normal e movimento reduzido respeitado.')
+  console.log('PASS navegação: cinco seções, fundo dourado acompanhando o item ativo, Agenda com ícone normal e movimento reduzido respeitado.')
 }finally{await browser.close()}

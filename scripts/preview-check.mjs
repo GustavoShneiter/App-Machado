@@ -35,6 +35,8 @@ const server = await createServer({
           import '/src/navigation-119.css';
           import '/src/dialog-layout.css';
           import '/src/admin-polish.css';
+          import '/src/professional/professional.css';
+          import '/src/professional/professional-space.css';
           ${fixture.replace("export const fixture", "const fixture")}
           const catalog={services:[{id:'s1',nome:'Corte integrado',descricao:'Corte',preco:40,duracao:30,ativo:true,cor:'#203F20',comissaoPadrao:50,comissoes:{p1:40,p2:0}}],professionals:[{id:'p1',nome:'Araújo',ativo:true,cor:'#203F20',iniciais:'A',especialidades:'Cortes',telefone:''},{id:'p2',nome:'Machado',ativo:true,cor:'#203F20',iniciais:'M',especialidades:'Cortes',telefone:''}],loading:false,error:'',updateService:async()=>null,addService:async()=>null,updateProfessional:async()=>null,addProfessional:async()=>null,deleteService:async()=>null,deleteProfessional:async()=>null};
           catalog.professionals=Array.from({length:Number(document.querySelector('meta[name="qa-professionals"]').content)},(_,index)=>catalog.professionals[index]??{id:'p'+(index+1),nome:'Profissional '+(index+1),ativo:true,cor:'#203F20',iniciais:String(index+1),especialidades:'Cortes',telefone:''});

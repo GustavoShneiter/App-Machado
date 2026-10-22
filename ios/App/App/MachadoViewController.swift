@@ -7,6 +7,6 @@ public class MachadoViewController: CAPBridgeViewController {
         super.capacitorDidLoad()
         bridge?.registerPluginInstance(ManagedAccessPlugin())
         bridge?.registerPluginInstance(MachadoDevicePlugin())
-        statusBarStyle = .darkContent
+        statusBarStyle = .lightContent
     }
 }

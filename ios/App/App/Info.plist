@@ -71,7 +71,7 @@
       <string>pt-BR</string>
     </array>
     <key>UIUserInterfaceStyle</key>
-    <string>Light</string>
+    <string>Dark</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>NSCameraUsageDescription</key>

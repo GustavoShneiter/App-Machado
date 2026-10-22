@@ -81,7 +81,7 @@ export default async function handler(req,res) {
       const cookies=response.headers.getSetCookie(); if(cookies.length)res.setHeader('Set-Cookie',cookies)
       res.statusCode=response.status; res.end(Buffer.from(await response.arrayBuffer())); return
     }
-    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.19.6',professionalVersion:'1.1.0',backend:'vercel',database:'neon'}); return }
+    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.19.7',professionalVersion:'1.1.1',backend:'vercel',database:'neon'}); return }
     if(path==='/api/professional/manifest'&&req.method==='GET') {
       send(res,200,{id:'/profissional/',name:'Machado Profissional',short_name:'Machado Pro',lang:'pt-BR',start_url:'/profissional/agenda',scope:'/profissional/',display:'standalone',background_color:'#f4f7f5',theme_color:'#177245',icons:[{src:'/professional-icon-192.png',sizes:'192x192',type:'image/png'},{src:'/professional-icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'}]}); return
     }
@@ -205,7 +205,7 @@ export default async function handler(req,res) {
     }
     if(path==='/api/system-status' && req.method==='GET') {
       await officeSession(req)
-      send(res,200,{version:'1.19.6',professionalVersion:'1.1.0',backend:'Vercel',database:'Neon',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs order by created_at desc limit 1')).rows[0]??null});return
+      send(res,200,{version:'1.19.7',professionalVersion:'1.1.1',backend:'Vercel',database:'Neon',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs order by created_at desc limit 1')).rows[0]??null});return
     }
     throw fail('Página não encontrada.',404)
   } catch(error) {
