@@ -1,10 +1,10 @@
 # Machado — atualização visual
 
-Administração **1.19.7** (Android 28) e Profissional **1.1.1** (Android 4).
+Administração **1.19.8** (Android 29) e Profissional **1.1.2** (Android 5).
 
-A mesma identidade aparece nos dois APKs, no administrativo para PC e nos aplicativos web para iPhone: carvão, dourado suave e couro, títulos em Space Grotesk, superfícies com transparência e bordas discretas. A fonte é servida localmente, com sua licença em `public/fonts/`.
+A mesma identidade aparece nos dois APKs, no administrativo para PC e nos aplicativos web para iPhone: carvão e verde musgo forte, títulos em Space Grotesk, superfícies com transparência e bordas discretas. A fonte é servida localmente, com sua licença em `public/fonts/`.
 
-O Caixa administrativo organiza saldo, rendimento e gráfico em uma composição assimétrica no PC. No celular, os destaques se empilham. O profissional mantém saldo, metas animadas, indicadores, histórico de comissões e Menu com perfil. A navegação mantém suas seções e recebe destaque dourado animado, resposta ao toque e foco visível. As janelas usam a mesma escala e superfícies do restante da interface.
+O Caixa administrativo organiza saldo, rendimento e gráfico em uma composição assimétrica no PC. No celular, os destaques se empilham. O profissional mantém saldo, metas animadas, indicadores, histórico de comissões e Menu com perfil. A navegação mantém suas seções e recebe destaque verde musgo animado, resposta ao toque e foco visível. As janelas usam a mesma escala e superfícies do restante da interface.
 
 ## Agenda
 
@@ -14,7 +14,7 @@ O ajuste ocorre no CSS. Cálculos, posições geradas, horários, bloqueios, ocu
 
 ## Escopo preservado
 
-Nenhum componente React, estado, hook, rota, callback, regra financeira, autenticação, chamada de API ou estrutura de banco foi alterado. Os únicos ajustes fora dos estilos e recursos visuais são metadados de versão/empacotamento, cores de abertura/instalação e a configuração visual das prévias de teste. A página pública de clientes mantém seu layout.
+Nenhum componente React, estado, hook, rota, callback, regra financeira, autenticação, chamada de API ou estrutura de banco foi alterado. Os únicos ajustes fora dos estilos e recursos visuais são metadados de versão/empacotamento, cores de abertura/instalação e a configuração visual das prévias de teste. A página pública de clientes mantém seu layout e recebe a mesma troca de detalhes dourados por verde musgo.
 
 ## Verificação
 
@@ -34,8 +34,8 @@ As verificações de WebKit simulam o navegador do iPhone; não substituem o tes
 - [Administração para PC](https://barbearia-machado-rose.vercel.app/admin).
 - [Administração web / iPhone](https://barbearia-machado-rose.vercel.app/app).
 - [Profissionais web / iPhone](https://barbearia-machado-rose.vercel.app/profissional).
-- [Android profissional 1.1.1](https://github.com/GustavoShneiter/App-Machado/releases/download/profissional-v1.1.1/Machado-Profissional-v1.1.1.apk).
+- [Android profissional 1.1.2](https://github.com/GustavoShneiter/App-Machado/releases/download/profissional-v1.1.2/Machado-Profissional-v1.1.2.apk).
 
-O APK administrativo é entregue privadamente em `entrega/Administracao/Machado-Gestao-v1.19.7.apk`. Ambos conservam suas identidades de pacote e a assinatura de produção para atualização sobre as versões anteriores.
+O APK administrativo é entregue privadamente em `entrega/Administracao/Machado-Gestao-v1.19.8.apk`. Ambos conservam suas identidades de pacote e a assinatura de produção para atualização sobre as versões anteriores.
 
 No iPhone: Safari → Compartilhar → Adicionar à Tela de Início. A navegação e as contas continuam as mesmas.

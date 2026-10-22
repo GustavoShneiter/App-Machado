@@ -22,8 +22,8 @@ android {
         applicationId professionalEdition ? "com.barbeariamachado.profissional" : "com.barbeariamachado.gestao"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode professionalEdition ? 4 : 28
-        versionName professionalEdition ? "1.1.1" : "1.19.7"
+        versionCode professionalEdition ? 5 : 29
+        versionName professionalEdition ? "1.1.2" : "1.19.8"
         manifestPlaceholders = [machadoAppName: professionalEdition ? 'Machado Profissional' : 'Machado Gestão', machadoAppIcon: professionalEdition ? '@drawable/professional_icon' : '@mipmap/ic_launcher', machadoRoundIcon: professionalEdition ? '@drawable/professional_icon' : '@mipmap/ic_launcher_round']
         buildConfigField 'String', 'MANAGED_EMAIL', groovy.json.JsonOutput.toJson(accessProperties.getProperty('email', ''))
         buildConfigField 'String', 'MANAGED_PASSWORD', groovy.json.JsonOutput.toJson(accessProperties.getProperty('password', ''))

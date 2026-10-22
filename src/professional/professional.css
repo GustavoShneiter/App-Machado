@@ -78,7 +78,7 @@
 .pro-ledger>article span { font-size:11px; color:#697d6f; }
 .pro-ledger>article small { font-size:10px; color:#849188; }
 .pro-entry-value { text-align:right; flex-shrink:0; max-width:42%; }
-.pro-ledger .pro-status { display:inline-block; padding:4px 7px; background:#fff4d9; color:#8c6b28; border-radius:6px; font-size:10px; }
+.pro-ledger .pro-status { display:inline-block; padding:4px 7px; background:#ebefe9; color:#53773d; border-radius:6px; font-size:10px; }
 .pro-ledger .pro-status.paid { background:#e8f5ed; color:#347348; }
 .pro-data-note { font-size:11px; color:#7c8c80; line-height:1.7; margin:0 4px; }
 .pro-card-options { border:1px solid #dce7df; border-radius:10px; padding:12px; margin:16px 0; }
