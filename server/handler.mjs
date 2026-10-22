@@ -2,9 +2,10 @@ import { createHash, randomUUID, timingSafeEqual } from 'node:crypto'
 import { fromNodeHeaders } from 'better-auth/node'
 import { hashPassword } from 'better-auth/crypto'
 import { put } from '@vercel/blob'
-import { getAuth, origins } from './auth.mjs'
+import { getAuth, getProfessionalAuth, origins } from './auth.mjs'
 import { pool, transaction } from './db.mjs'
 import { createBackup, archiveBackup } from './backups.mjs'
+import { ensureProfessionalAccess, professionalDirectory, professionalFor, professionalCatalog, professionalSnapshot, professionalCash, professionalPreferences, professionalAction } from './professionals.mjs'
 
 const publicRpcs = new Set(['public_booking_slots','public_available_slots','create_public_appointment'])
 const rpcArguments = {
@@ -41,8 +42,8 @@ async function readBody(req,maxBytes=1024*1024) {
   for await (const chunk of req) { length+=chunk.length; if(length>maxBytes) throw fail('Requisição muito grande.',413); chunks.push(chunk) }
   return length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {}
 }
-async function sessionFor(req) {
-  const session=await getAuth().api.getSession({headers:fromNodeHeaders(req.headers)})
+async function sessionFor(req,professional=false) {
+  const session=await (professional?getProfessionalAuth():getAuth()).api.getSession({headers:fromNodeHeaders(req.headers)})
   if (!session) return null
   const profile=await pool.query('select id,role from profiles where id=$1::uuid and active',[session.user.id])
   return profile.rows[0] ? { ...session, profile:profile.rows[0] } : null
@@ -71,14 +72,62 @@ export default async function handler(req,res) {
     const routedPath=url.searchParams.get('route')
     if(routedPath){url.pathname=`/api/${routedPath}`;url.searchParams.delete('route')}
     const path=url.pathname.replace(/\/$/,'')
-    if(path.startsWith('/api/auth/')) {
+    if(path.startsWith('/api/auth/')||path.startsWith('/api/professional-auth/')) {
       const body=['GET','HEAD'].includes(req.method)?undefined:JSON.stringify(await readBody(req))
-      const response=await getAuth().handler(new Request(url,{method:req.method,headers:fromNodeHeaders(req.headers),body}))
+      const auth=path.startsWith('/api/professional-auth/')?getProfessionalAuth():getAuth()
+      const response=await auth.handler(new Request(url,{method:req.method,headers:fromNodeHeaders(req.headers),body}))
       response.headers.forEach((value,key)=>{if(key!=='set-cookie')res.setHeader(key,value)})
       const cookies=response.headers.getSetCookie(); if(cookies.length)res.setHeader('Set-Cookie',cookies)
       res.statusCode=response.status; res.end(Buffer.from(await response.arrayBuffer())); return
     }
-    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.19.4',backend:'vercel',database:'neon'}); return }
+    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.19.5',professionalVersion:'1.0.0',backend:'vercel',database:'neon'}); return }
+    if(path==='/api/professional/manifest'&&req.method==='GET') {
+      const id=url.searchParams.get('profile')
+      if(!id||!/^[0-9a-f-]{36}$/i.test(id))throw fail('Profissional inválido.')
+      const pro=(await pool.query('select id,name from professionals where id=$1 and active',[id])).rows[0]
+      if(!pro)throw fail('Profissional não encontrado.',404)
+      send(res,200,{id:`/profissional/p/${pro.id}/`,name:`Machado Profissional · ${pro.name}`,short_name:pro.name,lang:'pt-BR',start_url:`/profissional/p/${pro.id}/agenda`,scope:'/profissional/',display:'standalone',background_color:'#f4f7f5',theme_color:'#177245',icons:[{src:'/professional-icon-192.png',sizes:'192x192',type:'image/png'},{src:'/professional-icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'}]}); return
+    }
+    if(path==='/api/professional-accounts'&&req.method==='GET') {
+      const session=await officeSession(req)
+      const data=await transaction(session.user.id,client=>professionalDirectory(client),{readOnly:true})
+      send(res,200,{data});return
+    }
+    if(path==='/api/professional-accounts'&&req.method==='POST') {
+      const session=await officeSession(req);await rateLimit(req,'professional-accounts',15)
+      const {professional_id,reset=false}=await readBody(req)
+      const data=await transaction(session.user.id,async client=>{
+        const access=await ensureProfessionalAccess(client,professional_id,{reset:reset===true})
+        await client.query("insert into audit_logs(actor_profile_id,operation,entity_type,result) values($1,$2,'professional_access','success')",[session.user.id,reset?'reset_professional_access':'create_professional_access'])
+        return access
+      })
+      send(res,200,{data});return
+    }
+    if(path.startsWith('/api/professional/')) {
+      const professionalSession=await sessionFor(req,true)
+      const adminSession=professionalSession?null:await sessionFor(req)
+      const session=professionalSession||(adminSession&&['owner','admin'].includes(adminSession.profile.role)?adminSession:null)
+      const body=req.method==='POST'?await readBody(req):{}
+      const requestedId=req.method==='POST'?body.professional_id:url.searchParams.get('professional_id')
+      const known=path==='/api/professional/access'||path==='/api/professional/catalog'||path==='/api/professional/snapshot'||path==='/api/professional/cash'||path==='/api/professional/action'||path==='/api/professional/preferences'
+      if(!known)throw fail('Página não encontrada.',404)
+      if((['/api/professional/action','/api/professional/preferences'].includes(path)?'POST':'GET')!==req.method)throw fail('Operação inválida.',405)
+      if(req.method==='POST')await rateLimit(req,'professional-action',90)
+      const data=await transaction(session?.user.id,async client=>{
+        const access=await professionalFor(client,session,requestedId)
+        const id=access.profile.id
+        if(path==='/api/professional/access')return access
+        if(path==='/api/professional/catalog')return professionalCatalog(client,id)
+        if(path==='/api/professional/snapshot')return professionalSnapshot(client,id)
+        if(path==='/api/professional/cash')return professionalCash(client,id,url.searchParams.get('from'),url.searchParams.get('to'))
+        let result
+        if(path==='/api/professional/preferences')result=await professionalPreferences(client,id,body.preferences??{})
+        else result=await professionalAction(client,id,body.action,body.payload??{})
+        await client.query("insert into audit_logs(actor_profile_id,operation,entity_type,request_summary,result) values($1,$2,'professional',jsonb_build_object('professional_id',$3::text),'success')",[session.user.id,path.endsWith('/preferences')?'professional:preferences':`professional:${String(body.action).slice(0,60)}`,id])
+        return result
+      },{readOnly:req.method==='GET'})
+      send(res,200,{data,error:null});return
+    }
     if(path==='/api/catalog' && req.method==='GET') {
       const session=await sessionFor(req)
       const data=await transaction(session?.user.id,async client=>{
@@ -107,7 +156,11 @@ export default async function handler(req,res) {
         const args=keys.map((key,index)=>`"${key}" => $${index+1}`).join(',')
         const tableResult=name==='public_booking_slots'||name==='public_available_slots'
         const statement=tableResult?`select coalesce(jsonb_agg(to_jsonb(x)),'[]'::jsonb) as value from public."${name}"(${args}) x`:`select public."${name}"(${args}) as value`
-        const result=(await client.query(statement,keys.map(key=>params[key]))).rows[0]?.value
+        let result=(await client.query(statement,keys.map(key=>params[key]))).rows[0]?.value
+        if(result?.id&&(name==='save_professional_profile'||(name==='office_action'&&params.action==='save_professional'))) {
+          const access=await ensureProfessionalAccess(client,result.id)
+          if(access)result={...result,access}
+        }
         if(session && name!=='office_snapshot' && name!=='can_access_admin') await client.query("insert into audit_logs(actor_profile_id,operation,entity_type,result) values($1,$2,'operation','success')",[session.user.id,name==='office_action'?`office_action:${String(params.action).slice(0,70)}`:name])
         return result
       })
@@ -151,7 +204,7 @@ export default async function handler(req,res) {
     }
     if(path==='/api/system-status' && req.method==='GET') {
       await officeSession(req)
-      send(res,200,{version:'1.19.4',backend:'Vercel',database:'Neon',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs order by created_at desc limit 1')).rows[0]??null});return
+      send(res,200,{version:'1.19.5',professionalVersion:'1.0.0',backend:'Vercel',database:'Neon',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs order by created_at desc limit 1')).rows[0]??null});return
     }
     throw fail('Página não encontrada.',404)
   } catch(error) {

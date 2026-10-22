@@ -2,12 +2,20 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { publicSiteUrl } from './runtime'
-import { isWebApp } from './appExperience'
+import { isWebApp, isProfessionalExperience } from './appExperience'
 
 export function WebAppMetadata() {
   const { pathname } = useLocation()
   useEffect(() => {
     const app = isWebApp()
+    if (isProfessionalExperience()) {
+      const id = pathname.match(/^\/profissional\/p\/([0-9a-f-]{36})(?:\/|$)/i)?.[1]
+      document.querySelector('link[rel="manifest"]')?.setAttribute('href', id ? '/api/professional/manifest?profile=' + id : '/professional.webmanifest')
+      document.querySelector('link[rel="apple-touch-icon"]')?.setAttribute('href', '/professional-icon-192.png')
+      document.querySelector('meta[name="apple-mobile-web-app-title"]')?.setAttribute('content', 'Machado Pro')
+      document.title = 'Machado Profissional'
+      return
+    }
     const admin = app || pathname.startsWith('/admin') || pathname === '/recuperar-acesso'
     document.querySelector('link[rel="manifest"]')?.setAttribute('href', app ? '/app.webmanifest' : admin ? '/admin.webmanifest' : '/manifest.webmanifest')
     document.querySelector('meta[name="apple-mobile-web-app-title"]')?.setAttribute('content', admin ? 'Machado Gestão' : 'Barbearia Machado')

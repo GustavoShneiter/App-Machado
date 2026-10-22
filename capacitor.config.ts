@@ -1,9 +1,10 @@
 import type { CapacitorConfig } from '@capacitor/cli'
+const professional = process.env.MACHADO_APP_EDITION === 'professional'
 
 const config: CapacitorConfig = {
-  appId: 'com.barbeariamachado.gestao',
-  appName: 'Machado Gestão',
-  webDir: 'dist',
+  appId: professional ? 'com.barbeariamachado.profissional' : 'com.barbeariamachado.gestao',
+  appName: professional ? 'Machado Profissional' : 'Machado Gestão',
+  webDir: professional ? 'dist-professional' : 'dist',
   server: {
     androidScheme: 'https',
   },

@@ -7,7 +7,8 @@ import {
   type ReactNode,
 } from "react";
 import { type Profissional, type Servico } from "./data";
-import { backend } from "./dataClient";
+import { backend, apiRequest } from "./dataClient";
+import type { ProfessionalCredential } from './professional/types';
 
 type Catalog = {
   business?: { name: string; phone: string | null; email: string | null; street: string | null; city: string | null; state: string | null } | null;
@@ -15,6 +16,8 @@ type Catalog = {
   professionals: Profissional[];
   loading: boolean;
   error: string;
+  createdAccess?: ProfessionalCredential | null;
+  clearCreatedAccess?: () => void;
   updateService: (
     id: string,
     update: Partial<Servico>,
@@ -63,19 +66,20 @@ const mapProfessional = (row: Record<string, unknown>): Profissional => ({
   comissaoServicos: Number(row.default_commission_percent ?? 50),
   comissaoProdutos: Number(row.default_product_commission_percent ?? 20),
 });
-export function CatalogProvider({ children }: { children: ReactNode }) {
+export function CatalogProvider({ children, professionalId }: { children: ReactNode; professionalId?: string }) {
   const [services, setServices] = useState<Servico[]>([]);
   const [professionals, setProfessionals] = useState<Profissional[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [business, setBusiness] = useState<Catalog['business']>(null);
+  const [createdAccess, setCreatedAccess] = useState<ProfessionalCredential | null>(null);
   const load = useCallback(async () => {
     if (!backend) {
       setError("Conexão indisponível.");
       setLoading(false);
       return;
     }
-    const result = await backend.rpc('catalog');
+    const result = professionalId ? await apiRequest('/professional/catalog?professional_id=' + encodeURIComponent(professionalId)).catch(() => ({ error: true, data: null })) : await backend.rpc('catalog');
     if (result.error || !result.data) {
       setError("Não foi possível atualizar serviços e profissionais.");
       setLoading(false);
@@ -99,7 +103,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     setBusiness(result.data.business ?? null);
     setError("");
     setLoading(false);
-  }, []);
+  }, [professionalId]);
   useEffect(() => {
     void load();
     const auth = backend?.auth.onAuthStateChange(() => {
@@ -108,7 +112,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     const reload = () => void load();
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible") void load();
-    }, 15000);
+    }, professionalId ? 30000 : 15000);
     window.addEventListener("focus", reload);
     window.addEventListener("online", reload);
     return () => {
@@ -117,7 +121,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("online", reload);
       auth?.data.subscription.unsubscribe();
     };
-  }, [load]);
+  }, [load, professionalId]);
   const save = async (action: string, payload: Record<string, unknown>) => {
     if (!backend) return "Conexão indisponível.";
     try {
@@ -130,6 +134,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
             ? await backend.rpc("save_service_profile", { payload })
             : await backend.rpc("office_action", { action, payload });
       if (result.error) return result.error.message;
+      if (result.data?.access?.password) setCreatedAccess(result.data.access);
       await load();
       if (action.startsWith("delete_")) window.dispatchEvent(new Event("operations:changed"));
       return null;
@@ -178,10 +183,12 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         professionals,
         loading,
         error,
+        createdAccess,
+        clearCreatedAccess: () => setCreatedAccess(null),
         updateService,
         addService: (s) => updateService("", s),
         updateProfessional,
-        addProfessional: (p) => updateProfessional("", { ...p, ativo: true }),
+        addProfessional: (p) => updateProfessional("", { ...p, ativo: p.ativo ?? true }),
         deleteProfessional: (id) => save("delete_professional_record", { professional_id: id }),
         deleteService: (id) => save("delete_service_record", { service_id: id }),
       }}

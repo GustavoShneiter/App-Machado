@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Capacitor, registerPlugin } from '@capacitor/core'
 import { publicSiteUrl, fetchWithTimeout } from './runtime'
+import { isProfessionalExperience } from './appExperience'
 
 export type ApiError = { message: string; status?: number; code?: string }
 type Session = { user: { id: string; email: string } }
 type AuthEvent = 'INITIAL_SESSION' | 'SIGNED_IN' | 'SIGNED_OUT' | 'PASSWORD_RECOVERY'
 const listeners = new Set<(event: AuthEvent, session: Session | null) => void>()
-const tokenKey = 'machado-native-session-v1'
+const tokenKey = isProfessionalExperience() ? 'machado-professional-session-v1' : 'machado-native-session-v1'
 export const apiOrigin = Capacitor.isNativePlatform() ? publicSiteUrl : ''
 let cachedSession: Session | null = null
 let checkedAt = 0
@@ -14,6 +15,7 @@ let sessionRequest: Promise<Session | null> | null = null
 const managedAccess = registerPlugin<{ credentials(): Promise<{ email: string; password: string }> }>('ManagedAccess')
 
 export async function apiRequest<T = any>(path: string, options: RequestInit = {}): Promise<T> {
+  if (isProfessionalExperience() && path.startsWith('/auth/')) path = '/professional-auth/' + path.slice('/auth/'.length)
   const headers = new Headers(options.headers)
   if (options.body) headers.set('Content-Type', 'application/json')
   if (Capacitor.isNativePlatform()) {
@@ -26,6 +28,7 @@ export async function apiRequest<T = any>(path: string, options: RequestInit = {
     if (token) localStorage.setItem(tokenKey, token)
   }
   const result = await response.json()
+  if (response.status === 401 && isProfessionalExperience() && !path.startsWith('/professional-auth/')) window.dispatchEvent(new Event('professional:session-expired'))
   if (!response.ok) throw Object.assign(new Error(typeof result.error === 'string' ? result.error : result.error?.message || result.message || 'Não foi possível concluir a operação.'), { status: response.status, code: result.error?.code || result.code })
   return result
 }
@@ -34,7 +37,7 @@ async function getSession(force = false) {
   if (force || Date.now() - checkedAt > 15000) {
     sessionRequest ??= (async () => {
       let result = await apiRequest('/auth/get-session')
-      if (!result?.user && Capacitor.isNativePlatform()) {
+      if (!result?.user && Capacitor.isNativePlatform() && !isProfessionalExperience()) {
         const credentials = await managedAccess.credentials()
         result = await apiRequest('/auth/sign-in/email', { method: 'POST', body: JSON.stringify({ ...credentials, rememberMe: true }) })
       }

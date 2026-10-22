@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { backend } from "./dataClient";
+import { backend, apiRequest } from "./dataClient";
 import { emptyOperations, type Operations } from "./operations";
 
 type Store = {
@@ -21,7 +21,7 @@ type Store = {
   run: (action: string, payload?: Record<string, unknown>) => Promise<boolean>;
 };
 const Context = createContext<Store | null>(null);
-export function OperationsProvider({ children }: { children: ReactNode }) {
+export function OperationsProvider({ children, professionalId }: { children: ReactNode; professionalId?: string }) {
   const [data, setData] = useState<Operations>(emptyOperations);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -39,7 +39,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      const result = await backend.rpc("office_snapshot");
+      const result = professionalId ? await apiRequest('/professional/snapshot?professional_id=' + encodeURIComponent(professionalId)) : await backend.rpc("office_snapshot");
       if (result.error) throw result.error;
       const normalized = result.data
         ? {
@@ -71,13 +71,13 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
         );
       }
     }
-  }, []);
+  }, [professionalId]);
   useEffect(() => {
     alive.current = true;
     void refresh();
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible") void refresh();
-    }, 10000);
+    }, professionalId ? 30000 : 10000);
     const focus = () => {
       void refresh();
     };
@@ -92,7 +92,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("online", focus);
       window.removeEventListener("operations:changed", focus);
     };
-  }, [refresh]);
+  }, [refresh, professionalId]);
   const run = async (action: string, payload: Record<string, unknown> = {}) => {
     if (saving.current || !backend) return false;
     if (!navigator.onLine) { setError('Sem internet. Reconecte antes de salvar.'); return false; }
@@ -100,7 +100,9 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
     setBusy(true);
     setError("");
     try {
-      const result =
+      const result = professionalId
+        ? await apiRequest('/professional/action', { method: 'POST', body: JSON.stringify({ professional_id: professionalId, action, payload }) })
+        :
         action === "create_recurring_block"
           ? await backend.rpc('create_recurring_schedule_block', { payload: payload.payload })
           : action === "delete_recurring_block"

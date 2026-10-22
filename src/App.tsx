@@ -4,12 +4,13 @@ import { Capacitor } from '@capacitor/core'
 import { CatalogProvider } from './CatalogStore'
 import { PublicLanding, Privacy } from './PublicPages'
 import { backend } from './dataClient'
-import { isAppExperience, isWebApp } from './appExperience'
+import { isAppExperience, isWebApp, isProfessionalExperience } from './appExperience'
 import { WebAppInstall } from './WebAppInstall'
 export { AdminLayout } from './AdminApp'
 const AdminApp = lazy(() => import('./AdminApp'))
 const PublicBooking = lazy(() => import('./PublicBooking').then(module => ({ default: module.PublicBookingV2 })))
 const RecoveryPage = lazy(() => import('./RecoveryPage'))
+const ProfessionalApp = lazy(() => import('./professional/ProfessionalApp'))
 
 export default function App() {
   const native = Capacitor.isNativePlatform()
@@ -21,6 +22,7 @@ export default function App() {
     })
     return () => auth?.data.subscription.unsubscribe()
   }, [navigate])
+  if (isProfessionalExperience()) return <Suspense fallback={<main className="auth-shell"><p role="status">Abrindo Machado Profissional…</p></main>}><ProfessionalApp /></Suspense>
   return <CatalogProvider><Suspense fallback={<main className="auth-shell"><p role="status">Carregando…</p></main>}><Routes>
     <Route path="/" element={appExperience ? <Navigate to="/admin" replace /> : <PublicLanding />} />
     <Route path="/instalar" element={isWebApp() ? <WebAppInstall /> : <Navigate to={native ? '/admin' : '/'} replace />} />

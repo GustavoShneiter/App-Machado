@@ -1,0 +1,10 @@
+{
+  "name": "Machado Gestão",
+  "version": "1.19.5",
+  "androidVersionCode": 26,
+  "applicationId": "com.barbeariamachado.gestao",
+  "webPath": "/app",
+  "pcPath": "/admin",
+  "source": "src/AdminApp.tsx",
+  "authentication": "office-only"
+}

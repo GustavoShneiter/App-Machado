@@ -5,6 +5,7 @@ import { type Servico, type Profissional } from "./data";
 import { Page, Modal } from "./ManagementPages";
 import { money } from "./operations";
 import { uploadCatalogPhoto } from "./media";
+import { CredentialModal, ProfessionalAccessPanel } from './professional/ProfessionalAccessPanel';
 
 export function ServicesV2() {
   const { services, professionals, updateService, addService, deleteService } = useCatalog();
@@ -185,6 +186,8 @@ export function ProfessionalsV2() {
     updateProfessional,
     addProfessional,
     deleteProfessional,
+    createdAccess,
+    clearCreatedAccess,
   } = useCatalog();
   const [draft, setDraft] = useState<Profissional | null>(null);
   const [photo, setPhoto] = useState<File | null>(null);
@@ -371,6 +374,7 @@ export function ProfessionalsV2() {
               />
               Ativo no agendamento
             </label>
+            {draft.id ? <ProfessionalAccessPanel professionalId={draft.id} /> : <p className="form-hint">Ao salvar, o acesso individual ao Machado Profissional será criado automaticamente. O e-mail, a senha inicial e o link serão exibidos na próxima janela.</p>}
             {error && <p className="form-error">{error}</p>}
             <div className="row-actions">
               <button className="primary" disabled={busy}>
@@ -390,6 +394,7 @@ export function ProfessionalsV2() {
           </form>
         </Modal>
       )}
+      {createdAccess && !draft && <CredentialModal access={createdAccess} close={() => clearCreatedAccess?.()} />}
     </Page>
   );
 }

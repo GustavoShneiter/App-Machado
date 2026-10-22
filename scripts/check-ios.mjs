@@ -30,7 +30,7 @@ assert.equal(configurations.length, 2)
 for (const config of configurations) {
   assert.equal(config.buildSettings.PRODUCT_BUNDLE_IDENTIFIER, 'com.barbeariamachado.gestao')
   assert.equal(String(config.buildSettings.MARKETING_VERSION), pkg.version)
-  assert.equal(Number(config.buildSettings.CURRENT_PROJECT_VERSION), 25)
+  assert.equal(Number(config.buildSettings.CURRENT_PROJECT_VERSION), 26)
 }
 const privacy = plist.parse(await readFile(`${root}/PrivacyInfo.xcprivacy`, 'utf8'))
 assert.equal(privacy.NSPrivacyTracking, false)

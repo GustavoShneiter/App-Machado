@@ -3,7 +3,7 @@ import { put } from '@vercel/blob'
 import { transaction, pool } from './db.mjs'
 
 export const businessTables = ['profiles','services','professionals','professional_services','professional_products','business_settings','business_hours','customers','appointments','schedule_blocks','commands','command_items','payments','commission_entries','cash_sessions','cash_movements','products','stock_movements','service_packages','service_package_items','package_sales','package_sale_balances','package_redemptions','notifications','audit_logs']
-businessTables.push('recurring_schedule_blocks')
+businessTables.push('recurring_schedule_blocks','professional_preferences')
 export const identityTables = ['auth_user','auth_account']
 
 export async function createBackup() {
@@ -12,7 +12,7 @@ export async function createBackup() {
     for (const table of [...businessTables,...identityTables]) {
       tables[table] = (await client.query(`select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) as rows from public."${table}" t`)).rows[0].rows
     }
-    return { format: 'machado-backup', version: 1, schemaVersion: 5, createdAt: new Date().toISOString(), tables }
+    return { format: 'machado-backup', version: 1, schemaVersion: 8, createdAt: new Date().toISOString(), tables }
   }, { readOnly: true })
 }
 

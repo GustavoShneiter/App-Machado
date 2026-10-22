@@ -14,6 +14,7 @@ import './dialog-layout.css'
 import './public-compact.css'
 import './admin-polish.css'
 import './web-app-install.css'
+import './professional/professional.css'
 import { WebAppMetadata } from './AdminWebApp'
 import { isWebApp, webAppBase } from './appExperience'
 

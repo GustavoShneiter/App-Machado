@@ -1,0 +1,10 @@
+{
+  "name": "Machado Profissional",
+  "version": "1.0.0",
+  "androidVersionCode": 1,
+  "applicationId": "com.barbeariamachado.profissional",
+  "webPath": "/profissional",
+  "source": "src/professional",
+  "api": "server/professionals.mjs",
+  "authentication": "individual-login"
+}

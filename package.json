@@ -1,7 +1,7 @@
 {
   "name": "barbearia-machado",
   "private": true,
-  "version": "1.19.4",
+  "version": "1.19.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -30,7 +30,13 @@
     "test:ios-device": "node scripts/test-ios-device.mjs",
     "ios:open": "npm run ios:prepare-access && npm run ios:sync && npx cap open ios",
     "ios:archive": "node scripts/archive-ios.mjs",
-    "test:web-app": "node scripts/test-web-app.mjs"
+    "test:web-app": "node scripts/test-web-app.mjs",
+    "db:professionals": "node --env-file=.env.local scripts/migrate-professionals.mjs",
+    "professionals:provision": "node --env-file=.env.local scripts/provision-professionals.mjs",
+    "test:professional-api": "node --env-file=.env.local scripts/test-professional-api.mjs",
+    "test:professional-browser": "node scripts/test-professional-browser.mjs",
+    "build:professional": "node scripts/build-professional.mjs",
+    "android:professional": "node scripts/build-professional.mjs --android"
   },
   "dependencies": {
     "@capacitor/app": "8.1.1",

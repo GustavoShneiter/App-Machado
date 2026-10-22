@@ -29,3 +29,12 @@ export const authOptions = {
 }
 let instance
 export function getAuth() { return instance ??= betterAuth(authOptions) }
+let professionalInstance
+export function getProfessionalAuth() {
+  return professionalInstance ??= betterAuth({
+    ...authOptions,
+    appName: 'Machado Profissional',
+    basePath: '/api/professional-auth',
+    advanced: { ...authOptions.advanced, cookiePrefix: 'machado-professional' },
+  })
+}

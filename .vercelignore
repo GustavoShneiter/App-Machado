@@ -1,6 +1,7 @@
 android/
 ios/
 releases/
+dist-professional/
 node_modules/
 .git/
 docs/

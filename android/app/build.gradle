@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+def professionalEdition = project.findProperty('machadoProfessional') == 'true'
 
 def signingProperties = new Properties()
 def signingPropertiesFile = rootProject.file('keystore.properties')
@@ -8,8 +9,8 @@ if (!signingPropertiesFile.exists() && gradle.startParameter.taskNames.any { it.
 }
 def accessProperties = new Properties()
 def accessPropertiesFile = rootProject.file('native-access.properties')
-if (accessPropertiesFile.exists()) accessProperties.load(new FileInputStream(accessPropertiesFile))
-if ((!accessProperties['email'] || !accessProperties['password']) && gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }) {
+if (!professionalEdition && accessPropertiesFile.exists()) accessProperties.load(new FileInputStream(accessPropertiesFile))
+if (!professionalEdition && (!accessProperties['email'] || !accessProperties['password']) && gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }) {
     throw new GradleException('Execute npm run android:prepare-access para configurar o acesso privado do APK.')
 }
 
@@ -18,11 +19,12 @@ android {
     namespace = "com.barbeariamachado.gestao"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.barbeariamachado.gestao"
+        applicationId professionalEdition ? "com.barbeariamachado.profissional" : "com.barbeariamachado.gestao"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 25
-        versionName "1.19.4"
+        versionCode professionalEdition ? 1 : 26
+        versionName professionalEdition ? "1.0.0" : "1.19.5"
+        manifestPlaceholders = [machadoAppName: professionalEdition ? 'Machado Profissional' : 'Machado Gestão', machadoAppIcon: professionalEdition ? '@drawable/professional_icon' : '@mipmap/ic_launcher', machadoRoundIcon: professionalEdition ? '@drawable/professional_icon' : '@mipmap/ic_launcher_round']
         buildConfigField 'String', 'MANAGED_EMAIL', groovy.json.JsonOutput.toJson(accessProperties.getProperty('email', ''))
         buildConfigField 'String', 'MANAGED_PASSWORD', groovy.json.JsonOutput.toJson(accessProperties.getProperty('password', ''))
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

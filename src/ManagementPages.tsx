@@ -570,7 +570,7 @@ export function AppointmentModal({
   );
 }
 
-export function Agenda() {
+export function Agenda({ professionalOnly = false }: { professionalOnly?: boolean } = {}) {
   const { data, run, busy, error } = useOperations();
   const { professionals } = useCatalog();
   const navigate = useNavigate();
@@ -787,7 +787,7 @@ export function Agenda() {
                 style={{ top: layout.top, height: layout.height }}
                 key={appointment.id}
                 onClick={() =>
-                  command
+                  command && !professionalOnly
                     ? navigate(`/admin/comandas?comanda=${command.id}`)
                     : setFocused(appointment)
                 }
@@ -888,7 +888,7 @@ export function Agenda() {
                 Faltou
               </button>
             )}
-            <button
+            {(!professionalOnly || !['completed','cancelled','no_show'].includes(focused.status)) && <button
               className="danger-button"
               disabled={busy}
               onClick={() => {
@@ -896,8 +896,8 @@ export function Agenda() {
                 setRemoving(focused);
               }}
             >
-              Remover
-            </button>
+              {professionalOnly ? 'Cancelar agendamento' : 'Remover'}
+            </button>}
           </div>
         </Modal>
       )}
@@ -973,11 +973,10 @@ export function Agenda() {
         </Modal>
       )}
       {removing && (
-        <Modal title="Remover agendamento" close={() => setRemoving(null)}>
+        <Modal title={professionalOnly ? 'Cancelar agendamento' : 'Remover agendamento'} close={() => setRemoving(null)}>
           <AppointmentIdentity appointment={removing} />
           <p>
-            Exclusão definitiva: o agendamento e sua comanda, pagamentos e
-            comissões serão apagados. Esta ação não pode ser desfeita.
+            {professionalOnly ? 'O horário será liberado e o agendamento ficará cancelado. Alterações em atendimentos concluídos são feitas pela administração.' : 'Exclusão definitiva: o agendamento e sua comanda, pagamentos e comissões serão apagados. Esta ação não pode ser desfeita.'}
           </p>
           {error && <p className="form-error">{error}</p>}
           <button
@@ -985,14 +984,14 @@ export function Agenda() {
             disabled={busy}
             onClick={async () => {
               if (
-                await run("delete_appointment", {
+                await run(professionalOnly ? "cancel_appointment" : "delete_appointment", {
                   id: removing.id,
                 })
               )
                 setRemoving(null);
             }}
           >
-            Excluir definitivamente
+            {professionalOnly ? 'Confirmar cancelamento' : 'Excluir definitivamente'}
           </button>
         </Modal>
       )}
