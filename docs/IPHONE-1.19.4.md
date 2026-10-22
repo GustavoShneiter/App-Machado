@@ -1,6 +1,6 @@
 # Machado Gestão para iPhone — base 1.19.4
 
-Projeto iOS nativo do aplicativo já utilizado no Android, com Agenda, Caixa, Comandas, Clientes, Menu, comissões, cadastros, fotos e exportação/compartilhamento. Usa a mesma API publicada na Vercel e o mesmo Neon; não existe migração nem cópia separada de dados.
+Versão iOS nativa do aplicativo já utilizado no Android, com Agenda, Caixa, Comandas, Clientes, Menu, comissões, cadastros, fotos e exportação/compartilhamento. Usa a mesma API publicada na Vercel e o mesmo Neon; não existe migração nem cópia separada de dados.
 
 - Nome: **Machado Gestão**.
 - Identificador: `com.barbeariamachado.gestao`.
@@ -8,6 +8,14 @@ Projeto iOS nativo do aplicativo já utilizado no Android, com Agenda, Caixa, Co
 - Plataformas: iPhone e iPad com iOS/iPadOS 15 ou mais recente.
 - Projeto: `ios/App/App.xcodeproj`, esquema compartilhado **App**.
 - Dependências: Node.js 24, Capacitor iOS 8.5.2, Swift Package Manager e Xcode 26 ou mais recente.
+
+## Arquivos da entrega
+
+- `Machado-Gestao-iPhone-v1.19.4-PARA-ASSINATURA.ipa`: aplicativo compilado para iPhone físico, arquitetura arm64, com o acesso privado da Machado configurado. Antes de instalar, é obrigatório aplicar uma assinatura Apple e um perfil de provisionamento compatível. O arquivo entregue está sem assinatura.
+- `Machado-iPhone-1.19.4-Projeto-Xcode-PRIVADO.zip`: código e projeto completos para compilar, assinar e enviar ao TestFlight no Xcode, com o acesso privado já preparado.
+- `VERIFICACOES-IPHONE-1.19.4.json` e `SHA256-IPHONE-1.19.4.txt`: evidências da compilação e integridade dos arquivos.
+
+As compilações finais para simulador e dispositivo passaram no [Mac de verificação do GitHub](https://github.com/GustavoShneiter/App-Machado/actions/runs/39809762520). O binário da entrega foi conferido como iPhoneOS/arm64, versão 1.19.4, build 25. O aplicativo e o projeto privados devem ficar com os responsáveis pela barbearia.
 
 ## O que está preparado
 
