@@ -38,6 +38,14 @@ jobs:
         run: xcodebuild -quiet -project ios/App/App.xcodeproj -scheme App -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/DerivedData CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
       - name: Compilar para iPhone
         run: xcodebuild -quiet -project ios/App/App.xcodeproj -scheme App -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath ios/DerivedData CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+      - name: Guardar compilação sem acesso para conferência
+        run: ditto -c -k --keepParent ios/DerivedData/Build/Products/Release-iphoneos/App.app ios/App-iPhone-sem-assinatura.zip
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: iphone-compilacao-sem-acesso
+          path: ios/App-iPhone-sem-assinatura.zip
+          retention-days: 1
+          if-no-files-found: error
       - name: Resumo
         run: |
           echo '### Machado Gestão para iPhone' >> "$GITHUB_STEP_SUMMARY"

@@ -6,6 +6,7 @@ node_modules/
 docs/
 supabase/
 *.apk
+*.ipa
 .private/
 .agents/
 test-results/
