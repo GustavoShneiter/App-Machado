@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core'
 import { Link } from 'react-router-dom'
 import { backend } from './dataClient'
 import { AdminWebHelp } from './AdminWebApp'
+import { isWebApp } from './appExperience'
 
 export function AdminAccess({ children }: { children: ReactNode }) {
   const [checking, setChecking] = useState(true)
@@ -45,7 +46,7 @@ export function AdminAccess({ children }: { children: ReactNode }) {
     } catch { setError('Não foi possível entrar. Confira sua conexão e tente novamente.'); setChecking(false) }
   }
   if (allowed) return <>{children}</>
-  if (checking) return <main className="auth-shell"><p role="status">{native ? 'Abrindo a barbearia…' : 'Verificando acesso…'}</p></main>
+  if (checking) return <main className="auth-shell"><p role="status">{native || isWebApp() ? 'Abrindo a barbearia…' : 'Verificando acesso…'}</p></main>
   if (native) return <main className="auth-shell"><section className="auth-card"><span className="brand-mark">BM</span><h1>Não foi possível abrir o painel</h1><p role="alert">{error || 'O acesso deste aplicativo está indisponível. Entre em contato com o responsável pela barbearia.'}</p><button className="primary" onClick={() => { setChecking(true); setError(''); setAttempt(value => value + 1) }}>Tentar novamente</button></section></main>
-  return <main className="auth-shell"><div className="web-login"><form className="auth-card" onSubmit={signIn}><span className="brand-mark">BM</span><h1>Entrar no painel</h1><label className="field"><span>E-mail</span><input type="email" autoComplete="username" required value={email} onChange={e => setEmail(e.target.value)} /></label><label className="field"><span>Senha</span><input type="password" autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} /></label>{error && <p className="form-error" role="alert">{error}</p>}<button className="primary">Entrar</button><Link to="/recuperar-acesso">Esqueci minha senha</Link><a href="/agendar">Agendamento público</a></form><AdminWebHelp /></div></main>
+  return <main className="auth-shell"><div className="web-login"><form className="auth-card" onSubmit={signIn}><span className="brand-mark">BM</span><h1>{isWebApp() ? 'Machado Gestão' : 'Entrar no painel'}</h1>{isWebApp() && <p>Entre uma vez para autorizar este aparelho.</p>}<label className="field"><span>E-mail</span><input type="email" autoComplete="username" required value={email} onChange={e => setEmail(e.target.value)} /></label><label className="field"><span>Senha</span><input type="password" autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} /></label>{error && <p className="form-error" role="alert">{error}</p>}<button className="primary">Entrar</button><Link to="/recuperar-acesso">Esqueci minha senha</Link>{isWebApp() ? <Link to="/instalar">Adicionar ao iPhone</Link> : <a href="/agendar">Agendamento público</a>}</form><AdminWebHelp /></div></main>
 }

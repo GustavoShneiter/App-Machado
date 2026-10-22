@@ -5,6 +5,8 @@ Sistema de gestão e agendamento da Barbearia Machado, em Toledo/PR. Base admini
 - Site: https://barbearia-machado-rose.vercel.app
 - Agendamento: `/agendar`
 - Painel: `/admin`
+- Aplicativo web com a interface do Android: `/app`
+- Instalar o aplicativo web no iPhone: `/app/instalar`
 - Recuperação de acesso: `/recuperar-acesso`
 - [Guia de entrega e operação](docs/ENTREGA-1.19-AJUSTADA.md)
 
@@ -39,6 +41,8 @@ Execute `npm run android:prepare-access`, `npm run android:sync` e depois `andro
 Consulte `docs/ENTREGA-1.19-AJUSTADA.md` para instalação, acesso, operação, suporte e homologação.
 
 ## iPhone e iPad
+
+Para usar no iPhone pelo Safari, abra `/app` e adicione à Tela de Início. Esse modo usa as mesmas telas e estilos do Android e tem manifesto próprio. As instruções ficam em `/app/instalar`; consulte [o guia do aplicativo web](docs/APP-WEB-ANDROID.md). O painel de PC continua em `/admin`.
 
 O projeto nativo está em `ios/App/App.xcodeproj`, baseado na versão 1.19.4. Ele usa o mesmo aplicativo, com acesso automático da distribuição privada, ícone e abertura próprios, seleção de fotos e compartilhamento de arquivos pelo iOS. Compatível com iOS/iPadOS 15 ou mais recente; a compilação exige Xcode 26 ou mais recente.
 

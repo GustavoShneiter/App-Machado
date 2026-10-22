@@ -48,6 +48,7 @@ import { BackupPanel } from './BackupPanel';
 import { AgendaCreateModal } from './AgendaScheduling';
 import { AdminWebHelp } from './AdminWebApp';
 import { copyText } from './deviceTools';
+import { isAppExperience } from './appExperience';
 
 const navItems = [
   { to: "/admin", label: "Início", icon: LayoutDashboard },
@@ -138,7 +139,7 @@ export function AdminLayout() {
             </NavLink>
           ))}
         </nav>
-        {!Capacitor.isNativePlatform() && <button
+        {!isAppExperience() && <button
           className="outline"
           onClick={() => void backend?.auth.signOut()}
         >
@@ -284,6 +285,7 @@ function NativeBackHandler() {
   return null;
 }
 function SettingsPage() {
+  const appExperience = isAppExperience();
   const [copied, setCopied] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
@@ -370,15 +372,15 @@ function SettingsPage() {
         </div>
         <h3>Acesso administrativo</h3>
         <AdminWebHelp />
-        <p>{Capacitor.isNativePlatform() ? 'Este aplicativo abre automaticamente a gestão da barbearia.' : 'Somente contas administrativas autorizadas acessam o painel.'}</p><p>Versão {appVersion}</p>
-        {!Capacitor.isNativePlatform() && <><Link className="outline" to="/recuperar-acesso">Alterar senha</Link><button
+        <p>{appExperience ? 'Este aplicativo abre automaticamente a gestão da barbearia.' : 'Somente contas administrativas autorizadas acessam o painel.'}</p><p>Versão {appVersion}</p>
+        {!appExperience && <><Link className="outline" to="/recuperar-acesso">Alterar senha</Link><button
           className="outline"
           onClick={() => void backend?.auth.signOut()}
         >
           Sair da conta
         </button></>}
       </section>
-      {Capacitor.isNativePlatform() ? <section className="panel operation-panel"><h3>Administração do proprietário</h3><p>As cópias de segurança continuam automáticas. Para exportar cópias ou reiniciar a operação, acesse o painel do proprietário no navegador.</p><a className="outline" href={`${origin}/admin`} target="_blank" rel="noreferrer">Abrir painel no navegador</a></section> : <><BackupPanel />
+      {appExperience ? <section className="panel operation-panel"><h3>Administração do proprietário</h3><p>As cópias de segurança continuam automáticas. Para exportar cópias ou reiniciar a operação, acesse o painel do proprietário no navegador.</p><a className="outline" href={`${origin}/admin`} target="_blank" rel="noreferrer">Abrir painel no navegador</a></section> : <><BackupPanel />
       <section className="panel operation-panel danger-zone">
         <h3>Zerar dados operacionais</h3>
         <p>
@@ -398,7 +400,7 @@ function SettingsPage() {
           Zerar agenda, caixa e relatórios
         </button>
       </section></>}
-      {!Capacitor.isNativePlatform() && resetOpen && (
+      {!appExperience && resetOpen && (
         <Modal
           title="Zerar dados operacionais"
           close={() => setResetOpen(false)}

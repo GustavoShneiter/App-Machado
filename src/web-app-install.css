@@ -1,0 +1,10 @@
+.app-install{min-height:100dvh;display:grid;place-items:center;background:#f4f7f5;padding:max(24px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left));color:#263e30}
+.app-install>section{width:min(420px,100%);padding:26px 22px;border:1px solid #dce7e0;border-radius:20px;background:#fff;box-shadow:0 12px 35px #1733230a}
+.app-install img{display:block;margin:0 auto 20px;border-radius:18px}
+.app-install .eyebrow{text-align:center}
+.app-install h1{font-size:22px;line-height:1.3;margin:10px 0 12px;text-align:center}
+.app-install p{font-size:13px;line-height:1.65;color:#5e7266}
+.app-install ol{padding-left:20px;margin:22px 0;font-size:13px;line-height:1.7}
+.app-install li{padding-left:5px;margin-bottom:12px}
+.app-install .app-install-note{font-size:12px;padding:12px;background:#f0f7f3;border-radius:10px}
+.app-install .primary{display:flex;justify-content:center;align-items:center;min-height:46px;margin-top:20px;font-size:13px;text-decoration:none}

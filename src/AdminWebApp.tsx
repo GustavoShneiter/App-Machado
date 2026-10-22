@@ -2,12 +2,14 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { publicSiteUrl } from './runtime'
+import { isWebApp } from './appExperience'
 
 export function WebAppMetadata() {
   const { pathname } = useLocation()
   useEffect(() => {
-    const admin = pathname.startsWith('/admin') || pathname === '/recuperar-acesso'
-    document.querySelector('link[rel="manifest"]')?.setAttribute('href', admin ? '/admin.webmanifest' : '/manifest.webmanifest')
+    const app = isWebApp()
+    const admin = app || pathname.startsWith('/admin') || pathname === '/recuperar-acesso'
+    document.querySelector('link[rel="manifest"]')?.setAttribute('href', app ? '/app.webmanifest' : admin ? '/admin.webmanifest' : '/manifest.webmanifest')
     document.querySelector('meta[name="apple-mobile-web-app-title"]')?.setAttribute('content', admin ? 'Machado Gestão' : 'Barbearia Machado')
     document.title = admin ? 'Machado Gestão' : 'Barbearia Machado'
   }, [pathname])
@@ -15,7 +17,7 @@ export function WebAppMetadata() {
 }
 
 export function AdminWebHelp() {
-  if (Capacitor.isNativePlatform()) return null
+  if (Capacitor.isNativePlatform() || isWebApp()) return null
   return <section className="web-access-help" aria-label="Acesso no PC e iPhone">
     <h3>Gestão no PC e no iPhone</h3>
     <p>Use o mesmo painel e os mesmos dados da barbearia.</p>
