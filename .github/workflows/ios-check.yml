@@ -33,6 +33,7 @@ jobs:
       - name: Preparar verificação sem acesso à barbearia
         run: node scripts/prepare-ios-access.mjs --ci
       - run: npm run ios:sync
+      - run: npm run test:ios-device
       - name: Compilar para simulador
         run: xcodebuild -quiet -project ios/App/App.xcodeproj -scheme App -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/DerivedData CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
       - name: Compilar para iPhone

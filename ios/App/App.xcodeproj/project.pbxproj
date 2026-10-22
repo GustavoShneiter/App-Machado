@@ -20,6 +20,7 @@
 		2070C5910D064C928AA9445A /* MachadoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3737733B0B8A465BB65FF15D /* MachadoViewController.swift */; };
 		7ECB143E4DB64045B6A3A5BD /* ManagedAccess.private.plist in Resources */ = {isa = PBXBuildFile; fileRef = 11696F0873964C168647990D /* ManagedAccess.private.plist */; };
 		9047E9808D5E4389B27FE509 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 045E31DCC4A44717BA7A01A7 /* PrivacyInfo.xcprivacy */; };
+		BC1F7399B9F6476B9389FB1C /* MachadoDevicePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3D79A003CBB441A8847CE80 /* MachadoDevicePlugin.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +39,7 @@
 		3737733B0B8A465BB65FF15D /* MachadoViewController.swift */ = {isa = PBXFileReference; name = "MachadoViewController.swift"; path = "MachadoViewController.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; includeInIndex = 0; };
 		11696F0873964C168647990D /* ManagedAccess.private.plist */ = {isa = PBXFileReference; name = "ManagedAccess.private.plist"; path = "ManagedAccess.private.plist"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = text.plist.xml; includeInIndex = 0; };
 		045E31DCC4A44717BA7A01A7 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; name = "PrivacyInfo.xcprivacy"; path = "PrivacyInfo.xcprivacy"; sourceTree = "<group>"; lastKnownFileType = text.plist.xml; includeInIndex = 0; };
+		A3D79A003CBB441A8847CE80 /* MachadoDevicePlugin.swift */ = {isa = PBXFileReference; name = "MachadoDevicePlugin.swift"; path = "MachadoDevicePlugin.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,6 +87,7 @@
 				3737733B0B8A465BB65FF15D /* MachadoViewController.swift */,
 				11696F0873964C168647990D /* ManagedAccess.private.plist */,
 				045E31DCC4A44717BA7A01A7 /* PrivacyInfo.xcprivacy */,
+				A3D79A003CBB441A8847CE80 /* MachadoDevicePlugin.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -177,6 +180,7 @@
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
 				D817DEE19CAD4B68BF223B92 /* ManagedAccessPlugin.swift in Sources */,
 				2070C5910D064C928AA9445A /* MachadoViewController.swift in Sources */,
+				BC1F7399B9F6476B9389FB1C /* MachadoDevicePlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

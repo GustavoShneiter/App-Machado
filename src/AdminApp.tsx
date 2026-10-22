@@ -47,6 +47,7 @@ import { dismissTopLayer, registerDismissibleLayer } from "./dismissibleLayers";
 import { BackupPanel } from './BackupPanel';
 import { AgendaCreateModal } from './AgendaScheduling';
 import { AdminWebHelp } from './AdminWebApp';
+import { copyText } from './deviceTools';
 
 const navItems = [
   { to: "/admin", label: "Início", icon: LayoutDashboard },
@@ -354,7 +355,7 @@ function SettingsPage() {
           <button
             onClick={async () => {
               try {
-                await navigator.clipboard.writeText(origin + "/");
+                await copyText(origin + "/");
                 setCopied(true);
               } catch {
                 setCopied(false);

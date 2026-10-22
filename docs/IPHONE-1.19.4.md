@@ -15,6 +15,8 @@ As telas e as regras de negócio são as mesmas da 1.19.4. O plugin Swift `Manag
 
 O projeto inclui ícone de 1024px sem transparência, tela de abertura da Machado, orientação para iPhone/iPad, uso das áreas seguras da tela, textos de permissão para câmera/fotos e manifesto do motivo de acesso a arquivos usado pelo compartilhamento. As fotos são escolhidas pelo seletor do sistema; os arquivos de exportação e backup usam a folha de compartilhamento do iOS.
 
+Fotos do iPhone, inclusive HEIC/HEIF, são preparadas nativamente como JPEG, com orientação corrigida e maior lado de até 1600px. O arquivo escolhido pode ter até 25 MB; a imagem enviada continua limitada a 3 MB. A cópia do link usa a área de transferência nativa do iOS. Essas adaptações não exigem mudanças nos dados nem no APK Android já instalado.
+
 O conteúdo do aplicativo é incorporado ao pacote, e a conexão ao sistema ocorre por HTTPS. A Agenda e as alterações de dados precisam de internet.
 
 ## Abrir o pacote privado no Mac

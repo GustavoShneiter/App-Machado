@@ -27,6 +27,7 @@
     "ios:prepare-access": "node scripts/prepare-ios-access.mjs",
     "ios:sync": "npm run build && npx cap sync ios && npm run ios:check",
     "ios:check": "node scripts/check-ios.mjs",
+    "test:ios-device": "node scripts/test-ios-device.mjs",
     "ios:open": "npm run ios:prepare-access && npm run ios:sync && npx cap open ios",
     "ios:archive": "node scripts/archive-ios.mjs"
   },
