@@ -40,6 +40,7 @@ No iPhone: **Safari → Compartilhar → Adicionar à Tela de Início**; habilit
 
 - [Edição profissional](../apps/profissional/README.md).
 - [Edição administrativa](../apps/administracao/README.md).
+- [Verificações da atualização e arquivos de entrega](VERIFICACOES-PROFISSIONAIS-1.0.1.md).
 - [Release do Android profissional](https://github.com/GustavoShneiter/App-Machado/releases/tag/profissional-v1.0.1).
 
 As edições têm navegação, sessões e pacotes distintos e compartilham o mesmo banco operacional para manter o trabalho sincronizado.
