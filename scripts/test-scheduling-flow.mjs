@@ -32,7 +32,7 @@ try{
  const catalog=await(await page.request.get(base+'/api/catalog')).json(),pro=catalog.data.professionals.find(row=>row.id===professional)
  assert.equal(Number(pro.default_commission_percent),70);assert.equal(Number(pro.default_product_commission_percent),25)
 
- await page.goto(base+'/admin/agenda');await page.locator('.agenda-professionals button').filter({hasText:names.professional}).click();await page.getByLabel('Data da agenda').fill(day)
+ await page.goto(base+'/admin/agenda');await page.locator('.agenda-professionals button').filter({hasText:names.professional}).click();await page.getByRole('button',{name:'Semana selecionada: escolher mês e ano'}).click();let calendar=page.getByRole('dialog',{name:'Escolher data'});await calendar.getByLabel('Mês',{exact:true}).selectOption(String(Number(day.slice(5,7))-1));await calendar.getByLabel('Ano',{exact:true}).selectOption(day.slice(0,4));await calendar.getByRole('button',{name:'Selecionar '+day.slice(8,10)+'/'+day.slice(5,7)+'/'+day.slice(0,4),exact:true}).click()
  const times=await page.locator('.agenda-time-axis time').allTextContents();assert.deepEqual(times.slice(0,3),['06:00','06:40','07:20']);assert.equal(times.at(-1),'23:00')
  await page.locator('.mobile-create').click();dialog=page.getByRole('dialog',{name:'Opções da Agenda'});await dialog.getByRole('button',{name:'Bloquear agenda',exact:true}).click()
  dialog=page.getByRole('dialog',{name:'Bloquear agenda',exact:true});await dialog.getByLabel('Tipo de bloqueio').selectOption('recurring')
@@ -46,7 +46,7 @@ try{
  dialog=page.getByRole('dialog',{name:'Criar encaixe',exact:true});await dialog.getByLabel('Cliente',{exact:true}).fill(names.fit);await dialog.getByLabel('WhatsApp',{exact:true}).fill('4500000713');await dialog.getByLabel('Serviço',{exact:true}).selectOption(service);await dialog.getByLabel('Horário do encaixe').fill('08:45');await dialog.getByLabel('Duração do encaixe (minutos)').fill('15');await dialog.getByRole('button',{name:'Salvar agendamento'}).click();await dialog.waitFor({state:'hidden'})
  snap=await rpc('office_snapshot');const fit=snap.appointments.find(row=>row.customer_name===names.fit);assert.ok(fit?.is_fit_in);assert.equal((new Date(fit.ends_at)-new Date(fit.starts_at))/60000,15)
  const command=snap.commands.find(row=>row.appointment_id===fit.id);assert.equal(snap.items.find(item=>item.command_id===command.id).commission_cents,3500)
- await page.getByRole('button',{name:'Bloqueios',exact:true}).click();dialog=page.getByRole('dialog',{name:'Bloqueios da agenda'});assert.ok((await dialog.innerText()).includes(tag+' pausa'));await dialog.getByRole('button',{name:'Fechar',exact:true}).click()
+ await page.locator('.mobile-create').click();await page.getByRole('dialog').getByRole('button',{name:'Ver bloqueios',exact:true}).click();dialog=page.getByRole('dialog',{name:'Bloqueios da agenda'});assert.ok((await dialog.innerText()).includes(tag+' pausa'));await dialog.getByRole('button',{name:'Fechar',exact:true}).click()
  await page.screenshot({path:'.private/screenshots/agenda-40-encaixe-bloqueio.png',fullPage:true,animations:'disabled'})
 
  // Existing /agendar links must show the entrance before the booking flow.

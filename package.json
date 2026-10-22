@@ -1,7 +1,7 @@
 {
   "name": "barbearia-machado",
   "private": true,
-  "version": "1.19.3",
+  "version": "1.19.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -18,6 +18,7 @@
     "db:scheduling": "node --env-file=.env.local scripts/migrate-scheduling.mjs",
     "test:scheduling": "node --env-file=.env.local scripts/test-scheduling-flow.mjs",
     "test:dialogs": "node scripts/test-dialog-layout.mjs",
+    "test:design": "node scripts/test-admin-polish.mjs",
     "dev:api": "node --env-file=.env.local scripts/dev-server.mjs",
     "test:database": "node --env-file=.env.local scripts/test-database.mjs",
     "test:api": "node scripts/test-api.mjs",

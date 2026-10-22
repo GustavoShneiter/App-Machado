@@ -12,6 +12,8 @@ import './booking-layout.css'
 import './navigation-119.css'
 import './dialog-layout.css'
 import './public-compact.css'
+import './admin-polish.css'
+import { WebAppMetadata } from './AdminWebApp'
 
 const queryClient = new QueryClient()
 
@@ -20,5 +22,5 @@ if ('serviceWorker' in navigator) {
 }
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode><AppErrorBoundary><QueryClientProvider client={queryClient}><BrowserRouter><ConnectionStatus /><App /></BrowserRouter></QueryClientProvider></AppErrorBoundary></StrictMode>,
+  <StrictMode><AppErrorBoundary><QueryClientProvider client={queryClient}><BrowserRouter><WebAppMetadata /><ConnectionStatus /><App /></BrowserRouter></QueryClientProvider></AppErrorBoundary></StrictMode>,
 )

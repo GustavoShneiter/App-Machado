@@ -6,7 +6,7 @@ try{
   const page=await browser.newPage({viewport}),errors=[];page.on('pageerror',e=>errors.push(e.message))
   await page.goto('http://127.0.0.1:5188/__qa')
   for(const kind of ['Criar encaixe','Bloquear agenda']){
-   await page.locator('.agenda-create-toolbar').getByRole('button',{name:'Novo agendamento',exact:true}).click()
+   await page.locator('.mobile-create').click()
    await page.getByRole('dialog').getByRole('button',{name:kind,exact:true}).click()
    const dialog=page.getByRole('dialog',{name:kind,exact:true})
    if(kind==='Criar encaixe')await dialog.getByLabel('Horário do encaixe').fill('09:15')

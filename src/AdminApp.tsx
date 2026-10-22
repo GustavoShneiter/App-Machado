@@ -46,6 +46,7 @@ import { backend } from "./dataClient";
 import { dismissTopLayer, registerDismissibleLayer } from "./dismissibleLayers";
 import { BackupPanel } from './BackupPanel';
 import { AgendaCreateModal } from './AgendaScheduling';
+import { AdminWebHelp } from './AdminWebApp';
 
 const navItems = [
   { to: "/admin", label: "Início", icon: LayoutDashboard },
@@ -233,7 +234,7 @@ export function AdminLayout() {
       </nav>
       {showCreate && (
         <button
-          className="mobile-create"
+          className={`mobile-create${isAgenda ? ' agenda-create-fab' : ''}`}
           aria-label={createLabel}
           onClick={openCreate}
         >
@@ -367,6 +368,7 @@ function SettingsPage() {
           </a>
         </div>
         <h3>Acesso administrativo</h3>
+        <AdminWebHelp />
         <p>{Capacitor.isNativePlatform() ? 'Este aplicativo abre automaticamente a gestão da barbearia.' : 'Somente contas administrativas autorizadas acessam o painel.'}</p><p>Versão {appVersion}</p>
         {!Capacitor.isNativePlatform() && <><Link className="outline" to="/recuperar-acesso">Alterar senha</Link><button
           className="outline"

@@ -1,0 +1,64 @@
+.app-shell .agenda-page{max-width:1040px;margin-inline:auto}
+.app-shell .agenda-daybar{background:#fff;border:1px solid #dce7e0;box-shadow:0 3px 12px #17332305;margin-bottom:10px;padding:6px;gap:6px}
+.app-shell .agenda-daybar>button{min-height:44px;background:#f0f6f2;color:#176b43}
+.app-shell .agenda-daybar .agenda-week-picker{display:flex;flex-direction:column;justify-content:center;width:100%;height:auto;gap:3px;padding:6px 10px;font-size:13px;line-height:1.35;background:transparent}
+.app-shell .agenda-week-picker span{font-size:10px;color:#76867c;letter-spacing:.04em}
+.app-shell .agenda-week-picker strong{font-size:14px;color:#264734;text-transform:capitalize}
+.app-shell .agenda-daybar button:hover{background:#e7f4eb;transform:none}
+.app-shell .agenda-daybar button:focus-visible,.calendar-days button:focus-visible{outline:2px solid #177245;outline-offset:2px}
+.app-shell .agenda-week{gap:5px;margin-bottom:14px}
+.app-shell .agenda-professionals>button{transition:background .18s,border-color .18s,box-shadow .18s}
+.app-shell .agenda-professionals>button.active{background:#edf8f1;box-shadow:inset 0 0 0 1px #bddfc9}
+.app-shell .agenda-professionals>button>span{font-size:13px}
+.app-shell .agenda-time-axis time:first-child{transform:none}
+.app-shell .agenda-time-axis time:last-child{transform:translateY(-100%)}
+.agenda-calendar{padding:16px 14px}
+.calendar-selectors{display:grid;grid-template-columns:32px minmax(0,1fr) 80px 32px;align-items:end;gap:8px;margin-bottom:16px}
+.modal-layer .calendar-selectors .field{margin:0}
+.modal-layer .modal .calendar-selectors>button{display:flex;align-items:center;justify-content:center;height:44px;padding:0;font-size:23px;min-width:0}
+.calendar-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
+.calendar-days small{padding-bottom:8px;color:#718177;font-size:10px}
+.calendar-days button{min-height:38px;padding:4px;border:1px solid transparent;border-radius:9px;background:#f4f7f5;color:#314b3b;font-size:13px;transition:background .15s,color .15s}
+.calendar-days button:hover{background:#e0f1e6}
+.calendar-days button.today{border-color:#86bd9a}
+.calendar-days button.selected{background:#177245;color:#fff;font-weight:700}
+.calendar-today{display:flex;justify-content:center;text-align:center;width:100%;margin-top:16px;min-height:44px}
+.modal-layer .modal .primary,.modal-layer .modal .outline{font-size:12px;border-radius:9px}
+.modal-layer .modal>form>.form-grid{padding:0;gap:12px;margin-bottom:12px}
+.modal-layer .modal>form>.form-grid .field{margin-bottom:0}
+.modal-layer .modal .record-row{gap:10px;min-width:0}
+.modal-layer .modal .record-row>div{min-width:0;overflow-wrap:anywhere}
+.modal-layer .modal .record-row strong{font-size:13px}
+.modal-layer .modal .record-row small{font-size:11px}
+.modal-layer .slot-choice-copy{font-size:13px;line-height:1.5;padding:0 18px}
+.modal-layer .agenda-create-options{padding:4px 18px 18px;gap:9px}
+.modal-layer .agenda-create-options button{min-height:44px}
+.modal-layer .schedule-block-list{padding:14px 18px}
+.modal-layer .recurrence-weekdays{gap:5px;padding:9px;margin-bottom:12px}
+.modal-layer .recurrence-weekdays label{font-size:12px;padding:5px 7px}
+.web-access-help{margin-top:18px;padding:18px;border:1px solid #dce7e0;border-radius:14px;background:#fff;color:#52665a;font-size:12px;line-height:1.65}
+.web-access-help h3{font-size:14px;color:#264734;margin:0 0 8px}
+.web-access-help a{color:#176b43;overflow-wrap:anywhere}
+.web-access-help p{margin:8px 0}
+.web-access-help summary{cursor:pointer;font-weight:650;color:#176b43;min-height:44px;display:flex;align-items:center}
+.web-login{width:min(400px,100%);min-width:0}
+.auth-shell .web-access-help{max-width:400px;width:100%;box-sizing:border-box}
+.web-login .auth-card{width:100%;box-sizing:border-box}
+@media(max-width:980px){.app-shell .topbar{padding-top:env(safe-area-inset-top,0px);height:calc(68px + env(safe-area-inset-top,0px))}}
+@media(min-width:981px){
+ .app-shell>.sidebar{width:224px;padding:24px 16px;background:#10372a}
+ .app-shell>.sidebar nav{margin-top:28px;gap:4px}
+ .app-shell>.sidebar nav a{font-size:13px;padding:11px 12px;border-radius:10px}
+ .app-shell>.sidebar nav a.active{background:#216548;color:#fff}
+ .app-shell>.sidebar nav a{color:#c4d9cd}
+ .app-shell>.sidebar .brand strong{color:#fff}
+ .app-shell>.sidebar .brand small{color:#bed6c8}
+ .app-shell>.sidebar .brand-mark{color:#fff}
+ .app-shell>.main{margin-left:224px;min-width:0}
+ .app-shell .topbar{position:sticky;top:0;z-index:10;height:74px;padding:0 28px;background:#ffffffed;backdrop-filter:blur(12px)}
+ .app-shell .page{padding:24px 28px 80px;max-width:1480px;margin-inline:auto}
+ .app-shell .page.agenda-page{max-width:1040px}
+ .app-shell .agenda-create-fab{display:grid;place-items:center;position:fixed;right:28px;bottom:26px;width:50px;height:50px;border-radius:15px;background:#177245;color:#fff;box-shadow:0 8px 24px #176b4330;z-index:12;transition:transform .18s,background .18s}
+ .app-shell .agenda-create-fab:hover{background:#125d39;transform:translateY(-2px)}
+}
+@media(prefers-reduced-motion:reduce){.app-shell .agenda-professionals>button,.app-shell .agenda-create-fab,.calendar-days button{transition:none}}

@@ -76,18 +76,18 @@
   flex-wrap: wrap;
   justify-content: center;
   align-items: flex-start;
-  gap: 16px;
+  gap: 10px;
   width: 100%;
   max-width: 720px;
-  margin: 0 auto 20px;
-  padding: 10px 8px;
+  margin: 0 auto 12px;
+  padding: 4px 8px;
   overflow: visible;
 }
 .app-shell .agenda-professionals > button {
-  flex: 0 1 88px;
-  width: 88px;
-  min-width: 68px;
-  padding: 8px 4px;
+  flex: 0 1 70px;
+  width: 70px;
+  min-width: 60px;
+  padding: 6px 4px;
   text-align: center;
   border-radius: 14px;
 }
@@ -96,8 +96,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 62px;
-  height: 62px;
+  width: 42px;
+  height: 42px;
   margin: 0 auto;
   border-radius: 50%;
   object-fit: cover;
@@ -105,7 +105,8 @@
 .app-shell .agenda-professionals > button > small {
   display: block;
   width: 100%;
-  margin: 9px 0 0;
+  margin: 7px 0 0;
+  font-size: 11px;
   line-height: 1.35;
   white-space: normal;
   text-align: center;
@@ -113,10 +114,10 @@
 }
 @media (min-width: 981px) { .app-shell .mobile-nav-animated { display: none; } }
 @media (max-width: 440px) {
-  .app-shell .agenda-professionals { gap: 12px; }
-  .app-shell .agenda-professionals > button { flex-basis: 78px; width: 78px; }
+  .app-shell .agenda-professionals { gap: 6px; }
+  .app-shell .agenda-professionals > button { flex-basis: 66px; width: 66px; }
   .app-shell .agenda-professionals > button > img,
-  .app-shell .agenda-professionals > button > span { width: 56px; height: 56px; }
+  .app-shell .agenda-professionals > button > span { width: 40px; height: 40px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .app-shell .mobile-nav-highlight,

@@ -5,7 +5,7 @@ import { AppointmentModal, Modal } from './ManagementPages'
 import { dayKey } from './operations'
 import { addDays, addMonths } from './schedule'
 
-type Props={close:()=>void;initialDate?:string;initialTime?:string;initialProfessional?:string}
+type Props={close:()=>void;initialDate?:string;initialTime?:string;initialProfessional?:string;manageBlocks?:()=>void}
 export function AgendaCreateModal(props:Props) {
   const [kind,setKind]=useState('')
   if(kind==='appointment'||kind==='fit')return <AppointmentModal {...props} fitIn={kind==='fit'} />
@@ -16,6 +16,7 @@ export function AgendaCreateModal(props:Props) {
       <button className="primary" onClick={()=>setKind('appointment')}>Novo agendamento</button>
       <button className="outline" onClick={()=>setKind('fit')}>Criar encaixe</button>
       <button className="outline" onClick={()=>setKind('block')}>Bloquear agenda</button>
+      {props.manageBlocks && <button className="outline" onClick={props.manageBlocks}>Ver bloqueios</button>}
     </div>
   </Modal>
 }

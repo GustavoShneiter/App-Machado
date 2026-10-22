@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { registerDismissibleLayer } from "./dismissibleLayers";
 import { AgendaCreateModal } from './AgendaScheduling';
+import { AgendaDatePicker } from './AgendaDatePicker';
 import { agendaTimes, recurringForDay } from './schedule';
 
 export function Page({
@@ -579,6 +580,7 @@ export function Agenda() {
   const [focusedBlock, setFocusedBlock] = useState<ScheduleBlock | null>(null);
   const [slotChoice, setSlotChoice] = useState("");
   const [blocksOpen, setBlocksOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   useEffect(() => { const open = () => setSlotChoice('new'); window.addEventListener('agenda:create',open); return () => window.removeEventListener('agenda:create',open); }, []);
   const [confirmation, setConfirmation] = useState<{
     appointment: Appointment;
@@ -658,7 +660,7 @@ export function Agenda() {
         ? "Pronto"
         : "Chegou";
   return (
-    <section className="page agenda-page"><div className="agenda-create-toolbar"><label>Data da agenda<input aria-label="Data da agenda" type="date" value={date} onChange={event=>{if(event.target.value)setDate(event.target.value)}} /></label><button className="primary" onClick={()=>setSlotChoice('new')}>Novo agendamento</button><button className="outline" onClick={()=>setBlocksOpen(true)}>Bloqueios</button></div>
+    <section className="page agenda-page">
       <section
         className="agenda-professionals"
         aria-label="Selecionar profissional"
@@ -686,10 +688,10 @@ export function Agenda() {
         <button aria-label="Semana anterior" onClick={() => shiftDate(-7)}>
           ‹
         </button>
-        <div>
+        <button className="agenda-week-picker" aria-label="Semana selecionada: escolher mês e ano" aria-haspopup="dialog" onClick={() => setCalendarOpen(true)}>
           <span>Semana selecionada</span>
           <strong>{monthLabel}</strong>
-        </div>
+        </button>
         <button aria-label="Próxima semana" onClick={() => shiftDate(7)}>
           ›
         </button>
@@ -809,7 +811,8 @@ export function Agenda() {
           })}
         </div>
       </section>
-      {slotChoice && <AgendaCreateModal initialDate={date} initialTime={slotChoice==='new'?'':slotChoice} initialProfessional={professional} close={()=>setSlotChoice('')} />}
+      {calendarOpen && <AgendaDatePicker date={date} choose={setDate} close={() => setCalendarOpen(false)} />}
+      {slotChoice && <AgendaCreateModal initialDate={date} initialTime={slotChoice==='new'?'':slotChoice} initialProfessional={professional} close={()=>setSlotChoice('')} manageBlocks={()=>{setSlotChoice('');setBlocksOpen(true)}} />}
       {blocksOpen && <Modal title="Bloqueios da agenda" close={()=>setBlocksOpen(false)}><div className="schedule-block-list">
         <button className="primary" onClick={()=>{setBlocksOpen(false);setSlotChoice('new')}}>Novo bloqueio ou agendamento</button>
         {(data.recurringBlocks??[]).filter(rule=>rule.professional_id===professional).map(rule=><article key={rule.id}><strong>{rule.reason||'Bloqueio recorrente'}</strong><p>{rule.weekdays.map(day=>['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'][day-1]).join(', ')} · {rule.start_time.slice(0,5)}–{rule.end_time.slice(0,5)}</p><small>{rule.starts_on} até {rule.until_on||'sempre'}</small><button className="danger-button" disabled={busy} onClick={async()=>{if(window.confirm('Excluir toda esta recorrência?') )await run('delete_recurring_block',{id:rule.id})}}>Excluir recorrência</button></article>)}
