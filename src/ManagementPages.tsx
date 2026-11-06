@@ -248,7 +248,6 @@ function CashActivity({
       <div className="panel-title">
         <div>
           <h3>Movimento da semana</h3>
-          <p>Entradas e saídas dos últimos 7 dias.</p>
         </div>
         <strong className={total < 0 ? "red" : "green"}>
           {total < 0 ? "−" : "+"}
@@ -1053,7 +1052,7 @@ export function Customers({
           className="primary"
           onClick={() => setDraft({ id: "", name: "", phone: "", notes: "" })}
         >
-          Novo
+          Novo cliente
         </button>
       }
     >
@@ -2121,7 +2120,6 @@ export function CashManagement({
           <HandCoins size={22} />
         </span>
         <span>
-          <small>Colaboradores e profissionais</small>
           <strong>Valores a repassar</strong>
         </span>
         <b>
@@ -2140,7 +2138,6 @@ export function CashManagement({
                   ? "Repasses pendentes"
                   : "Repasses pagos"}
               </h3>
-              <p>Comissões de serviços e produtos, conforme a regra de cada item e profissional.</p>
             </div>
           </div>
           <div className="payout-filters">
@@ -2199,7 +2196,7 @@ export function CashManagement({
                       <div className="cash-commission-breakdown">
                         {entries.map(entry => {
                           const item = data.items.find(row => row.id === entry.command_item_id);
-                          return <span key={entry.id}>{item?.type === 'product' ? 'Produto' : 'Serviço'} · {item?.description ?? 'Atendimento'} · {item?.commission_value ?? 0}% · Profissional: {money(entry.commission_cents)} · Barbearia: {money(entry.gross_cents - entry.commission_cents)}</span>;
+                          return <div className="cash-commission-line" key={entry.id}><span><b>{item?.description ?? 'Atendimento'}</b><small>{item?.type === 'product' ? 'Produto' : 'Serviço'} · {item?.commission_value ?? 0}%</small></span><span><small>Profissional</small><strong>{money(entry.commission_cents)}</strong></span><span><small>Barbearia</small><strong>{money(entry.gross_cents - entry.commission_cents)}</strong></span></div>;
                         })}
                       </div>
                     </div>
@@ -2279,12 +2276,12 @@ export function CashManagement({
                     {packageInfo.name}
                   </span>
                 )}
-                <div className="cash-commission-breakdown">
+                <details className="receipt-commission-details"><summary>Divisão do atendimento</summary><div className="cash-commission-breakdown">
                   {data.items.filter(item => item.command_id === command.id).map(item => <span key={item.id}>
                     {item.description} · {professionals.find(pro => pro.id === item.professional_id)?.nome ?? 'Profissional'} · {item.commission_value ?? 0}% · Comissão: {money(item.commission_cents)}
                   </span>)}
                   <span>Barbearia: {money(total - data.items.filter(item => item.command_id === command.id).reduce((sum, item) => sum + item.commission_cents, 0))}</span>
-                </div>
+                </div></details>
               </div>
               <strong>{money(total)}</strong>
               <button
@@ -2651,9 +2648,9 @@ export function Products() {
               <span className={p.quantity <= p.minimum_quantity ? "low" : ""}>
                 {p.quantity} un. · mín. {p.minimum_quantity}
               </span>
-              <div className="service-commission-summary">
+              <details className="service-commission-details"><summary>Comissões por profissional</summary><div className="service-commission-summary">
                 {professionals.filter(pro => pro.ativo).map(pro => <span key={pro.id}>{pro.nome}: {p.commission_mode === 'professional' ? pro.comissaoProdutos ?? 20 : p.commission_mode === 'uniform' ? p.commission_percent ?? 20 : p.commissions?.[pro.id] ?? p.commission_percent ?? 20}%</span>)}
-              </div>
+              </div></details>
               <div className="row-actions">
                 <button
                   className="outline small"

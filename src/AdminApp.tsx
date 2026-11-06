@@ -116,7 +116,7 @@ export function AdminLayout() {
     clearError();
   }, [location.pathname, clearError]);
   return (
-    <div className="app-shell">
+    <div className="app-shell admin-app">
       <aside className={`sidebar ${sidebar ? "open" : ""}`}>
         <div className="brand">
           <span className="brand-mark">BM</span>
@@ -295,14 +295,12 @@ function SettingsPage() {
   return (
     <Page
       title="Menu"
-      text="Cadastros, configurações e controles da barbearia."
     >
       <section className="menu-shortcuts" aria-label="Cadastros e gestão">
         <Link to="/admin/produtos">
           <Package />
           <span>
             <strong>Produtos e estoque</strong>
-            <small>Cadastre produtos e ajuste as quantidades.</small>
           </span>
           <ArrowRight />
         </Link>
@@ -310,7 +308,6 @@ function SettingsPage() {
           <Scissors />
           <span>
             <strong>Serviços</strong>
-            <small>Organize os serviços disponíveis no agendamento.</small>
           </span>
           <ArrowRight />
         </Link>
@@ -318,7 +315,6 @@ function SettingsPage() {
           <Users />
           <span>
             <strong>Profissionais</strong>
-            <small>Equipe e disponibilidade no agendamento.</small>
           </span>
           <ArrowRight />
         </Link>
@@ -326,7 +322,6 @@ function SettingsPage() {
           <Gift />
           <span>
             <strong>Pacotes</strong>
-            <small>Cadastre, venda e acompanhe sessões.</small>
           </span>
           <ArrowRight />
         </Link>
@@ -334,7 +329,6 @@ function SettingsPage() {
           <Building2 />
           <span>
             <strong>Empresa</strong>
-            <small>Dados e canais da Machado.</small>
           </span>
           <ArrowRight />
         </Link>
@@ -342,17 +336,12 @@ function SettingsPage() {
           <LayoutDashboard />
           <span>
             <strong>Relatórios</strong>
-            <small>Veja os resultados da operação.</small>
           </span>
           <ArrowRight />
         </Link>
       </section>
-      <section className="panel operation-panel">
-        <h3>Link para a bio do Instagram</h3>
-        <p>
-          O cliente escolhe entre falar no WhatsApp ou fazer o agendamento
-          online.
-        </p>
+      <section className="panel operation-panel admin-access-panel">
+        <h3>Link de agendamento</h3>
         <div className="copy-field">
           <code>{bookingLink}</code>
           <button
@@ -373,11 +362,11 @@ function SettingsPage() {
         </div>
         <h3>Acesso administrativo</h3>
         <div className="admin-web-versions" aria-label="Versões web da administração">
-          <a className="outline" href={`${publicSiteUrl}/admin`} target="_blank" rel="noreferrer"><span><strong>Versão web admin</strong><small>Painel para computador</small></span><ArrowRight size={18} /></a>
-          <a className="outline" href={`${publicSiteUrl}/app`} target="_blank" rel="noreferrer"><span><strong>Versão web</strong><small>O mesmo app no navegador e no iPhone</small></span><ArrowRight size={18} /></a>
+          <a className="outline" href={`${publicSiteUrl}/admin`} target="_blank" rel="noreferrer"><span><strong>Versão web admin</strong><small>Computador</small></span><ArrowRight size={18} /></a>
+          <a className="outline" href={`${publicSiteUrl}/app`} target="_blank" rel="noreferrer"><span><strong>Versão web</strong><small>Celular e iPhone</small></span><ArrowRight size={18} /></a>
         </div>
-        <p className="unit-access-help">No iPhone, abra a Versão web pelo Safari e use Compartilhar → Adicionar à Tela de Início. Os dois painéis usam o e-mail e a senha da mesma unidade.</p>
-        <p>Entre com o e-mail e a senha da conta administrativa desta unidade.</p><p>Versão {appVersion}</p>
+        <details className="admin-install-help"><summary>Adicionar ao iPhone</summary><p>No Safari, use Compartilhar → Adicionar à Tela de Início. Entre com o e-mail e a senha da sua unidade.</p></details>
+        <p className="admin-version">Versão {appVersion}</p>
         <div className="row-actions"><Link className="outline" to="/recuperar-acesso">Recuperar acesso</Link><button
           className="outline"
           onClick={() => void backend?.auth.signOut()}
@@ -385,7 +374,7 @@ function SettingsPage() {
           Sair da conta
         </button></div>
       </section>
-      {appExperience ? <section className="panel operation-panel"><h3>Administração do proprietário</h3><p>As cópias de segurança continuam automáticas. Para exportar cópias ou reiniciar a operação, acesse o painel do proprietário no navegador.</p><a className="outline" href={`${origin}/admin`} target="_blank" rel="noreferrer">Abrir painel no navegador</a></section> : <><BackupPanel />
+      {appExperience ? <section className="panel operation-panel"><h3>Painel do proprietário</h3><a className="outline" href={`${origin}/admin`} target="_blank" rel="noreferrer">Abrir painel no navegador</a></section> : <details className="admin-owner-tools"><summary>Ferramentas do proprietário</summary><BackupPanel />
       <section className="panel operation-panel danger-zone">
         <h3>Zerar dados operacionais</h3>
         <p>
@@ -404,7 +393,7 @@ function SettingsPage() {
         >
           Zerar agenda, caixa e relatórios
         </button>
-      </section></>}
+      </section></details>}
       {!appExperience && resetOpen && (
         <Modal
           title="Zerar dados operacionais"

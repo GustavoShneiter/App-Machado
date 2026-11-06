@@ -33,9 +33,10 @@ export function RefreshGesture({ target, refresh, disabled = false }: Props) {
     let suppressClickUntil = 0
     function clear() { start = null; pulled = 0; if (!running.current) { setPhase('idle'); setDistance(0) } }
     function atTop(node: Element) {
-      if (window.scrollY > 1 || document.documentElement.scrollTop > 1) return false
-      if (element && element.scrollTop > 1 && element.scrollHeight > element.clientHeight) return false
-      for (let parent: Element | null = node; parent && parent !== element; parent = parent.parentElement) {
+      if (window.scrollY > 1 || (document.scrollingElement?.scrollTop ?? 0) > 1) return false
+      // The WebView may scroll body/root or a nested panel instead of main.
+      // Check the complete ancestor chain before claiming a downward drag.
+      for (let parent: Element | null = node; parent; parent = parent.parentElement) {
         if (parent.scrollTop > 1 && parent.scrollHeight > parent.clientHeight) return false
       }
       return true

@@ -1,5 +1,6 @@
-.app-shell:has(.refresh-gesture-status) { overscroll-behavior-y:contain; }
-html:has(.refresh-gesture-status),body:has(.refresh-gesture-status) { overscroll-behavior-y:contain; }
+/* Contain the viewport bounce, not the content-sized body: containing that
+   non-scrolling overflow box prevents touch scrolling from reaching html. */
+html:has(.refresh-gesture-status) { overscroll-behavior-y:contain; }
 .refresh-gesture-status {
  position:fixed; left:50%; top:env(safe-area-inset-top,0px); z-index:170;
  display:flex; align-items:center; justify-content:center; gap:9px;

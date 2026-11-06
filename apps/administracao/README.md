@@ -1,9 +1,9 @@
-# Machado Gestão 1.19.9 — Administração
+# Machado Gestão 1.19.10 — Administração
 
 - [Web admin para PC](https://barbearia-machado-rose.vercel.app/admin).
 - [Versão web / iPhone com a interface do Android](https://barbearia-machado-rose.vercel.app/app).
-- [Android 1.19.9](https://github.com/GustavoShneiter/App-Machado/releases/download/gestao-v1.19.9/Machado-Gestao-v1.19.9.apk).
-- [Guia da atualização](../../docs/ENTREGA-1.19.9.md).
+- [Android 1.19.10](https://github.com/GustavoShneiter/App-Machado/releases/download/gestao-v1.19.10/Machado-Gestao-v1.19.10.apk).
+- [Guia da atualização](../../docs/ENTREGA-1.19.10.md).
 
 Mantém Caixa, Comandas, Agenda, Clientes e Menu. Conta administrativa com e-mail e senha em todas as edições. Criar conta cadastra uma nova unidade independente; não acrescenta um administrador à unidade atual. Guarde os códigos de recuperação do cadastro.
 

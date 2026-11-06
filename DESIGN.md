@@ -23,3 +23,13 @@ Mercury: hierarquia financeira e alinhamento de valores. Revolut: saldo e navega
 ## Responsivo e validação
 
 Android/web/iPhone mantêm os mesmos dados e ações; PC usa a largura para relatórios e comparação. Sem rolagem horizontal da página. Janelas em portal com rolagem interna e botão de fechar acessível. Verificar conteúdo real e vazio em 390px, 768px e 1440px, além de teclado e movimento reduzido.
+
+## Revisão de leitura e gesto — Gestão 1.19.10 / Profissional 1.2.1
+
+A tela principal responde uma pergunta de cada vez. Saldo centralizado em uma superfície musgo; metas compactas; detalhes e comparação em Meu resultado, recolhido inicialmente. Extrato mostra três comissões e uma única ação para abrir todas. Valores e regras financeiras permanecem intactos.
+
+Centralizar cabeçalhos, destaques, identidade, períodos e grupos de métricas. Nas listas, conservar a coluna de descrição e a coluna de valor para leitura rápida. Eliminar parágrafos de apresentação e instruções óbvias; manter rótulos, datas, estados, validação e consequências de ações destrutivas.
+
+Pesquisa: Mercury/Revolut (biblioteca de referências) e fontes oficiais Monzo Insights, Revolut Analytics e Fresha Wallet/Performance. Adotar a separação entre saldo, atividade e análises; não copiar marcas ou cores.
+
+Rolagem deve propagar dos containers sem overflow para o documento. `overscroll-behavior:contain` no body ou em um shell que cresce com o conteúdo bloqueia o toque; reservar a contenção à superfície real de rolagem. A regressão deve usar gestos confiáveis do navegador, além de eventos sintéticos, e conferir deslocamento real nos dois sentidos.

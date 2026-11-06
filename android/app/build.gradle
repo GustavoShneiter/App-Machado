@@ -15,8 +15,8 @@ android {
         applicationId professionalEdition ? "com.barbeariamachado.profissional" : "com.barbeariamachado.gestao"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode professionalEdition ? 6 : 30
-        versionName professionalEdition ? "1.2.0" : "1.19.9"
+        versionCode professionalEdition ? 7 : 31
+        versionName professionalEdition ? "1.2.1" : "1.19.10"
         manifestPlaceholders = [machadoAppName: professionalEdition ? 'Machado Profissional' : 'Machado Gestão', machadoAppIcon: professionalEdition ? '@drawable/professional_icon' : '@mipmap/ic_launcher', machadoRoundIcon: professionalEdition ? '@drawable/professional_icon' : '@mipmap/ic_launcher_round']
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {

@@ -63,12 +63,12 @@ function ProfessionalGate() {
       } finally { setBusy(false) }
     }}>
       <div className="pro-login-brand"><img className="pro-login-icon" src="/professional-icon-192.png" alt="" /><span><small>Barbearia Machado</small><strong>Área do profissional</strong></span></div>
-      <h1>Entre na sua conta</h1><p>Consulte sua agenda, acompanhe suas comissões e suas metas.</p>
+      <h1>Entre na sua conta</h1>
       <label className="field"><span>E-mail de acesso</span><input type="email" autoComplete="username" required value={email} onChange={event => setEmail(event.target.value)} /></label>
       <label className="field"><span>Senha</span><input type="password" autoComplete="current-password" required value={password} onChange={event => setPassword(event.target.value)} /></label>
       {error && <p className="form-error" role="alert">{error}</p>}
       <button className="primary" disabled={busy}>{busy ? 'Entrando…' : 'Entrar'}</button>
-      <p className="pro-login-help">Use o e-mail e a senha definidos pela administração da barbearia.</p>
+
     </form>
     {!Capacitor.isNativePlatform() && <div className="pro-install-links"><a href={professionalApkUrl}><Download size={17} /><span>Baixar para Android</span></a><Link to="/profissional/instalar"><Smartphone size={17} /><span>Instalar no iPhone</span></Link></div>}
     <p className="pro-login-footer">Esqueceu seu acesso? Peça à administração para definir uma nova senha.</p>

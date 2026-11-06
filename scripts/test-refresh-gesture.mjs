@@ -40,7 +40,11 @@ for (const scenario of scenarios) {
   try {
     await page.goto(base + '/profissional/caixa')
     await page.getByRole('heading', { name: 'Meu Caixa', exact: true }).waitFor()
-    await page.locator('.pro-cash-content[aria-busy=false]').waitFor(); await idle(); await page.waitForTimeout(350)
+    await page.locator('.pro-cash-content[aria-busy=false]').waitFor({ state: 'attached' })
+    const resultsDisclosure = page.locator('.pro-results-disclosure')
+    if (await resultsDisclosure.count()) await resultsDisclosure.locator('summary').click()
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await idle(); await page.waitForTimeout(350)
     assert.equal(await page.locator('.topbar').getByRole('button', { name: /Atualizar/i }).count(), 0)
 
     const initial = stableCounts()
@@ -90,8 +94,12 @@ for (const scenario of scenarios) {
     assert.ok(await page.locator('main').evaluate(node => node.scrollTop > 1))
     await noRefresh(() => swipe(), 'contêiner principal fora do topo não atualiza')
     await page.evaluate(() => { const main = document.querySelector('main'); main.style.height = ''; main.style.minHeight = ''; main.style.overflowY = ''; main.scrollTop = 0 })
+    await page.evaluate(() => { const root = document.getElementById('root'); root.style.height = '400px'; root.style.minHeight = '400px'; root.style.overflowY = 'auto'; root.scrollTop = 100; window.scrollTo(0, 0) })
+    assert.ok(await page.locator('#root').evaluate(node => node.scrollTop > 1))
+    await noRefresh(() => swipe(), 'ancestral acima do main fora do topo não atualiza')
+    await page.evaluate(() => { const root = document.getElementById('root'); root.style.height = ''; root.style.minHeight = ''; root.style.overflowY = ''; root.scrollTop = 0 })
     assert.deepEqual(errors, [])
-    results.push({ name: scenario.name, status: 'passed', snapshotAndCatalog: true, blocked: ['horizontal', 'upward', 'multi-touch', 'cancelled', 'below-top', 'nested-scroll', 'main-scroll', 'input', 'modal'], keyboard: true, networkErrorRecovery: true })
+    results.push({ name: scenario.name, status: 'passed', snapshotAndCatalog: true, blocked: ['horizontal', 'upward', 'multi-touch', 'cancelled', 'below-top', 'nested-scroll', 'main-scroll', 'root-scroll', 'input', 'modal'], keyboard: true, networkErrorRecovery: true })
     console.log(`PASS ${scenario.name}: gesto atualiza agenda/catálogo, respeita rolagem/janelas/campos, teclado e recuperação de erro.`)
   } finally { await browser.close() }
 }

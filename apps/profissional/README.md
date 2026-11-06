@@ -1,7 +1,7 @@
-# Machado Profissional 1.2.0
+# Machado Profissional 1.2.1
 
 - [Web / iPhone](https://barbearia-machado-rose.vercel.app/profissional).
-- [Android 1.2.0](https://github.com/GustavoShneiter/App-Machado/releases/download/profissional-v1.2.0/Machado-Profissional-v1.2.0.apk).
+- [Android 1.2.1](https://github.com/GustavoShneiter/App-Machado/releases/download/profissional-v1.2.1/Machado-Profissional-v1.2.1.apk).
 - [Instalar no iPhone](https://barbearia-machado-rose.vercel.app/profissional/instalar).
 - [Central de acessos](../../docs/CENTRAL-DE-ACESSOS.md).
 
@@ -17,4 +17,4 @@ No iPhone, abra o link no Safari e use **Compartilhar → Adicionar à Tela de I
 
 Fontes em src/professional/, API em server/professionals.mjs. Preferências são persistidas por perfil; metas são escritas somente por server/professional-goals.mjs com autorização administrativa. O banco é compartilhado entre edições e isolado por unidade.
 
-Compilação: npm run build:professional ou npm run android:professional. O build usa dist-professional e restaura os recursos administrativos após empacotar. Assinatura e contas de teste ficam fora do Git. [Guia e verificações](../../docs/ENTREGA-1.19.9.md).
+Compilação: npm run build:professional ou npm run android:professional. O build usa dist-professional e restaura os recursos administrativos após empacotar. Assinatura e contas de teste ficam fora do Git. [Guia e verificações](../../docs/ENTREGA-1.19.10.md).

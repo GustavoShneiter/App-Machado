@@ -33,7 +33,7 @@ function CommissionList({ entries, loading, choose }: { entries: ProfessionalEnt
         </button>
       </div>
     })}
-    {!entries.length && <div className="pro-empty-ledger"><ReceiptText size={24} /><strong>Nenhuma comissão neste filtro.</strong><p>As comissões aparecem depois do recebimento do atendimento no Caixa.</p></div>}
+    {!entries.length && <div className="pro-empty-ledger"><ReceiptText size={24} /><strong>Nenhuma comissão neste filtro.</strong></div>}
   </div>
 }
 
@@ -76,14 +76,17 @@ export function ProfessionalCash({ professionalId }: { professionalId: string })
     {selected && current && prefs && <>
       <div className={'pro-wallet-top' + (prefs.show_goals !== false ? ' with-goals' : '')}>
         <section className="pro-wallet-balance" aria-label="Comissão total a receber">
-          <div className="pro-wallet-balance-label"><h2>Meu saldo a receber</h2><button aria-label="Entender meu saldo" onClick={() => setPopup('balance')}><CircleHelp size={18} /></button></div>
-          <strong>{money(selected.totalPending)}</strong><p>Comissões aguardando repasse · todos os períodos</p>
+          <div className="pro-wallet-balance-label"><h2>Comissões a receber</h2><button aria-label="Entender meu saldo" onClick={() => setPopup('balance')}><CircleHelp size={17} /></button></div>
+          <strong>{money(selected.totalPending)}</strong><p>Todos os períodos</p>
         </section>
         <ProfessionalGoals current={current} edit={() => setPopup('settings')} details={() => setPopup('progress')} />
       </div>
 
+      <div className="pro-period-toolbar"><button className="pro-period-trigger" aria-label="Escolher período das comissões" onClick={() => setPopup('period')}><CalendarDays size={16} /><span>{periods.find(item => item.id === period)?.label}</span><ChevronDown size={15} /></button><span>{shortDate(range.from)} a {shortDate(range.to)}</span></div>
+      <div className="pro-wallet-lower">
+      <details className="pro-results-disclosure">
+        <summary><span><strong>Meu resultado</strong><small>{shortDate(range.from)} a {shortDate(range.to)}</small></span><ChevronDown size={19} aria-hidden="true" /></summary>
       <section className="pro-wallet-period" aria-label="Resultados do período">
-        <header className="pro-results-heading"><div><h2>Seu resultado</h2><p>Atendimentos de {shortDate(range.from)} a {shortDate(range.to)}</p></div><button className="pro-period-trigger" aria-label="Escolher período das comissões" onClick={() => setPopup('period')}><CalendarDays size={16} /><span>{periods.find(item => item.id === period)?.label}</span><ChevronDown size={15} /></button></header>
         {loading && <p className="pro-updating" role="status">Atualizando período…</p>}
         <div className="pro-cash-content" aria-busy={loading}>
           <section className="pro-results-grid" aria-label="Meus indicadores" style={{ '--indicator-count': shownIndicators.length } as CSSProperties}>
@@ -94,20 +97,21 @@ export function ProfessionalCash({ professionalId }: { professionalId: string })
         </div>
       </section>
 
-      <div className="pro-wallet-lower">
         <section className="pro-week-history" aria-label="Histórico semanal">
-          <div className="pro-section-heading"><h2>Sua evolução</h2><button className="pro-wallet-text-action" onClick={() => setPopup('report')}>Ver relatório<ChevronRight size={15} /></button></div>
+          <div className="pro-section-heading"><h2>Evolução semanal</h2></div>
           <div className="pro-week-comparison-list">{weeks.map((week, index) => <button aria-label={'Ver ' + periods[index].label.toLowerCase()} aria-pressed={period === periods[index].id} className={period === periods[index].id ? 'active' : ''} onClick={() => setPeriod(periods[index].id)} key={week.from}>
-            <span className="pro-week-name"><strong>{periods[index].label}</strong><time>{shortDate(week.from)} a {shortDate(week.to)}</time></span>
-            <span className="pro-week-result"><strong>{money(week.earned)}</strong><small>{week.services} serviços · {week.customers} clientes</small></span>
+            <span className="pro-week-name"><strong>{periods[index].label}</strong></span>
+            <span className="pro-week-result"><strong>{money(week.earned)}</strong></span>
             <span className="pro-history-track" aria-hidden="true"><i style={{ transform: `scaleX(${week.earned / Math.max(...weeks.map(value => value.earned), 1)})` }} /></span>
           </button>)}</div>
         </section>
+        <button className="pro-open-report" onClick={() => setPopup('report')}>Ver relatório<ChevronRight size={16} /></button>
+      </details>
         <section className="pro-commission-ledger">
-          <div className="pro-section-heading"><h2>Minhas comissões</h2>{visibleEntries.length > 5 && <button className="pro-wallet-text-action" onClick={() => setPopup('ledger')}>Ver todas<ChevronRight size={15} /></button>}</div>
+          <div className="pro-section-heading"><h2>Minhas comissões</h2></div>
           {ledgerFilters}
-          <CommissionList entries={visibleEntries.slice(0, 5)} loading={loading} choose={setEntry} />
-          {visibleEntries.length > 5 && <button className="pro-wallet-show-all" onClick={() => setPopup('ledger')}>Ver extrato completo · {visibleEntries.length} lançamentos<ChevronRight size={16} /></button>}
+          <CommissionList entries={visibleEntries.slice(0, 3)} loading={loading} choose={setEntry} />
+          {visibleEntries.length > 3 && <button className="pro-wallet-show-all" onClick={() => setPopup('ledger')}>Ver todas <span>{visibleEntries.length}</span><ChevronRight size={16} /></button>}
         </section>
       </div>
     </>}

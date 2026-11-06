@@ -1,13 +1,13 @@
 # Machado Gestão
 
-Gestão, agendamento e acompanhamento da equipe da Barbearia Machado. React/Vite, aplicativos Capacitor, API na Vercel, Neon Postgres, Better Auth e Vercel Blob. Administração 1.19.9; Profissional 1.2.0.
+Gestão, agendamento e acompanhamento da equipe da Barbearia Machado. React/Vite, aplicativos Capacitor, API na Vercel, Neon Postgres, Better Auth e Vercel Blob. Administração 1.19.10; Profissional 1.2.1.
 
 - [Site e agendamento](https://barbearia-machado-rose.vercel.app/).
 - [Administração no PC](https://barbearia-machado-rose.vercel.app/admin).
 - [Administração web / iPhone, com a interface do Android](https://barbearia-machado-rose.vercel.app/app).
 - [Profissionais web / iPhone](https://barbearia-machado-rose.vercel.app/profissional).
 - [Central de links e downloads](docs/CENTRAL-DE-ACESSOS.md).
-- [Entrega e uso desta atualização](docs/ENTREGA-1.19.9.md).
+- [Entrega e uso desta atualização](docs/ENTREGA-1.19.10.md).
 - [Cadastro e isolamento das unidades](docs/UNIDADES-E-CADASTRO.md).
 
 ## Contas e unidades

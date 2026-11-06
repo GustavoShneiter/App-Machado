@@ -48,14 +48,14 @@ for (const scenario of scenarios) {
   const fixedClock = async () => assert.equal(await page.evaluate(() => Date.now()), fixedTime.getTime(), 'dois refreshes com a mesma data, sem depender do texto de horário')
   try {
     await page.goto(base + '/profissional/caixa')
-    await page.locator('.pro-cash-content[aria-busy=false]').waitFor()
+    await page.locator('.pro-cash-content[aria-busy=false]').waitFor({ state: 'attached' })
     await page.waitForFunction(() => document.querySelector('.pro-wallet-balance strong')?.textContent?.includes('100,00'))
     for (const [nextAmount, visible] of [[20000, '200,00'], [30000, '300,00']]) {
       amount = nextAmount
       const before = { ...calls }
       await swipe('.pro-wallet-heading')
       await page.waitForFunction(value => document.querySelector('.pro-wallet-balance strong')?.textContent?.includes(value) && document.querySelector('.pro-result-earned strong')?.textContent?.includes(value), visible)
-      await page.locator('.pro-cash-content[aria-busy=false]').waitFor()
+      await page.locator('.pro-cash-content[aria-busy=false]').waitFor({ state: 'attached' })
       assert.equal(calls.snapshot, before.snapshot + 1, 'cada gesto recarrega o snapshot')
       assert.ok(calls.cash > before.cash, 'cada gesto recarrega as comissões')
       await fixedClock()

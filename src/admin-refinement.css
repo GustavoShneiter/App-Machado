@@ -1,0 +1,253 @@
+/* Administração: ritmo compartilhado, superfícies discretas e dados alinhados. */
+.app-shell.admin-app {
+  --admin-canvas: #121212;
+  --admin-surface: #1b1c1a;
+  --admin-line: #30322e;
+  --admin-text: #ecf0e9;
+  --admin-muted: #a6b1a0;
+  --admin-moss: #a6bf87;
+  background: var(--admin-canvas) !important;
+  color: var(--admin-text);
+  font-variant-numeric: tabular-nums;
+}
+.admin-app .main { background: var(--admin-canvas); }
+.app-shell.admin-app .page {
+  width: 100%; max-width: 1180px; margin: 0 auto;
+  padding: 32px 32px 52px; min-width: 0;
+}
+.admin-app :is(.page-head,.report-heading) { align-items: center; margin-bottom: 24px; gap: 16px; }
+.admin-app .page-head { flex-direction: column; justify-content: center; text-align: center; }
+.admin-app .page-head>.row-actions { justify-content: center; }
+.admin-app .report-heading { position: relative; justify-content: center; text-align: center; padding-inline: 52px; }
+.admin-app .report-heading>.report-export { position: absolute; right: 0; top: 0; }
+.admin-app :is(.page-head h2,.report-heading h1) { font-size: 26px; line-height: 1.25; letter-spacing: -.025em; font-weight: 600; }
+.admin-app :is(.page-head p,.report-heading p) { font-size: 13px; line-height: 1.5; color: var(--admin-muted); }
+.app-shell.admin-app :is(.panel,.operation-panel,.customer-card,.command-card,.package-card) {
+  background: var(--admin-surface); border: 0; border-radius: 14px; box-shadow: none;
+  backdrop-filter: none;
+}
+.admin-app :is(.panel,.operation-panel):hover { box-shadow: none; }
+.admin-app :is(.panel,.operation-panel) { padding: 22px; }
+.admin-app :is(.panel-title h3,.operation-panel>h3) { font-size: 16px; font-weight: 600; letter-spacing: -.015em; }
+.admin-app :is(.panel-title p,.record-row p,.record-row small) { font-size: 13px; line-height: 1.5; color: var(--admin-muted); }
+.admin-app :is(.primary,.outline,.text-button,.command-filters button,.payout-filters button) {
+  min-height: 44px; border-radius: 10px; font-size: 13px; font-weight: 600;
+  box-shadow: none; transition: background-color .18s ease-out, border-color .18s ease-out, transform .15s ease-out;
+}
+.admin-app .primary { background: #57743c; color: #fff; }
+.admin-app .primary:hover { background: #668548; box-shadow: none; transform: none; }
+.admin-app .outline { background: transparent; border-color: #44483f; color: var(--admin-text); }
+.admin-app .outline:hover { background: #262a22; border-color: #71885a; }
+.admin-app :is(button,a):focus-visible { outline: 2px solid var(--admin-moss); outline-offset: 3px; }
+.admin-app :is(button,a):active { transform: scale(.985); }
+.admin-app :is(button,a):disabled { transform: none; opacity: .5; }
+.admin-app :is(.management-filters,.filter-panel) { background: transparent; border: 0; padding: 0; box-shadow: none; margin-bottom: 24px; }
+.admin-app :is(input,select,textarea) { accent-color: #a6bf87; caret-color: #a6bf87; }
+.admin-app :is(.management-filters input,.management-filters select,.field input,.field select,.field textarea,.payout-filters select) {
+  min-height: 44px; border-radius: 10px; border: 1px solid #45493f; background: #191b17;
+  color: var(--admin-text); font-size: 16px; box-shadow: none;
+}
+.admin-app :is(input,textarea)::placeholder { color: #9da795; opacity: 1; }
+.admin-app .management-filters label { font-size: 13px; font-weight: 500; color: var(--admin-muted); }
+.admin-app .record-row { display: grid; grid-template-columns: minmax(0,1fr) auto auto; align-items: center; padding-block: 20px; border-color: var(--admin-line); gap: 20px; }
+.admin-app .record-row:last-child { border-bottom: 0; }
+.admin-app .record-row>div { min-width: 0; }
+.admin-app .record-row strong { font-size: 15px; font-weight: 600; line-height: 1.4; }
+.admin-app .record-row p { margin-top: 6px; }
+.admin-app .catalog-photo,.admin-app .catalog-placeholder { width: 44px; height: 44px; border-radius: 12px; }
+.admin-app :is(.command-filters,.payout-filters) { gap: 8px; border-color: var(--admin-line); }
+.admin-app :is(.command-filters button,.payout-filters button) { border: 1px solid var(--admin-line); background: transparent; color: var(--admin-muted); }
+.admin-app :is(.command-filters button.active,.payout-filters button.active) { background: #283322; border-color: #587340; color: #d9e9c8; }
+.admin-app .command-filters span { min-width: 22px; height: 22px; background: #30382a; color: #c5d9b3; font-size: 11px; }
+.admin-app .command-filters button.active span { background: #455d33; color: #f1f6eb; }
+.admin-app .command-list { gap: 16px; }
+.admin-app .command-card:hover { transform: none; box-shadow: none; }
+.admin-app .command-card-main { padding: 20px; }
+.admin-app .command-card-main>strong { font-size: 17px; margin: 18px 0 8px; }
+.admin-app .command-card-main p { font-size: 13px; line-height: 1.5; white-space: normal; }
+.admin-app .command-card-footer { border-color: var(--admin-line); padding: 16px 20px; }
+.admin-app .command-card-footer>strong { font-size: 20px; font-weight: 600; }
+.admin-app .command-card-top small,.admin-app .status { font-size: 12px; }
+.admin-app .customer-search { max-width: 520px; }
+.admin-app .customer-card { padding: 20px; }
+.admin-app .customer-avatar { background: #283022; color: #c5d6b4; border: 0; border-radius: 12px; }
+.admin-app .customer-card-main strong { font-size: 16px; }
+.admin-app .customer-card-main small { font-size: 13px; margin-top: 5px; }
+.admin-app .customer-action { width: 44px; height: 44px; background: transparent; border-color: var(--admin-line); color: var(--admin-muted); }
+.admin-app .customer-action:hover { background: #293222; color: #c5d9b2; }
+.admin-app .customer-summary { border-color: var(--admin-line); margin-top: 18px; padding-top: 16px; gap: 16px; }
+.admin-app .customer-summary small { font-size: 12px; text-transform: none; letter-spacing: 0; color: var(--admin-muted); }
+.admin-app .customer-summary b { font-size: 14px; font-weight: 500; color: var(--admin-text); margin-top: 8px; }
+.admin-app .service-commission-details { margin-top: 10px; }
+.admin-app .service-commission-details summary { width: fit-content; min-height: 44px; display: list-item; list-style-position: inside; padding-block: 12px; cursor: pointer; color: var(--admin-moss); font-size: 12px; }
+.admin-app .service-commission-summary { gap: 8px; margin: 4px 0 0; }
+.admin-app .service-commission-summary span { background: #252c20; color: #c3d7b0; border: 0; padding: 6px 9px; font-size: 12px; }
+.admin-app .menu-shortcuts { gap: 0 32px; margin-bottom: 32px; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.admin-app .menu-shortcuts a { min-height: 68px; padding: 16px 0; border: 0; border-bottom: 1px solid var(--admin-line); border-radius: 0; background: transparent; box-shadow: none; gap: 16px; }
+.admin-app .menu-shortcuts a:hover { background: transparent; transform: none; box-shadow: none; }
+.admin-app .menu-shortcuts a>svg:first-child { width: 24px; height: 24px; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--admin-muted); }
+.admin-app .menu-shortcuts a:hover>svg:first-child { color: var(--admin-moss); }
+.admin-app .menu-shortcuts strong { font-size: 15px; font-weight: 500; }
+.admin-app .menu-shortcuts a>svg:last-child { width: 18px; color: #9da795; background: transparent; }
+.admin-app .admin-access-panel { padding: 24px; }
+.admin-app .admin-access-panel>h3 { margin: 0 0 16px; }
+.admin-app .admin-access-panel>h3:not(:first-child) { margin-top: 30px; }
+.admin-app .copy-field { border: 1px solid #414739; border-radius: 10px; background: #191c16; }
+.admin-app .copy-field code { font-size: 12px; line-height: 1.6; padding: 12px; }
+.admin-app .copy-field :is(button,a) { min-height: 44px; color: var(--admin-moss); background: transparent; border-left: 1px solid var(--admin-line); border-radius: 0; font-size: 13px; }
+.admin-app .admin-web-versions { gap: 0; }
+.admin-app .admin-web-versions a { min-height: 76px; padding: 16px 0; border-color: var(--admin-line); border-radius: 0; }
+.admin-app .admin-web-versions a strong { font-size: 15px; font-weight: 500; }
+.admin-app .admin-web-versions a small { margin-top: 7px; color: var(--admin-muted); font-size: 13px; }
+.admin-app .admin-install-help { margin-top: 12px; }
+.admin-app .admin-install-help summary { min-height: 44px; display: list-item; list-style-position: inside; padding-block: 14px; cursor: pointer; font-size: 13px; color: var(--admin-moss); }
+.admin-app .admin-install-help p { max-width: 62ch; margin: 0 0 12px; font-size: 13px; color: var(--admin-muted); line-height: 1.6; }
+.admin-app .admin-owner-tools { border-top: 1px solid var(--admin-line); margin-top: 28px; }
+.admin-app .admin-owner-tools>summary { min-height: 64px; display: list-item; list-style-position: inside; padding-block: 22px; color: var(--admin-muted); font-size: 14px; cursor: pointer; }
+.admin-app .admin-owner-tools>.operation-panel { margin-bottom: 20px; }
+.admin-app .admin-version { font-size: 12px; color: var(--admin-muted); margin: 20px 0 16px; }
+.admin-app .company-form { max-width: 860px; margin-inline: auto; }
+.admin-app .company-form>form { padding: 0; }
+.admin-app .admin-form-section { padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--admin-line); }
+.admin-app .admin-form-section>h3 { margin: 0 0 18px; font-size: 16px; font-weight: 600; }
+.admin-app .admin-form-section .form-grid { padding: 0; gap: 16px 24px; }
+.admin-app .admin-form-section .field { margin: 0; font-size: 13px; }
+.admin-app .company-form>form>.primary { margin: 0; }
+.admin-app .package-grid { gap: 16px; }
+.admin-app .package-card { padding: 22px; }
+.admin-app .package-card>div { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 12px; }
+.admin-app .package-card .status { grid-column: 1 / -1; justify-self: start; }
+.admin-app .package-card h3 { font-size: 16px; line-height: 1.4; }
+.admin-app .package-card>div>strong { font-size: 18px; white-space: nowrap; }
+.admin-app .package-card ul { margin: 20px 0; padding-left: 18px; font-size: 13px; line-height: 1.8; }
+.admin-app .page:has(>.cash-overview-grid) { display: block; }
+.admin-app .page:has(>.cash-overview-grid)>.page-head { margin-bottom: 24px; }
+.admin-app .page:has(>.cash-overview-grid)>.cash-overview-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin: 0 0 28px; padding: 0; border: 0; }
+.app-shell.admin-app .page:has(>.cash-overview-grid) .cash-overview-card { display: flex; justify-content: center; text-align: center; padding: 24px; min-height: 172px; background: #1b1c1a; border: 1px solid #30362a; border-radius: 16px; box-shadow: none; overflow: visible; }
+.app-shell.admin-app .page:has(>.cash-overview-grid) .cash-register-card { background: #26371b; border-color: #4e6837; }
+.admin-app .cash-overview-card::after,.admin-app .cash-overview-icon { display: none; }
+.admin-app .cash-overview-card>div>span { font-size: 14px; font-weight: 500; text-transform: none; letter-spacing: 0; }
+.admin-app .cash-overview-card strong { margin: 14px 0 12px; font-size: 36px; letter-spacing: -.03em; font-weight: 500; }
+.admin-app .cash-overview-card small { margin-inline: auto; max-width: 32ch; font-size: 12px; line-height: 1.6; }
+.admin-app .cash-overview-card small:is(.open,.closed) { background: transparent; padding: 0; border: 0; }
+.admin-app .page:has(>.cash-overview-grid)>.cash-activity-card { min-height: 0; height: auto; margin: 0 0 24px; padding: 22px; border-radius: 14px; }
+.admin-app .page:has(>.cash-overview-grid)>.cash-activity-card .cash-chart { flex: none; height: 136px; min-height: 0; margin-top: 24px; }
+.admin-app .cash-chart i { box-shadow: none; }
+.admin-app .cash-chart>div { height: 100%; }
+.admin-app .cash-chart>div:not(.negative):not(.current) i { background: #69864e; }
+.admin-app .cash-chart>div.current i { background: #a6bf87; box-shadow: none; }
+.admin-app .cash-chart>div.negative i { background: #bc806d; }
+.admin-app .payout-summary-button { margin: 0 0 24px; min-height: 76px; border: 1px solid #44503a; border-radius: 12px; background: #1e251a; box-shadow: none; padding: 16px 20px; }
+.admin-app .payout-summary-button:hover { transform: none; box-shadow: none; background: #252f1e; }
+.admin-app .page:has(>.cash-overview-grid)>.payout-summary-button { margin-bottom: 24px; }
+.admin-app .payout-summary-button strong { font-size: 15px; font-weight: 500; }
+.admin-app .payout-summary-button>b { font-size: 22px; font-weight: 500; }
+.admin-app .payout-summary-icon { background: transparent; border: 0; width: 32px; height: 32px; }
+.admin-app .page:has(>.cash-overview-grid)>.operation-panel { margin-bottom: 24px; }
+.admin-app .payout-row { align-items: start; }
+.admin-app .payout-row>div:first-child { min-width: 0; }
+.admin-app .payout-row>b { white-space: nowrap; font-size: 18px; }
+.admin-app .cash-commission-breakdown { margin-top: 18px; gap: 0; }
+.admin-app .cash-commission-line { display: grid; grid-template-columns: minmax(140px,1.5fr) repeat(2,minmax(95px,1fr)); gap: 16px; padding: 12px 0; border-top: 1px solid var(--admin-line); }
+.admin-app .cash-commission-line>span { display: flex; flex-direction: column; gap: 5px; }
+.admin-app .cash-commission-line>span:not(:first-child) { text-align: right; }
+.admin-app .cash-commission-line :is(b,strong) { font-size: 13px; font-weight: 500; color: var(--admin-text); }
+.admin-app .cash-commission-line small { margin: 0; font-size: 12px; color: var(--admin-muted); }
+.admin-app .receipt-commission-details { margin-top: 8px; }
+.admin-app .receipt-commission-details>summary { min-height: 44px; display: list-item; list-style-position: inside; padding-block: 12px; font-size: 12px; color: var(--admin-moss); cursor: pointer; }
+.admin-app .receipt-commission-details .cash-commission-breakdown { margin-top: 8px; font-size: 12px; line-height: 1.6; }
+.app-shell.admin-app .machado-reports { padding-top: 32px; }
+.admin-app .report-summary-strip { padding: 24px 0; margin: 0 0 28px; }
+.admin-app .report-filterbar { justify-content: center; gap: 20px; }
+.admin-app .report-summary-strip>div { text-align: center; padding-inline: 16px; }
+.admin-app .report-summary-strip strong { font-size: 28px; letter-spacing: -.025em; }
+.admin-app .report-summary-strip>div:first-child strong { font-size: 32px; }
+.admin-app .report-summary-strip small { font-size: 12px; }
+.admin-app .report-charts-grid { gap: 24px; margin-bottom: 32px; }
+.admin-app .report-chart-section { padding: 24px; background: var(--admin-surface); border: 0; border-radius: 14px; }
+.admin-app .report-section-title { margin-bottom: 20px; }
+.admin-app .report-section-title h2 { font-size: 17px; font-weight: 600; }
+.admin-app .report-person-row { padding-block: 20px; }
+.admin-app .report-person-number strong { font-size: 14px; font-weight: 500; }
+.admin-app .report-person-identity strong { font-size: 14px; }
+.admin-app .report-person-identity small { font-size: 12px; }
+.admin-app .report-context-note { margin-top: 20px; }
+.admin-app .report-context-note p { font-size: 13px; line-height: 1.6; }
+.admin-app ::selection { background: #526d38; color: #fff; }
+.admin-app:has(.customer-list,.command-list) .topbar .top-actions>.primary { display: none; }
+
+/* O portal só recebe esta escala quando a administração está montada. */
+body:has(.admin-app)>.modal-layer .modal { border: 0; border-radius: 14px; background: #1b1c1a; color: #ecf0e9; font-size: 14px; box-shadow: 0 22px 64px #0008; }
+body:has(.admin-app)>.modal-layer .modal-head { display: grid; grid-template-columns: 44px minmax(0,1fr) auto; background: #1b1c1a; padding: 16px 20px; border-color: #30322e; text-align: center; }
+body:has(.admin-app)>.modal-layer .modal-head h2 { grid-column: 2; font-size: 18px; font-weight: 600; letter-spacing: -.02em; }
+body:has(.admin-app)>.modal-layer .modal-head button { grid-column: 3; }
+body:has(.admin-app)>.modal-layer .modal :is(.primary,.outline) { min-height: 44px; border-radius: 10px; font-size: 13px; box-shadow: none; }
+body:has(.admin-app)>.modal-layer .modal>form { padding: 20px; }
+body:has(.admin-app)>.modal-layer .field { margin-bottom: 16px; font-size: 13px; gap: 8px; }
+body:has(.admin-app)>.modal-layer .field :is(input,select,textarea) { min-height: 44px; font-size: 16px; border-radius: 10px; background: #151713; border-color: #45493f; color: #ecf0e9; }
+body:has(.admin-app)>.modal-layer .field input[type=number] { text-align: right; }
+body:has(.admin-app)>.modal-layer :is(input,textarea)::placeholder { color: #9da795; opacity: 1; }
+body:has(.admin-app)>.modal-layer .field :is(input,select,textarea):focus-visible { outline: 2px solid #a6bf87; outline-offset: 2px; }
+body:has(.admin-app)>.modal-layer .service-commission-fields { border: 1px solid #3b4135; border-radius: 12px; background: transparent; }
+body:has(.admin-app)>.modal-layer .service-commission-fields p { font-size: 13px; line-height: 1.6; }
+
+@media (min-width: 981px) {
+  .admin-app .topbar { padding-inline: 32px; }
+  .admin-app .sidebar nav a { min-height: 44px; font-size: 13px; }
+  .admin-app .customer-list { gap: 16px; }
+}
+@media (max-width: 980px) {
+  .app-shell.admin-app .page { padding: 24px 20px calc(112px + env(safe-area-inset-bottom)); }
+  .admin-app :is(.page-head h2,.report-heading h1) { font-size: 24px; }
+  .admin-app .menu-shortcuts { gap: 0 24px; }
+  .admin-app .payout-row { display: grid; grid-template-columns: minmax(0,1fr) auto; }
+  .admin-app .payout-row>div:first-child { grid-column: 1 / -1; }
+  .admin-app .payout-row>b { margin: 0; grid-column: 1; }
+  .admin-app .payout-row>.primary { grid-column: 2; width: auto; }
+}
+@media (max-width: 600px) {
+  .app-shell.admin-app .page { padding-inline: 16px; }
+  .admin-app :is(.page-head,.report-heading) { gap: 12px; margin-bottom: 24px; }
+  .admin-app .page-head>.row-actions { gap: 8px; }
+  .admin-app :is(.panel,.operation-panel,.admin-access-panel) { padding: 18px; }
+  .admin-app .record-row { gap: 14px; }
+  .admin-app .menu-shortcuts { grid-template-columns: 1fr; margin-bottom: 28px; }
+  .admin-app .menu-shortcuts a { min-height: 64px; }
+  .admin-app .customer-card { padding: 18px; }
+  .admin-app .customer-card-header { grid-template-columns: 36px minmax(0,1fr); gap: 12px; }
+  .admin-app .customer-avatar { width: 36px; height: 36px; font-size: 12px; }
+  .admin-app .customer-actions { grid-column: 2; gap: 8px; margin-top: 2px; }
+  .admin-app .customer-summary { gap: 10px; }
+  .admin-app .customer-summary small { font-size: 11px; }
+  .admin-app .customer-summary b { font-size: 12px; }
+  .admin-app .command-card-main { padding: 18px; }
+  .admin-app .command-card-footer { padding: 14px 18px; }
+  .admin-app .package-card { padding: 20px; }
+  .admin-app .admin-form-section .form-grid { grid-template-columns: 1fr; gap: 16px; }
+  .admin-app .page:has(>.cash-overview-grid)>.cash-overview-grid { padding-top: 8px; gap: 12px; }
+  .app-shell.admin-app .page:has(>.cash-overview-grid) .cash-overview-card { min-height: 172px; padding: 20px 10px; border-radius: 14px; }
+  .admin-app .cash-overview-card strong { font-size: 28px; }
+  .admin-app .cash-overview-card>div>span { display: flex; align-items: center; justify-content: center; min-height: 36px; font-size: 13px; }
+  .admin-app .cash-overview-card small { font-size: 11px; max-width: 22ch; }
+  .admin-app .payout-summary-button { gap: 10px; padding: 16px; grid-template-columns: 26px minmax(0,1fr) 18px; }
+  .admin-app .payout-summary-icon { width: 26px; }
+  .admin-app .payout-summary-button>b { grid-column: 2; font-size: 22px; }
+  .admin-app .cash-commission-line { grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px; }
+  .admin-app .cash-commission-line>span:first-child { grid-column: 1 / -1; }
+  .admin-app .cash-commission-line>span:not(:first-child) { text-align: left; }
+  .admin-app .ready-receipts .record-row { grid-template-columns: minmax(0,1fr) auto; gap: 12px; }
+  .admin-app .ready-receipts .record-row>div:first-child { grid-column: 1; grid-row: 1 / span 2; }
+  .admin-app .ready-receipts .record-row>strong { grid-column: 2; grid-row: 1; text-align: right; align-self: end; }
+  .admin-app .ready-receipts .record-row>.primary { grid-column: 2; grid-row: 2; align-self: start; }
+  .admin-app .report-summary-strip>div { padding: 12px 8px; }
+  .admin-app .report-summary-strip strong,.admin-app .report-summary-strip>div:first-child strong { font-size: 26px; }
+  .admin-app .report-summary-strip small { font-size: 11px; }
+  .admin-app .report-chart-section { padding: 20px 16px; }
+  .admin-app .report-chart-activity { gap: 8px; }
+  .admin-app .report-chart-activity small { font-size: 11px; }
+  .admin-app .report-charts-grid { gap: 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-app :is(button,a) { transition: none; }
+  .admin-app :is(button,a):active { transform: none; }
+}

@@ -6,11 +6,11 @@ import { money } from '../operations'
 import type { Preferences } from './types'
 
 export const indicators = [
-  { id: 'earned', title: 'Comissão gerada', icon: WalletCards },
-  { id: 'pending', title: 'Ainda a receber', icon: WalletCards },
-  { id: 'paid', title: 'Comissão já repassada', icon: CheckCircle2 },
-  { id: 'services', title: 'Serviços realizados', icon: Scissors },
-  { id: 'customers', title: 'Clientes atendidos', icon: Users },
+  { id: 'earned', title: 'Comissões', icon: WalletCards },
+  { id: 'pending', title: 'A receber', icon: WalletCards },
+  { id: 'paid', title: 'Recebidas', icon: CheckCircle2 },
+  { id: 'services', title: 'Serviços', icon: Scissors },
+  { id: 'customers', title: 'Clientes', icon: Users },
 ]
 
 export function PreferencesModal({ professionalId, preferences, close, saved, tab = 'goals' }: { professionalId: string; preferences: Preferences; close: () => void; saved: (preferences: Preferences) => void; tab?: 'goals' | 'cards' }) {
@@ -33,15 +33,13 @@ export function PreferencesModal({ professionalId, preferences, close, saved, ta
     <form onSubmit={event => { event.preventDefault(); void save() }}>
       <fieldset disabled={busy} className="pro-settings-fields">
         {section === 'goals' ? <>
-          <p className="pro-dialog-intro">As metas são definidas pela administração da sua unidade. Aqui você escolhe como acompanhá-las.</p>
-          <label className="pro-visibility-setting"><span className="pro-setting-icon">{draft.show_goals ? <Eye size={19} /> : <EyeOff size={19} />}</span><span><strong>Mostrar metas no Meu Caixa</strong><small>Ocultar a visualização mantém as metas atribuídas.</small></span><input type="checkbox" role="switch" checked={draft.show_goals} onChange={event => setDraft({ ...draft, show_goals: event.target.checked })} /></label>
+          <label className="pro-visibility-setting"><span className="pro-setting-icon">{draft.show_goals ? <Eye size={19} /> : <EyeOff size={19} />}</span><span><strong>Mostrar metas no Meu Caixa</strong></span><input type="checkbox" role="switch" checked={draft.show_goals} onChange={event => setDraft({ ...draft, show_goals: event.target.checked })} /></label>
           <dl className="pro-assigned-goals" aria-label="Metas definidas pela administração">
             <div><dt>Comissão por semana</dt><dd>{preferences.weekly_commission_goal_cents > 0 ? money(preferences.weekly_commission_goal_cents) : 'Não definida'}</dd></div>
             <div><dt>Serviços por semana</dt><dd>{preferences.weekly_service_goal > 0 ? preferences.weekly_service_goal : 'Não definida'}</dd></div>
             <div><dt>Clientes por semana</dt><dd>{preferences.weekly_customer_goal > 0 ? preferences.weekly_customer_goal : 'Não definida'}</dd></div>
           </dl>
-          <p className="pro-setting-note">Para solicitar uma mudança nos valores, converse com a administração. A semana vai de segunda a domingo.</p>
-        </> : <><p className="pro-dialog-intro">Escolha os números do seu resumo. As comissões continuam disponíveis no extrato.</p><fieldset className="pro-card-options"><legend>Indicadores que quero ver</legend>{indicators.map(item => <label className="pro-card-choice" key={item.id}><item.icon size={18} /><span>{item.title}</span><input type="checkbox" checked={draft.visible_cards.includes(item.id)} onChange={event => setDraft({ ...draft, visible_cards: event.target.checked ? [...draft.visible_cards, item.id] : draft.visible_cards.filter(value => value !== item.id) })} /></label>)}</fieldset>{!draft.visible_cards.length && <p className="form-hint">Escolha pelo menos um indicador.</p>}</>}
+        </> : <><fieldset className="pro-card-options"><legend>Indicadores em Meu resultado</legend>{indicators.map(item => <label className="pro-card-choice" key={item.id}><item.icon size={18} /><span>{item.title}</span><input type="checkbox" checked={draft.visible_cards.includes(item.id)} onChange={event => setDraft({ ...draft, visible_cards: event.target.checked ? [...draft.visible_cards, item.id] : draft.visible_cards.filter(value => value !== item.id) })} /></label>)}</fieldset>{!draft.visible_cards.length && <p className="form-hint">Escolha pelo menos um indicador.</p>}</>}
       </fieldset>
       {error && <p className="form-error" role="alert">{error}</p>}<button className="primary pro-dialog-save" disabled={busy || !draft.visible_cards.length}><Check size={17} />{busy ? 'Salvando…' : 'Salvar preferências'}</button>
     </form>

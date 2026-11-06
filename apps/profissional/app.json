@@ -1,7 +1,7 @@
 {
   "name": "Machado Profissional",
-  "version": "1.2.0",
-  "androidVersionCode": 6,
+  "version": "1.2.1",
+  "androidVersionCode": 7,
   "applicationId": "com.barbeariamachado.profissional",
   "webPath": "/profissional",
   "source": "src/professional",

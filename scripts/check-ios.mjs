@@ -6,6 +6,8 @@ import plist from 'plist'
 const root = 'ios/App/App', project = xcode.project('ios/App/App.xcodeproj/project.pbxproj')
 project.parseSync()
 const pkg = JSON.parse(await readFile('package.json', 'utf8'))
+const metadata = JSON.parse(await readFile('apps/administracao/app.json', 'utf8'))
+assert.equal(metadata.version, pkg.version)
 assert.equal(pkg.devDependencies['@capacitor/ios'], pkg.dependencies['@capacitor/core'])
 const app = plist.parse(await readFile(`${root}/Info.plist`, 'utf8'))
 assert.equal(app.CFBundleDisplayName, 'Machado Gestão')
@@ -27,7 +29,7 @@ assert.equal(configurations.length, 2)
 for (const config of configurations) {
   assert.equal(config.buildSettings.PRODUCT_BUNDLE_IDENTIFIER, 'com.barbeariamachado.gestao')
   assert.equal(String(config.buildSettings.MARKETING_VERSION), pkg.version)
-  assert.equal(Number(config.buildSettings.CURRENT_PROJECT_VERSION), 30)
+  assert.equal(Number(config.buildSettings.CURRENT_PROJECT_VERSION), metadata.androidVersionCode)
 }
 const privacy = plist.parse(await readFile(`${root}/PrivacyInfo.xcprivacy`, 'utf8'))
 assert.equal(privacy.NSPrivacyTracking, false)

@@ -11,7 +11,7 @@ export function ProfessionalAccountModal({ profile, close, signedOut }: { profil
   return <Modal title="Minha conta profissional" close={close}><div className="pro-account">
     <div className="pro-account-heading"><strong>{profile.name}</strong><span>Conta profissional</span></div>
     <label className="field"><span>E-mail de acesso</span><input readOnly type="email" value={profile.email ?? ''} /></label>
-    <p>Este login dá acesso somente à sua agenda e às suas comissões. Para mudar o e-mail, fale com a administração.</p>
+
     <PasswordChange />
     {!Capacitor.isNativePlatform() && <Link className="outline" to="/profissional/instalar" onClick={close}><Smartphone size={16} />Instalar no celular</Link>}
     {error && <p className="form-error" role="alert">{error}</p>}

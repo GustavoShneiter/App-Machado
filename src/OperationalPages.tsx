@@ -58,14 +58,14 @@ export function ServicesV2() {
                 {service.duracao} min · {money(service.preco * 100)} ·{" "}
                 {service.ativo ? "Ativo" : "Pausado"}
               </p>
-              <div className="service-commission-summary">
+              <details className="service-commission-details"><summary>Comissões por profissional</summary><div className="service-commission-summary">
                 {activeProfessionals.map((professional) => (
                   <span key={professional.id}>
                     {professional.nome}:{" "}
                     {service.modoComissao === 'professional' ? professional.comissaoServicos ?? 50 : service.modoComissao === 'uniform' ? service.comissaoPadrao ?? 50 : service.comissoes?.[professional.id] ?? service.comissaoPadrao ?? 50}%
                   </span>
                 ))}
-              </div>
+              </div></details>
             </div>
             <button
               className="outline small"
@@ -364,7 +364,7 @@ export function ProfessionalsV2() {
             </label>
             <button type="button" className="outline" aria-expanded={commissionOpen} onClick={() => setCommissionOpen(!commissionOpen)}>Configurar comissões</button>
             {commissionOpen && <fieldset className="service-commission-fields"><legend>Comissões do profissional</legend>
-              <p>Valem para os itens que usam o percentual do perfil. Itens com regra própria mantêm a configuração escolhida.</p>
+              <p>Aplicadas aos itens que usam a comissão do perfil.</p>
               <label className="field"><span>Comissão em serviços (%)</span><input type="number" required min="0" max="100" step="0.01" value={draft.comissaoServicos ?? 50} onChange={event => setDraft({ ...draft, comissaoServicos: Number(event.target.value) })} /></label>
               <label className="field"><span>Comissão em produtos (%)</span><input type="number" required min="0" max="100" step="0.01" value={draft.comissaoProdutos ?? 20} onChange={event => setDraft({ ...draft, comissaoProdutos: Number(event.target.value) })} /></label>
             </fieldset>}
@@ -378,7 +378,7 @@ export function ProfessionalsV2() {
               />
               Ativo no agendamento
             </label>
-            {draft.id ? <ProfessionalAccessPanel professionalId={draft.id} /> : <section className="professional-access-row"><strong>Login do profissional</strong><p>Defina o e-mail e a senha que este barbeiro usará para entrar.</p><LoginFields {...login} change={values => setLogin(previous => ({ ...previous, ...values }))} /></section>}
+            {draft.id ? <ProfessionalAccessPanel professionalId={draft.id} /> : <section className="professional-access-row"><strong>Login do profissional</strong><LoginFields {...login} change={values => setLogin(previous => ({ ...previous, ...values }))} /></section>}
             {draft.id && <AdminProfessionalGoals professionalId={draft.id} />}
             {error && <p className="form-error">{error}</p>}
             <div className="row-actions">
