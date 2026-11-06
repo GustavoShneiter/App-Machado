@@ -3,21 +3,24 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { type Profissional, type Servico } from "./data";
 import { backend, apiRequest } from "./dataClient";
 import type { ProfessionalCredential } from './professional/types';
+import { useLocation } from 'react-router-dom';
 
 type Catalog = {
-  business?: { name: string; phone: string | null; email: string | null; street: string | null; city: string | null; state: string | null } | null;
+  business?: { name: string; phone: string | null; email: string | null; street: string | null; city: string | null; state: string | null; unit_slug?: string } | null;
   services: Servico[];
   professionals: Profissional[];
   loading: boolean;
   error: string;
   createdAccess?: ProfessionalCredential | null;
   clearCreatedAccess?: () => void;
+  refresh?: () => Promise<void>;
   updateService: (
     id: string,
     update: Partial<Servico>,
@@ -67,19 +70,23 @@ const mapProfessional = (row: Record<string, unknown>): Profissional => ({
   comissaoProdutos: Number(row.default_product_commission_percent ?? 20),
 });
 export function CatalogProvider({ children, professionalId }: { children: ReactNode; professionalId?: string }) {
+  const { search } = useLocation();
   const [services, setServices] = useState<Servico[]>([]);
   const [professionals, setProfessionals] = useState<Profissional[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [business, setBusiness] = useState<Catalog['business']>(null);
   const [createdAccess, setCreatedAccess] = useState<ProfessionalCredential | null>(null);
+  const request = useRef(0);
   const load = useCallback(async () => {
+    const version = ++request.current;
     if (!backend) {
       setError("Conexão indisponível.");
       setLoading(false);
       return;
     }
     const result = professionalId ? await apiRequest('/professional/catalog?professional_id=' + encodeURIComponent(professionalId)).catch(() => ({ error: true, data: null })) : await backend.rpc('catalog');
+    if (version !== request.current) return;
     if (result.error || !result.data) {
       setError("Não foi possível atualizar serviços e profissionais.");
       setLoading(false);
@@ -103,10 +110,12 @@ export function CatalogProvider({ children, professionalId }: { children: ReactN
     setBusiness(result.data.business ?? null);
     setError("");
     setLoading(false);
-  }, [professionalId]);
+  }, [professionalId, search]);
   useEffect(() => {
     void load();
     const auth = backend?.auth.onAuthStateChange(() => {
+      request.current++;
+      setServices([]); setProfessionals([]); setBusiness(null); setLoading(true);
       window.setTimeout(() => void load(), 0);
     });
     const reload = () => void load();
@@ -120,6 +129,7 @@ export function CatalogProvider({ children, professionalId }: { children: ReactN
       window.removeEventListener("focus", reload);
       window.removeEventListener("online", reload);
       auth?.data.subscription.unsubscribe();
+      request.current++;
     };
   }, [load, professionalId]);
   const save = async (action: string, payload: Record<string, unknown>) => {
@@ -186,6 +196,7 @@ export function CatalogProvider({ children, professionalId }: { children: ReactN
         error,
         createdAccess,
         clearCreatedAccess: () => setCreatedAccess(null),
+        refresh: load,
         updateService,
         addService: (s) => updateService("", s),
         updateProfessional,

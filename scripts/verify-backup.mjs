@@ -7,19 +7,25 @@ import { get } from '@vercel/blob'
 
 const file=process.argv.find(arg=>arg.endsWith('.json')) || '.private/verified-backup.json'
 const data=JSON.parse(await readFile(file,'utf8'))
-assert.equal(data.format,'machado-backup');assert.equal(data.version,1)
+assert.equal(data.format,'machado-backup');assert.ok([1,2].includes(data.version))
 const client=await pool.connect()
 try{
   await client.query('begin')
-  const names=[...businessTables,...identityTables]
+  const names=[...new Set(['business_units',...businessTables,...identityTables])]
+  if(data.version===1) {
+    const unit=(await client.query('select * from business_units where is_primary')).rows[0]
+    data.tables.business_units=[unit]
+    data.tables.recovery_codes??=[]
+    for(const [table,rows] of Object.entries(data.tables))if(table!=='business_units'&&Array.isArray(rows))for(const row of rows)row.tenant_id??=unit.id
+  }
   for(const name of names){
     assert.ok(Array.isArray(data.tables[name]),`Tabela ausente: ${name}`)
     await client.query(`create temporary table "restore_${name}" (like public."${name}" including all) on commit drop`)
     await client.query(`insert into "restore_${name}" select * from jsonb_populate_recordset(null::public."${name}",$1::jsonb)`,[JSON.stringify(data.tables[name])])
     assert.equal(Number((await client.query(`select count(*) as n from "restore_${name}"`)).rows[0].n),data.tables[name].length)
   }
-  await client.query('create temporary table restore_identity_users(id uuid primary key) on commit drop')
-  await client.query('insert into restore_identity_users select id::uuid from restore_auth_user')
+  await client.query('create temporary table restore_identity_users(id uuid primary key,tenant_id uuid not null,unique(tenant_id,id)) on commit drop')
+  await client.query('insert into restore_identity_users select id::uuid,tenant_id from restore_auth_user')
   const foreignKeys=await client.query("select c.conname,t.relname,pg_get_constraintdef(c.oid) as definition from pg_constraint c join pg_class t on t.oid=c.conrelid where c.contype='f' and t.relnamespace='public'::regnamespace")
   for(const row of foreignKeys.rows){
     if(!names.includes(row.relname))continue

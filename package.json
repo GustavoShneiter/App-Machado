@@ -1,7 +1,7 @@
 {
   "name": "barbearia-machado",
   "private": true,
-  "version": "1.19.8",
+  "version": "1.19.9",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,6 @@
     "preview": "vite preview",
     "android:sync": "npm run build && npx cap sync android",
     "android:open": "npm run android:sync && npx cap open android",
-    "android:prepare-access": "node --env-file=.env.local scripts/prepare-native-access.mjs",
     "db:agenda": "node --env-file=.env.local scripts/migrate-agenda.mjs",
     "db:final": "node --env-file=.env.local scripts/migrate-final-adjustments.mjs",
     "db:scheduling": "node --env-file=.env.local scripts/migrate-scheduling.mjs",
@@ -24,11 +23,10 @@
     "test:api": "node scripts/test-api.mjs",
     "test:browser": "node --env-file=.env.local scripts/test-browser.mjs",
     "backup:verify": "node --env-file=.env.local scripts/verify-backup.mjs",
-    "ios:prepare-access": "node scripts/prepare-ios-access.mjs",
     "ios:sync": "npm run build && npx cap sync ios && npm run ios:check",
     "ios:check": "node scripts/check-ios.mjs",
     "test:ios-device": "node scripts/test-ios-device.mjs",
-    "ios:open": "npm run ios:prepare-access && npm run ios:sync && npx cap open ios",
+    "ios:open": "npm run ios:sync && npx cap open ios",
     "ios:archive": "node scripts/archive-ios.mjs",
     "test:web-app": "node scripts/test-web-app.mjs",
     "db:professionals": "node --env-file=.env.local scripts/migrate-professionals.mjs",
@@ -37,7 +35,14 @@
     "test:professional-browser": "node scripts/test-professional-browser.mjs",
     "test:professional-admin": "node --env-file=.env.local scripts/test-professional-admin-login.mjs",
     "build:professional": "node scripts/build-professional.mjs",
-    "android:professional": "node scripts/build-professional.mjs --android"
+    "android:professional": "node scripts/build-professional.mjs --android",
+    "test:reports": "node scripts/test-management-reports.mjs",
+    "test:office-access": "node scripts/test-office-access-browser.mjs",
+    "test:refresh": "node scripts/test-refresh-gesture.mjs",
+    "test:refresh-version": "node scripts/test-professional-refresh-version.mjs",
+    "test:units": "node --env-file=.env.local scripts/test-unit-isolation.mjs",
+    "test:unit-api": "node scripts/test-unit-api.mjs",
+    "db:units": "node --env-file=.env.local scripts/migrate-unit-accounts.mjs"
   },
   "dependencies": {
     "@capacitor/app": "8.1.1",
@@ -47,7 +52,7 @@
     "@hookform/resolvers": "5.9.1",
     "@tanstack/react-query": "5.103.1",
     "@vercel/blob": "2.8.2",
-    "@vercel/functions": "3.10.1",
+    "@vercel/functions": "3.11.0",
     "bcryptjs": "3.0.3",
     "better-auth": "1.7.12",
     "date-fns": "4.4.0",
@@ -57,7 +62,7 @@
     "react-dom": "19.3.0",
     "react-hook-form": "7.88.0",
     "react-router-dom": "7.18.4",
-    "zod": "3.25.76"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@capacitor/android": "8.5.2",
@@ -76,12 +81,21 @@
     "plist": "3.1.1",
     "typescript": "5.6.3",
     "typescript-eslint": "8.70.0",
-    "vite": "6.4.4",
+    "vite": "6.4.5",
     "xcode": "3.0.1"
   },
   "overrides": {
     "xcode": {
       "uuid": "11.1.1"
+    },
+    "@vercel/blob": {
+      "@vercel/oidc": "4.0.7"
+    },
+    "rimraf": {
+      "glob": "14.0.4"
+    },
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "11.0.5"
     }
   }
 }

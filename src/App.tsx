@@ -29,7 +29,7 @@ export default function App() {
     <Route path="/agendar" element={appExperience ? <Navigate to="/admin" replace /> : <PublicLanding />} />
     <Route path="/agendar/horarios" element={appExperience ? <Navigate to="/admin" replace /> : <PublicBooking />} />
     <Route path="/privacidade" element={<Privacy />} />
-    <Route path="/recuperar-acesso" element={native ? <Navigate to="/admin" replace /> : <RecoveryPage />} />
+    <Route path="/recuperar-acesso" element={<RecoveryPage />} />
     <Route path="/admin/*" element={<AdminApp />} />
     <Route path="*" element={<Navigate to={appExperience ? '/admin' : '/'} replace />} />
   </Routes></Suspense></CatalogProvider>

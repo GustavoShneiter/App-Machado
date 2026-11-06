@@ -14,6 +14,7 @@ import '../readiness.css'
 import '../web-app-install.css'
 import './professional.css'
 import './professional-space.css'
+import './professional-wallet.css'
 
 const queryClient = new QueryClient()
 createRoot(document.getElementById('root')!).render(

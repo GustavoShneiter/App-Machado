@@ -3,7 +3,8 @@ import { readFile } from 'node:fs/promises'
 
 const base = process.env.TEST_BASE_URL || 'https://barbearia-machado-rose.vercel.app'
 const origin = 'capacitor://localhost'
-const account = JSON.parse(await readFile('.private/native-access.json', 'utf8'))
+const fixture = JSON.parse(await readFile(process.env.TEST_ACCOUNT_FILE || '.private/qa-account.json', 'utf8'))
+const account = fixture.ownerA || fixture
 let token
 try {
   const preflight = await fetch(base + '/api/rpc', { method: 'OPTIONS', headers: { origin, 'access-control-request-method': 'POST', 'access-control-request-headers': 'authorization,content-type' } })
@@ -23,7 +24,7 @@ try {
     if (name === 'can_access_admin') assert.equal(result.data, true)
     else assert.ok(Array.isArray(result.data.appointments) && Array.isArray(result.data.customers))
   }
-  console.log('PASS API iOS: origem capacitor://localhost, preflight, acesso automático, token acessível, sessão e leitura da Agenda no Neon.')
+  console.log('PASS API iOS: origem capacitor://localhost, preflight, login individual, token acessível, sessão e leitura da Agenda no Neon.')
 } finally {
   if (token) {
     const logout = await fetch(base + '/api/auth/sign-out', { method: 'POST', headers: { origin, authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body: '{}' })

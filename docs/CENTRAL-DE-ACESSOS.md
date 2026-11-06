@@ -17,7 +17,7 @@
 | Versão para iPhone pelo Safari | [Abrir no iPhone](https://barbearia-machado-rose.vercel.app/app) |
 | Instruções de instalação no iPhone | [Adicionar à Tela de Início](https://barbearia-machado-rose.vercel.app/app/instalar) |
 
-A edição administrativa web e a edição para iPhone usam o mesmo endereço. No iPhone, o Safari permite adicionar o ícone à Tela de Início. O APK administrativo 1.19.8 é entregue de forma privada ao responsável pela barbearia.
+A edição administrativa web e a edição para iPhone usam o mesmo endereço. No iPhone, o Safari permite adicionar o ícone à Tela de Início. O Android administrativo 1.19.9 também usa login individual. [Baixar Machado Gestão](https://github.com/GustavoShneiter/App-Machado/releases/download/gestao-v1.19.9/Machado-Gestao-v1.19.9.apk).
 
 ## Profissionais
 
@@ -26,7 +26,7 @@ A edição administrativa web e a edição para iPhone usam o mesmo endereço. N
 | Web / iPhone | [Machado Profissional](https://barbearia-machado-rose.vercel.app/profissional) |
 | Instalação no iPhone | [Adicionar à Tela de Início](https://barbearia-machado-rose.vercel.app/profissional/instalar) |
 
-**Android profissional:** [baixar Machado Profissional 1.1.2](https://github.com/GustavoShneiter/App-Machado/releases/download/profissional-v1.1.2/Machado-Profissional-v1.1.2.apk). É o mesmo APK para a equipe; cada profissional entra com a própria conta. A conta administrativa permanece no aplicativo Machado Gestão.
+**Android profissional:** [baixar Machado Profissional 1.2.0](https://github.com/GustavoShneiter/App-Machado/releases/download/profissional-v1.2.0/Machado-Profissional-v1.2.0.apk). É o mesmo APK para a equipe; cada profissional entra com a própria conta. A conta administrativa permanece no aplicativo Machado Gestão.
 
 O login determina a agenda e as comissões exibidas. Não há site nem APK diferente para cada barbeiro. Endereços pessoais antigos redirecionam ao portal comum e respeitam a conta conectada.
 
@@ -44,6 +44,10 @@ No iPhone: **Safari → Compartilhar → Adicionar à Tela de Início**; habilit
 - [Edição administrativa](../apps/administracao/README.md).
 - [Novidades e configuração do profissional 1.1.0](PROFISSIONAL-1.1.0.md).
 - [Histórico de verificações da versão 1.0.1](VERIFICACOES-PROFISSIONAIS-1.0.1.md).
-- [Release do Android profissional](https://github.com/GustavoShneiter/App-Machado/releases/tag/profissional-v1.1.2).
+- [Release do Android profissional](https://github.com/GustavoShneiter/App-Machado/releases/tag/profissional-v1.2.0).
 
 As edições têm navegação, sessões e pacotes distintos e compartilham o mesmo banco operacional para manter o trabalho sincronizado.
+
+## Novas unidades e metas
+
+**Criar conta** no Machado Gestão cadastra outra unidade isolada. Para acessar a atual, use sua conta existente. A administração define metas semanais em Profissionais ou Relatórios; o barbeiro acompanha e pode ocultar a visualização. [Guia desta atualização](ENTREGA-1.19.9.md).

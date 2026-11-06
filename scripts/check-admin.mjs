@@ -2,6 +2,7 @@ import { build } from "esbuild";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 const result = await build({
+  loader: { '.css': 'empty' },
   stdin: {
     contents: `
     import assert from 'node:assert/strict'
@@ -27,7 +28,7 @@ const result = await build({
         if(data===fixture&&page==='comandas') assert.ok(html.includes('Comandas'))
         console.log('PASS '+path+' '+(data===fixture?'with records':'empty'))
       }
-      const modal=renderToString(h(CatalogProvider,null,h(TestContext.Provider,{value},h(AppointmentModal,{close(){}}))))
+      const modal=renderToString(h(MemoryRouter,null,h(CatalogProvider,null,h(TestContext.Provider,{value},h(AppointmentModal,{close(){}})))))
       assert.ok(modal.includes('Salvar agendamento'))
     }
     const summary=summarize(fixture,'2026-09-18','2026-09-18')

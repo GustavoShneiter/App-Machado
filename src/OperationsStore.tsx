@@ -16,6 +16,7 @@ type Store = {
   error: string;
   busy: boolean;
   refreshed: string;
+  refreshVersion?: number;
   refresh: () => Promise<void>;
   clearError: () => void;
   run: (action: string, payload?: Record<string, unknown>) => Promise<boolean>;
@@ -28,6 +29,7 @@ export function OperationsProvider({ children, professionalId }: { children: Rea
   const [loadError, setLoadError] = useState("");
   const [busy, setBusy] = useState(false);
   const [refreshed, setRefreshed] = useState("");
+  const [refreshVersion, setRefreshVersion] = useState(0);
   const request = useRef(0);
   const saving = useRef(false);
   const alive = useRef(true);
@@ -58,6 +60,7 @@ export function OperationsProvider({ children, professionalId }: { children: Rea
       if (alive.current && version === request.current) {
         setData(normalized as Operations);
         setRefreshed(new Date().toLocaleTimeString("pt-BR"));
+        setRefreshVersion(value => value + 1);
         setLoading(false);
         setLoadError("");
       }
@@ -275,6 +278,7 @@ export function OperationsProvider({ children, professionalId }: { children: Rea
         error: error || loadError,
         busy,
         refreshed,
+        refreshVersion,
         refresh,
         clearError,
         run,

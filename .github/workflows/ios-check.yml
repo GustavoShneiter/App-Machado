@@ -30,8 +30,6 @@ jobs:
       - name: Conferir Xcode
         run: xcodebuild -version
       - run: npm ci
-      - name: Preparar verificação sem acesso à barbearia
-        run: node scripts/prepare-ios-access.mjs --ci
       - run: npm run ios:sync
       - run: npm run test:ios-device
       - name: Compilar para simulador
@@ -50,4 +48,4 @@ jobs:
         run: |
           echo '### Machado Gestão para iPhone' >> "$GITHUB_STEP_SUMMARY"
           echo 'Compilações de simulador e iPhone verificadas. Nenhuma credencial da barbearia ou assinatura Apple foi utilizada.' >> "$GITHUB_STEP_SUMMARY"
-          echo 'A distribuição instalável precisa do acesso privado local e da assinatura Apple Developer.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'O aplicativo usa login individual. A distribuição nativa instalável precisa da assinatura Apple Developer.' >> "$GITHUB_STEP_SUMMARY"

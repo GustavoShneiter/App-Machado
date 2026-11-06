@@ -1,10 +1,25 @@
 import { Capacitor } from '@capacitor/core'
 
-export const professionalVersion = '1.1.2'
+export const professionalVersion = '1.2.0'
 export const professionalApkUrl = `https://github.com/GustavoShneiter/App-Machado/releases/download/profissional-v${professionalVersion}/Machado-Profissional-v${professionalVersion}.apk`
-export const appVersion = import.meta.env.VITE_APP_EDITION === 'professional' ? professionalVersion : '1.19.8'
+export const appVersion = import.meta.env.VITE_APP_EDITION === 'professional' ? professionalVersion : '1.19.9'
 export const publicSiteUrl = 'https://barbearia-machado-rose.vercel.app'
 export const bookingSiteUrl = Capacitor.isNativePlatform() || typeof window === 'undefined' ? publicSiteUrl : window.location.origin
+
+export function publicUnitSlug() {
+  if (typeof window === 'undefined' || Capacitor.isNativePlatform()) return ''
+  const path = window.location.pathname
+  if (path !== '/' && !path.startsWith('/agendar') && path !== '/privacidade') return ''
+  return new URLSearchParams(window.location.search).get('unidade')?.trim() || ''
+}
+
+export function unitPath(path: string) {
+  const slug = publicUnitSlug()
+  if (!slug) return path
+  const url = new URL(path, 'https://machado.local')
+  url.searchParams.set('unidade', slug)
+  return url.pathname + url.search + url.hash
+}
 
 export function whatsappUrl(phone: string | null | undefined) {
   const digits = String(phone ?? '').replace(/\D/g, '')

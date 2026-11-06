@@ -1,0 +1,17 @@
+.app-shell:has(.refresh-gesture-status) { overscroll-behavior-y:contain; }
+html:has(.refresh-gesture-status),body:has(.refresh-gesture-status) { overscroll-behavior-y:contain; }
+.refresh-gesture-status {
+ position:fixed; left:50%; top:env(safe-area-inset-top,0px); z-index:170;
+ display:flex; align-items:center; justify-content:center; gap:9px;
+ min-height:44px; padding:11px 17px; border:1px solid #46513f; border-radius:14px;
+ background:#232721; color:#dce6d1; box-shadow:0 8px 28px #0004;
+ pointer-events:none; opacity:1; transition:transform .18s ease-out,opacity .18s;
+ font-size:13px; white-space:nowrap;
+}
+.refresh-gesture-status[data-phase=idle] { opacity:0; }
+.refresh-gesture-status[data-phase=ready] { color:#c2d8a7; border-color:#769257; }
+.refresh-gesture-status[data-phase=refreshing]>svg { animation:refresh-gesture-spin .8s linear infinite; }
+.refresh-keyboard-control { position:fixed; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); padding:0; }
+.refresh-keyboard-control:focus-visible { top:calc(78px + env(safe-area-inset-top,0px)); left:16px; z-index:180; width:auto; height:auto; clip-path:none; padding:12px 16px; border-radius:10px; background:#283420; color:#e4eddc; }
+@keyframes refresh-gesture-spin { to { transform:rotate(360deg); } }
+@media(prefers-reduced-motion:reduce) { .refresh-gesture-status { transition:none; } .refresh-gesture-status[data-phase=refreshing]>svg { animation:none; } }

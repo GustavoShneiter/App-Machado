@@ -1,64 +1,20 @@
-# Machado Profissional 1.1.2
+# Machado Profissional 1.2.0
 
-Aplicativo da equipe, separado do **Machado Gestão** administrativo.
-
-- Web e iPhone: [abrir Machado Profissional](https://barbearia-machado-rose.vercel.app/profissional).
-- Android: [baixar o APK profissional](https://github.com/GustavoShneiter/App-Machado/releases/download/profissional-v1.1.2/Machado-Profissional-v1.1.2.apk).
+- [Web / iPhone](https://barbearia-machado-rose.vercel.app/profissional).
+- [Android 1.2.0](https://github.com/GustavoShneiter/App-Machado/releases/download/profissional-v1.2.0/Machado-Profissional-v1.2.0.apk).
+- [Instalar no iPhone](https://barbearia-machado-rose.vercel.app/profissional/instalar).
 - [Central de acessos](../../docs/CENTRAL-DE-ACESSOS.md).
 
-O APK é o mesmo para todos os barbeiros. A conta individual determina qual agenda e quais comissões aparecem. O identificador Android `com.barbeariamachado.profissional` permite instalar junto do administrador. Nenhuma credencial administrativa está embutida neste APK.
+Um único aplicativo e endereço para toda a equipe. Cada profissional entra com o e-mail e a senha definidos pela administração. O login determina a unidade, a própria agenda e as próprias comissões. Nenhum faturamento geral ou resultado alheio é retornado ao barbeiro.
 
-## Três seções
+**Minha Agenda:** agenda própria, novos agendamentos, encaixes, bloqueios pontuais e recorrentes. Grade de 06h a 23h em intervalos de 40 min, compacta e preservada. A API limita ações ao profissional conectado.
 
-**Minha Agenda:** visualizar a própria agenda, marcar cliente, criar encaixe, confirmar chegada/atendimento/conclusão, cancelar atendimento ainda aberto, bloquear horários, dias, semanas e meses e criar/remover recorrências. Os horários seguem a base administrativa: 06h–23h, de 40 em 40 minutos. Encaixes permitem horário e duração próprios, respeitando ocupações e bloqueios.
+**Meu Caixa:** saldo de comissões a receber, resultados do período, metas, evolução semanal e extrato agrupado por dia. Detalhes dos lançamentos, comparação de semanas e gráfico ficam em janelas. Só a administração define metas de comissão, serviços e clientes. O barbeiro acompanha e pode ocultar a visualização. Ocultar não apaga os valores. Recebimentos da barbearia e repasses continuam na administração.
 
-**Meu Caixa:** somente comissões do profissional em serviços e produtos; saldo total a receber, comissões geradas e repassadas, histórico desta semana, passada e retrasada, intervalo personalizado, serviços realizados e clientes distintos. Metas semanais de comissão, serviços e clientes, estimativa de serviços para atingir a meta e escolha dos indicadores. Preferências persistidas por perfil.
+**Menu:** foto, conta e senha, indicadores, visibilidade das metas e **Versão web**. Para recarregar dados, puxe para baixo a partir do topo. Duas atualizações no mesmo segundo também renovam Caixa e preferências. Animações de progresso respeitam a preferência por reduzir movimento.
 
-O novo visual destaca o saldo e as metas, com barras animadas, detalhes em pop-ups e histórico semanal compacto. A preferência do sistema por reduzir movimentos é respeitada. O período financeiro é escolhido em uma janela; metas sempre correspondem à semana atual.
+No iPhone, abra o link no Safari e use **Compartilhar → Adicionar à Tela de Início**. É a edição web instalável, com a mesma interface do Android e login individual; exige internet. O pacote Android com.barbeariamachado.profissional, código 6, pode coexistir com o administrativo.
 
-**Menu:** foto de perfil com prévia antes de enviar, acesso à conta e senha, configuração dos indicadores e metas. É possível ocultar metas preservando os valores, desativar uma meta com zero ou remover todas mediante confirmação. A foto atualiza também a identificação no agendamento da barbearia. O servidor limita qualquer alteração ao perfil conectado.
+Fontes em src/professional/, API em server/professionals.mjs. Preferências são persistidas por perfil; metas são escritas somente por server/professional-goals.mjs com autorização administrativa. O banco é compartilhado entre edições e isolado por unidade.
 
-Na Agenda profissional, as linhas passam de 72 para 44 pixels por intervalo de 40 minutos: cerca de 39% menos altura, mantendo 06h–23h e todos os horários. Os detalhes completos continuam acessíveis ao tocar no atendimento.
-
-Concluir um atendimento gera a comanda e a comissão no fluxo existente. Recebimento de clientes, repasse de comissões e alterações financeiras continuam na administração. Atendimentos já encerrados não podem ser apagados pelo profissional.
-
-## Conta e instalação
-
-O administrador escolhe o e-mail e a senha no cadastro do profissional, com confirmação da senha. A senha aparece somente na confirmação do cadastro; o servidor conserva apenas seu hash. Em **Editar profissional → Login do profissional**, a administração consulta e muda o e-mail e define uma nova senha usando **Salvar acesso**. Deixar a senha vazia preserva a atual. Alterar o e-mail ou a senha revoga as sessões anteriores. Desativar o profissional impede seu acesso. E-mails de login são únicos sem diferenciar maiúsculas e minúsculas.
-
-Todos usam `/profissional` e o mesmo APK. O login determina o perfil; links pessoais antigos redirecionam ao portal comum. **Minha conta** mostra somente o e-mail conectado. No iPhone, abra o portal no Safari e use **Compartilhar → Adicionar à Tela de Início**. Se exibido, habilite **Abrir como App da Web**. Entre com a conta individual. É a edição web instalável; requer internet e dispensa Apple Developer.
-
-## Organização técnica
-
-| Parte | Local |
-|---|---|
-| Interface profissional | `src/professional/` |
-| Autorização, extrato e contas | `server/professionals.mjs` |
-| Autenticação separada | `/api/professional-auth/*`, cookie `machado-professional` |
-| API limitada ao perfil | `/api/professional/*` |
-| Provisionamento administrativo | `/api/professional-accounts` |
-| Regras de agenda e preferências | `database/008_professional_workspace.sql` |
-| Manifesto comum do iPhone | `/professional.webmanifest` |
-| Metadados da edição | `apps/profissional/app.json` |
-
-O banco operacional é compartilhado para refletir imediatamente os agendamentos no painel da barbearia. A aplicação, a navegação, as sessões, as permissões e o pacote Android são separados. A API verifica o perfil em toda requisição e não retorna faturamento, caixa físico, pagamentos ou comissões alheias no extrato profissional. O catálogo do agendamento público continua público.
-
-## Compilar e verificar
-
-Na raiz do repositório, com as dependências instaladas:
-
-```text
-npm run db:professionals -- --check
-npm run db:professionals
-node --env-file=.env.local scripts/migrate-professional-login.mjs
-node --env-file=.env.local scripts/migrate-professional-goals.mjs
-npm run build:professional
-npm run android:professional
-npm run test:professional-api
-npm run test:professional-browser
-node --env-file=.env.local scripts/test-professional-admin-login.mjs
-```
-
-Os testes de API usam uma conta temporária de QA e excluem os registros criados ao terminar. O teste de navegador usa login e agenda reais de leitura; valores determinísticos de Caixa são substituídos somente no navegador de teste para conferir metas e layout, sem alterar comissões ou preferências reais. O `--check` da migração executa e reverte os testes SQL sem alterar o histórico.
-
-O build Android profissional usa `dist-professional/` e `-PmachadoProfessional=true`. O script restaura os arquivos administrativos após empacotar. A chave de assinatura é local e ignorada pelo Git. Senhas de entrega permanecem em `.private/`, nunca em commits ou Releases.
+Compilação: npm run build:professional ou npm run android:professional. O build usa dist-professional e restaura os recursos administrativos após empacotar. Assinatura e contas de teste ficam fora do Git. [Guia e verificações](../../docs/ENTREGA-1.19.9.md).

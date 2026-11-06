@@ -1,60 +1,41 @@
 # Machado Gestão
 
-Sistema de gestão e agendamento da Barbearia Machado, em Toledo/PR. Base administrativa 1.19 ajustada: site React/Vite e aplicativos Capacitor para Android e iOS, com publicações separadas, compartilhando a API na Vercel, PostgreSQL Neon, Better Auth e Vercel Blob.
+Gestão, agendamento e acompanhamento da equipe da Barbearia Machado. React/Vite, aplicativos Capacitor, API na Vercel, Neon Postgres, Better Auth e Vercel Blob. Administração 1.19.9; Profissional 1.2.0.
 
-- Site: https://barbearia-machado-rose.vercel.app
-- Agendamento: `/agendar`
-- Painel: `/admin`
-- Aplicativo web com a interface do Android: `/app`
-- Instalar o aplicativo web no iPhone: `/app/instalar`
-- Recuperação de acesso: `/recuperar-acesso`
-- [Guia de entrega e operação](docs/ENTREGA-1.19-AJUSTADA.md)
-- [Central de links: clientes, administração e equipe](docs/CENTRAL-DE-ACESSOS.md)
-- [Machado Profissional 1.1.0 — web, iPhone e APK da equipe](apps/profissional/README.md)
-- [Machado Gestão 1.19.6 — administração](apps/administracao/README.md)
+- [Site e agendamento](https://barbearia-machado-rose.vercel.app/).
+- [Administração no PC](https://barbearia-machado-rose.vercel.app/admin).
+- [Administração web / iPhone, com a interface do Android](https://barbearia-machado-rose.vercel.app/app).
+- [Profissionais web / iPhone](https://barbearia-machado-rose.vercel.app/profissional).
+- [Central de links e downloads](docs/CENTRAL-DE-ACESSOS.md).
+- [Entrega e uso desta atualização](docs/ENTREGA-1.19.9.md).
+- [Cadastro e isolamento das unidades](docs/UNIDADES-E-CADASTRO.md).
 
-## Aplicativo dos profissionais
+## Contas e unidades
 
-Todos os profissionais usam o mesmo site `/profissional` e o mesmo APK. Cada login abre **Minha Agenda**, **Meu Caixa** e **Menu** do perfil conectado. O administrador define e altera o e-mail e a senha em **Menu → Profissionais**. No Menu profissional, cada barbeiro pode atualizar a foto e configurar, ocultar ou remover suas metas. Metas e indicadores são pessoais; o extrato inclui apenas a comissão do profissional. Sessões web profissionais e administrativas usam cookies separados. Os acessos existentes são preservados.
+O Machado Gestão usa e-mail e senha no Android e na web. A sessão permanece enquanto for válida. **Criar conta** abre outra unidade independente: clientes, profissionais, Agenda, Caixa, produtos, serviços, metas e backups próprios. O cadastro não concede acesso à Machado existente. Ao cadastrar, guarde os três códigos de recuperação exibidos uma única vez. A administração existente e seu histórico são preservados.
 
-Os componentes profissionais estão em `src/professional/`, a API limitada em `server/professionals.mjs` e a migração em `database/008_professional_workspace.sql`. O APK `Machado Profissional` tem identificador próprio e login individual, permitindo instalar junto do administrador. Veja os guias em `apps/` para compilar cada edição. O sistema mantém o banco operacional compartilhado para sincronizar a Agenda com a barbearia.
+O responsável define o login dos barbeiros em **Menu → Profissionais**. Todos usam o mesmo aplicativo profissional e o mesmo endereço; cada login abre somente a própria agenda e as próprias comissões. Sessões administrativas e profissionais têm cookies separados. As senhas são armazenadas como hashes; não podem ser consultadas depois.
 
-## Desenvolvimento
+## Metas, relatórios e interface
 
-Use Node.js 24 e `npm ci`. Configure `.env.local` a partir de `.env.example`, com credenciais do ambiente de desenvolvimento. Nenhuma credencial de banco ou Blob pode ter prefixo `VITE_`.
+Somente a administração define metas semanais de comissão, serviços e clientes, pelo perfil profissional ou por Relatórios. O barbeiro acompanha o progresso e pode ocultar a visualização, sem editar valores. Relatórios administrativos têm filtros de período e profissional, gráfico de participação, evolução diária e exportação CSV. O profissional vê apenas seus resultados.
 
-Execute `npm run dev:api` e `npm run dev` em terminais separados. O Vite encaminha `/api` para a API local na porta 3000.
+O Caixa profissional destaca saldo, progresso, histórico semanal e extrato compacto, com detalhes em janelas. O visual carvão e verde musgo é compartilhado entre Android, web e iPhone. Para atualizar os dados, puxe a tela para baixo a partir do topo; o comando também fica acessível pelo teclado. Os links das versões web estão no Menu de cada edição.
 
-## Validação
+## Desenvolvimento e verificações
 
-`npm run build` verifica TypeScript, renderização das telas e cálculos financeiros antes de gerar `dist`. `npm run lint` verifica o código. Os scripts `test:database`, `test:api`, `test:browser` e `backup:verify` documentam as verificações integradas; as contas temporárias e credenciais de QA ficam em `.private`, que é excluído do Git e da publicação. Os testes de operação devem ser executados em ambiente isolado ou com as fixtures revertidas.
+Use Node.js 24, npm ci e um .env.local configurado a partir de .env.example. Credenciais de banco e Blob são exclusivas do servidor. Execute npm run dev:api e npm run dev. O Vite encaminha /api para a porta 3000.
 
-## Banco e autenticação
+npm run lint e npm run build verificam código, tipos, renderização e cálculos. Os scripts de unidades usam bancos descartáveis e credenciais privadas locais. Consulte o guia de entrega para os testes desta versão. Não execute scripts antigos de QA contra a produção sem revisar suas fixtures.
 
-`database/001_initial.sql` preserva o schema operacional migrado. `002_auth.sql` contém o schema gerado pelo Better Auth, e `003_readiness.sql` acrescenta catálogo público seguro, validações, recuperação por códigos e metadados de backup. Os helpers SQL `auth.uid()` e `auth.users` são locais ao PostgreSQL: mantêm as referências históricas e não dependem de serviços Supabase.
+## Banco e backups
 
-O navegador acessa apenas endpoints permitidos da API. A API valida a sessão Better Auth e o perfil ativo antes das operações administrativas. O identificador autenticado é aplicado na transação SQL. Não há conexão de banco nem credenciais privilegiadas no frontend. Cadastro público de administradores está desativado. A migração inicial não sobrescreve bancos já inicializados.
+As migrações ficam em database/. A 011 adiciona unidades, políticas RLS, referências compostas e papel de execução sem BYPASSRLS; a012 torna as metas administradas pela gestão e identifica backups por unidade. Use npm run db:units -- --check para ensaiar sem persistir e --apply somente no processo de publicação documentado.
 
-Os arquivos da antiga integração Supabase foram mantidos em `supabase/` como histórico e referência de testes. Eles não são executados no ambiente atual.
+O backup exportado por um proprietário contém só a unidade dele, incluindo hashes das contas e códigos de recuperação, sem senhas em texto nem sessões ativas. Guarde-o em local privado. O cron protegido /api/backup-daily produz a cópia global de recuperação no Blob privado. A verificação de restauração usa tabelas temporárias e não muda a operação. Os arquivos supabase/ são históricos; a operação atual usa Neon.
 
-As migrações 004/005 já aplicadas permanecem registradas como histórico do banco. O retorno visual à base 1.19 não exige reverter dados nem executar migrações. A navegação inferior e os fluxos da base 1.19 foram restaurados; os ajustes atuais são de destaque da seção ativa e centralização dos profissionais.
+## Android e iPhone
 
-## Backups
+Administração: npm run android:sync e android/gradlew.bat assembleRelease. Profissional: npm run android:professional. Assinatura local em android/keystore.properties, fora do Git. Os dois pacotes são separados e usam login individual; nenhum acesso administrativo é embutido. Alterações web exigem novo APK para os aparelhos instalados.
 
-O cron `/api/backup-daily` é protegido por `CRON_SECRET` e gera uma cópia no Blob privado. O proprietário também pode exportar um backup pelo menu. Sessões ativas e códigos de recuperação não são incluídos nos arquivos de exportação. A verificação de restauração usa tabelas temporárias e não altera a operação.
-
-## Android
-
-Execute `npm run android:prepare-access`, `npm run android:sync` e depois `android/gradlew.bat assembleRelease`. A chave e o acesso automático ficam fora do Git; `android/keystore.properties` e `android/native-access.properties` configuram o Gradle. O APK da distribuição privada dá acesso direto à gestão e não deve ser publicado em repositórios ou canais abertos. Alterações do site precisam ser incorporadas em um novo APK para chegar aos aparelhos instalados.
-
-Consulte `docs/ENTREGA-1.19-AJUSTADA.md` para instalação, acesso, operação, suporte e homologação.
-
-## iPhone e iPad
-
-Para usar no iPhone pelo Safari, abra `/app` e adicione à Tela de Início. Esse modo usa as mesmas telas e estilos do Android e tem manifesto próprio. As instruções ficam em `/app/instalar`; consulte [o guia do aplicativo web](docs/APP-WEB-ANDROID.md). O painel de PC continua em `/admin`.
-
-O projeto nativo está em `ios/App/App.xcodeproj`, baseado na versão 1.19.4. Ele usa o mesmo aplicativo, com acesso automático da distribuição privada, ícone e abertura próprios, seleção de fotos e compartilhamento de arquivos pelo iOS. Compatível com iOS/iPadOS 15 ou mais recente; a compilação exige Xcode 26 ou mais recente.
-
-Execute `npm run ios:prepare-access` e `npm run ios:sync`. No Mac, `npm run ios:open` abre o projeto no Xcode. Selecione a equipe Apple Developer para assinar e instalar no aparelho ou distribuir pelo TestFlight. O acesso privado fica em `ios/App/App/ManagedAccess.private.plist`, ignorado pelo Git e excluído da hospedagem web.
-
-`npm run ios:check` verifica a integração do projeto. O workflow **Verificar iPhone** compila para simulador e dispositivo em um Mac do GitHub, sem assinatura e sem acesso à barbearia. Ele não distribui um instalador. Consulte [a entrega para iPhone](docs/IPHONE-1.19.4.md) para concluir a assinatura no Xcode.
+No iPhone, abra /app ou /profissional no Safari e use **Compartilhar → Adicionar à Tela de Início**. As edições web instaláveis exigem internet. O projeto nativo iOS existe e tem verificações de integração; a distribuição nativa via TestFlight/App Store exige Mac, Xcode e Apple Developer. A entrega disponível ao iPhone nesta etapa é a versão web instalável.

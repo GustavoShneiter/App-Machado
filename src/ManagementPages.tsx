@@ -113,7 +113,7 @@ export function Modal({
       className="modal-backdrop"
       onClick={() => closeRef.current()}
       onKeyDown={(event) => {
-        if (event.key === "Escape") closeRef.current();
+        if (event.key === "Escape") { event.stopPropagation(); closeRef.current(); }
       }}
     >
       <section

@@ -26,7 +26,11 @@ import {
   ClipboardList,
   Plus,
 } from "lucide-react";
-import { bookingSiteUrl, appVersion } from "./runtime";
+import { bookingSiteUrl, appVersion, publicSiteUrl } from "./runtime";
+import { useCatalog } from './CatalogStore';
+import { RefreshGesture } from './RefreshGesture';
+import { AdminReports } from './reports/AdminReports';
+import './unit-access.css';
 import { ServicesV2, ProfessionalsV2 } from "./OperationalPages";
 import { AdminAccess } from "./AdminAccess";
 import { OperationsProvider, useOperations } from "./OperationsStore";
@@ -35,7 +39,6 @@ import {
   Agenda,
   Customers,
   CashManagement,
-  Reports,
   Products,
   Orders,
   Modal,
@@ -46,7 +49,6 @@ import { backend } from "./dataClient";
 import { dismissTopLayer, registerDismissibleLayer } from "./dismissibleLayers";
 import { BackupPanel } from './BackupPanel';
 import { AgendaCreateModal } from './AgendaScheduling';
-import { AdminWebHelp } from './AdminWebApp';
 import { copyText } from './deviceTools';
 import { isAppExperience } from './appExperience';
 
@@ -82,6 +84,9 @@ export function AdminLayout() {
   const activeSection = sectionIndex >= 0 ? sectionIndex : location.pathname === '/admin' ? -1 : 4;
   const { loading, error, busy, refreshed, refresh, clearError } =
     useOperations();
+  const { refresh: refreshCatalog, business } = useCatalog();
+  const refreshTarget = useRef<HTMLElement>(null);
+  const refreshAll = async () => { await Promise.all([refresh(), refreshCatalog?.()]); };
   const isCommands = location.pathname.endsWith("/comandas");
   const isClients = location.pathname.endsWith("/clientes");
   const isCash = location.pathname.endsWith("/caixa");
@@ -139,15 +144,16 @@ export function AdminLayout() {
             </NavLink>
           ))}
         </nav>
-        {!isAppExperience() && <button
+        <button
           className="outline"
           onClick={() => void backend?.auth.signOut()}
         >
           Sair da conta
-        </button>}
+        </button>
       </aside>
       {sidebar && <div className="scrim" onClick={() => setSidebar(false)} />}
-      <main className="main">
+      <main className="main" ref={refreshTarget}>
+        <RefreshGesture target={refreshTarget} refresh={refreshAll} disabled={busy || loading} />
         <header className="topbar">
           <button
             className="icon-btn menu-trigger"
@@ -157,19 +163,12 @@ export function AdminLayout() {
             <Menu />
           </button>
           <div>
-            <p className="eyebrow">Barbearia Machado</p>
+            <p className="eyebrow">{business?.name || 'Barbearia Machado'}</p>
             <small>
               {refreshed ? `Atualizado às ${refreshed}` : "Carregando dados…"}
             </small>
           </div>
           <div className="top-actions">
-            <button
-              className="outline small"
-              disabled={busy}
-              onClick={() => void refresh()}
-            >
-              Atualizar
-            </button>
             {showTopCreate && (
               <button className="primary compact" onClick={openCreate}>
                 {createLabel}
@@ -215,7 +214,7 @@ export function AdminLayout() {
                 />
               }
             />
-            <Route path="relatorios" element={<Reports />} />
+            <Route path="relatorios" element={<AdminReports />} />
             <Route path="produtos" element={<Products />} />
             <Route path="servicos" element={<ServicesV2 />} />
             <Route path="profissionais" element={<ProfessionalsV2 />} />
@@ -290,7 +289,9 @@ function SettingsPage() {
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
   const { run, busy, error } = useOperations();
+  const { business } = useCatalog();
   const origin = bookingSiteUrl;
+  const bookingLink = origin + '/' + (business?.unit_slug ? '?unidade=' + encodeURIComponent(business.unit_slug) : '');
   return (
     <Page
       title="Menu"
@@ -353,11 +354,11 @@ function SettingsPage() {
           online.
         </p>
         <div className="copy-field">
-          <code>{origin}/</code>
+          <code>{bookingLink}</code>
           <button
             onClick={async () => {
               try {
-                await copyText(origin + "/");
+                await copyText(bookingLink);
                 setCopied(true);
               } catch {
                 setCopied(false);
@@ -366,19 +367,23 @@ function SettingsPage() {
           >
             {copied ? "Copiado" : "Copiar"}
           </button>
-          <a href={origin + "/"} target="_blank" rel="noreferrer">
+          <a href={bookingLink} target="_blank" rel="noreferrer">
             Abrir
           </a>
         </div>
         <h3>Acesso administrativo</h3>
-        <AdminWebHelp />
-        <p>{appExperience ? 'Este aplicativo abre automaticamente a gestão da barbearia.' : 'Somente contas administrativas autorizadas acessam o painel.'}</p><p>Versão {appVersion}</p>
-        {!appExperience && <><Link className="outline" to="/recuperar-acesso">Alterar senha</Link><button
+        <div className="admin-web-versions" aria-label="Versões web da administração">
+          <a className="outline" href={`${publicSiteUrl}/admin`} target="_blank" rel="noreferrer"><span><strong>Versão web admin</strong><small>Painel para computador</small></span><ArrowRight size={18} /></a>
+          <a className="outline" href={`${publicSiteUrl}/app`} target="_blank" rel="noreferrer"><span><strong>Versão web</strong><small>O mesmo app no navegador e no iPhone</small></span><ArrowRight size={18} /></a>
+        </div>
+        <p className="unit-access-help">No iPhone, abra a Versão web pelo Safari e use Compartilhar → Adicionar à Tela de Início. Os dois painéis usam o e-mail e a senha da mesma unidade.</p>
+        <p>Entre com o e-mail e a senha da conta administrativa desta unidade.</p><p>Versão {appVersion}</p>
+        <div className="row-actions"><Link className="outline" to="/recuperar-acesso">Recuperar acesso</Link><button
           className="outline"
           onClick={() => void backend?.auth.signOut()}
         >
           Sair da conta
-        </button></>}
+        </button></div>
       </section>
       {appExperience ? <section className="panel operation-panel"><h3>Administração do proprietário</h3><p>As cópias de segurança continuam automáticas. Para exportar cópias ou reiniciar a operação, acesse o painel do proprietário no navegador.</p><a className="outline" href={`${origin}/admin`} target="_blank" rel="noreferrer">Abrir painel no navegador</a></section> : <><BackupPanel />
       <section className="panel operation-panel danger-zone">

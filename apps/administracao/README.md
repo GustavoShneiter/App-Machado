@@ -1,14 +1,14 @@
-# Machado Gestão 1.19.8 — Administração
+# Machado Gestão 1.19.9 — Administração
 
-- [Painel para PC](https://barbearia-machado-rose.vercel.app/admin).
-- [Aplicativo web / iPhone, com a interface do Android](https://barbearia-machado-rose.vercel.app/app).
-- [Como adicionar ao iPhone](https://barbearia-machado-rose.vercel.app/app/instalar).
-- [Central de links](../../docs/CENTRAL-DE-ACESSOS.md).
+- [Web admin para PC](https://barbearia-machado-rose.vercel.app/admin).
+- [Versão web / iPhone com a interface do Android](https://barbearia-machado-rose.vercel.app/app).
+- [Android 1.19.9](https://github.com/GustavoShneiter/App-Machado/releases/download/gestao-v1.19.9/Machado-Gestao-v1.19.9.apk).
+- [Guia da atualização](../../docs/ENTREGA-1.19.9.md).
 
-Mantém as cinco seções da base 1.19: Caixa, Comandas, Agenda, Clientes e Menu. O administrador cria e gerencia o acesso individual dos profissionais em **Menu → Profissionais**.
+Mantém Caixa, Comandas, Agenda, Clientes e Menu. Conta administrativa com e-mail e senha em todas as edições. Criar conta cadastra uma nova unidade independente; não acrescenta um administrador à unidade atual. Guarde os códigos de recuperação do cadastro.
 
-Ao salvar um profissional novo, o administrador escolhe o e-mail e a senha; a criação da conta ocorre na mesma transação. Na edição, os campos de login mostram somente o acesso daquele profissional. **Salvar acesso** permite mudar o e-mail e definir uma nova senha; deixar a senha vazia mantém a atual. Alterar os dados de login revoga sessões anteriores. Desativar o profissional bloqueia o acesso. Toda a equipe usa o mesmo endereço `/profissional` e o mesmo APK profissional.
+Em **Menu → Profissionais**, o responsável define e-mail/senha dos barbeiros e as metas semanais. Deixar a senha vazia na edição preserva a atual. Alterá-la revoga as sessões anteriores; inativar o profissional bloqueia seu acesso. As metas também podem ser definidas em Relatórios, que reúne filtros, gráficos, comissões e CSV.
 
-O aplicativo Android administrativo tem identificador `com.barbeariamachado.gestao`, versão 1.19.8, código 29. Sua distribuição privada contém acesso gerenciado e permanece fora dos anexos públicos do GitHub. O APK profissional é outro aplicativo, com login individual e identificação própria.
+No Menu aparecem **Versão web admin** e **Versão web**, nesta ordem. Para atualizar dados, puxe para baixo a partir do topo. O aplicativo usa o mesmo visual verde musgo da web e dos profissionais.
 
-Fontes: `src/AdminApp.tsx`, `src/OperationalPages.tsx`, `src/ManagementPages.tsx`. Os componentes visuais de Agenda e janelas são compartilhados com a edição profissional para manter o mesmo padrão, com ações e dados limitados no servidor.
+Android: identificador com.barbeariamachado.gestao, código 30. Login individual, sem conta administrativa fixa no pacote. Assinatura igual à distribuição anterior. Fontes principais em src/AdminApp.tsx, src/OperationalPages.tsx, src/ManagementPages.tsx e src/reports/. [Isolamento das unidades](../../docs/UNIDADES-E-CADASTRO.md).

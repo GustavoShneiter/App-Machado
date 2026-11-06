@@ -1,0 +1,192 @@
+.machado-reports,.admin-professional-goals,.report-goal-editor,.report-period-editor,.report-donut,.report-trend {
+  --r-ground:#121212; --r-surface:#1c1c1e; --r-raised:#252527; --r-line:#343436;
+  --r-text:#ecf0e9; --r-muted:#b2b9ac; --r-accent:#a6bf87; --r-action:#526e38;
+  font-variant-numeric:tabular-nums;
+}
+.app-shell .page.machado-reports { max-width:1380px; padding-top:24px; padding-bottom:100px; }
+.app-shell>.main:has(.machado-reports) { background:#121212; }
+.app-shell:has(.machado-reports)>.sidebar nav a.active { background:#25301f; box-shadow:none; }
+.app-shell:has(.machado-reports) .mobile-nav-highlight { background:#25301f; box-shadow:none; }
+.app-shell .machado-reports :is(h1,h2,h3,h4) { letter-spacing:-.025em; }
+.app-shell .report-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:20px; }
+.app-shell .report-heading h1 { font-size:26px; line-height:1.2; font-weight:600; margin:0 0 7px; }
+.app-shell .report-heading p { color:var(--r-muted); font-size:13px; line-height:1.5; margin:0; }
+.app-shell .report-export { min-height:44px; display:inline-flex; gap:8px; align-items:center; padding:10px 12px; background:transparent; color:var(--r-text); border:1px solid #ffffff26; border-radius:10px; font-size:13px; }
+.app-shell .report-filterbar { display:flex; gap:12px; align-items:center; justify-content:space-between; margin:0 0 24px; }
+.app-shell .report-professional-select { display:flex; align-items:center; gap:10px; min-width:0; color:var(--r-muted); font-size:13px; }
+.app-shell .report-professional-select>span { white-space:nowrap; }
+.app-shell .report-professional-select select { min-height:44px; width:230px; max-width:100%; border:1px solid #ffffff26; background:#1c1c1e; color:var(--r-text); padding:10px 32px 10px 12px; font-size:13px; }
+.app-shell .report-period-trigger { display:flex; align-items:center; gap:8px; min-height:44px; padding:10px 12px; background:#ffffff04; color:var(--r-text); border:1px solid #ffffff26; border-radius:10px; font-size:13px; flex:none; }
+.app-shell .report-summary-strip { display:grid; grid-template-columns:1.2fr repeat(3,minmax(0,1fr)); margin:0 0 24px; padding:19px 0; border-top:1px solid #2b2b2d; border-bottom:1px solid #2b2b2d; }
+.app-shell .report-summary-strip>div { min-width:0; padding:0 20px; border-left:1px solid #2b2b2d; }
+.app-shell .report-summary-strip>div:first-child { padding-left:0; border-left:0; }
+.app-shell .report-summary-strip>div:last-child { padding-right:0; }
+.app-shell .report-summary-strip span { display:block; color:var(--r-muted); font-size:13px; line-height:1.5; }
+.app-shell .report-summary-strip strong { display:block; color:var(--r-text); font-family:'Machado Space','DM Sans',sans-serif; font-weight:500; font-size:25px; margin:8px 0 5px; letter-spacing:-.03em; overflow-wrap:anywhere; }
+.app-shell .report-summary-strip>div:first-child strong { font-size:32px; }
+.app-shell .report-summary-strip small { display:block; color:var(--r-muted); font-size:11px; line-height:1.6; }
+/* PC: 2 adjacent 50% columns, one 18px gutter; mobile retains one full-width track. */
+.app-shell .report-charts-grid { display:grid; grid-template-columns:1fr 1fr; align-items:stretch; gap:18px; margin-bottom:28px; }
+.app-shell .report-chart-section { min-width:0; background:var(--r-surface); border:0; border-radius:16px; padding:20px; box-shadow:none; }
+.app-shell .report-section-title { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+.app-shell .report-section-title :is(h2,h3) { font-size:16px; font-weight:600; margin:0; color:var(--r-text); }
+.app-shell .report-section-title p { color:var(--r-muted); font-size:13px; line-height:1.6; margin:5px 0 0; }
+.app-shell .report-section-title>span { color:var(--r-muted); font-size:12px; white-space:nowrap; flex:none; }
+.app-shell .report-donut { display:grid; grid-template-columns:minmax(140px,180px) minmax(0,1fr); align-items:center; gap:18px; margin:0; }
+.app-shell .report-donut-drawing { position:relative; width:100%; max-width:190px; aspect-ratio:1; container-type:inline-size; justify-self:center; }
+.app-shell .report-donut-drawing>svg { display:block; width:100%; height:100%; }
+.app-shell .report-donut-track { stroke:#ffffff0c; }
+.app-shell .report-donut-segment { transform:rotate(-90deg); transform-origin:100px 100px; transition:stroke .18s; }
+.app-shell .report-donut-total { position:absolute; inset:28%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; text-align:center; pointer-events:none; }
+.app-shell .report-donut-total span { color:var(--r-muted); font-size:11px; line-height:1.45; }
+.app-shell .report-donut-total strong { color:var(--r-text); font-family:'Machado Space','DM Sans',sans-serif; font-weight:500; white-space:nowrap; letter-spacing:-.025em; font-size:clamp(14px,10cqi,22px); }
+.app-shell .report-donut-breakdown { min-width:0; }
+.app-shell .report-donut-breakdown>ul { list-style:none; padding:0; margin:0; }
+.app-shell .report-legend-row { display:grid; grid-template-columns:7px minmax(0,1fr) auto; gap:10px; align-items:center; width:100%; min-height:45px; padding:6px 0; background:transparent; color:var(--r-text); text-align:left; font-size:13px; }
+.app-shell .report-legend-row>span:nth-child(2) { min-width:0; line-height:1.45; overflow-wrap:anywhere; }
+.app-shell .report-legend-row small { display:block; color:var(--r-muted); font-size:11px; margin-top:3px; }
+.app-shell .report-legend-row strong { font-size:13px; font-weight:500; color:var(--r-text); text-align:right; white-space:nowrap; }
+.app-shell .report-legend-mark { width:7px; height:7px; border-radius:50%; }
+.app-shell .report-chart-empty { color:var(--r-muted); font-size:13px; line-height:1.7; margin:0; }
+.app-shell .report-chart-note { color:var(--r-muted); font-size:11px; line-height:1.6; margin:8px 0 0; }
+.app-shell .report-chart-values { margin-top:12px; color:var(--r-muted); font-size:12px; }
+.app-shell .report-chart-values summary { min-height:40px; display:flex; align-items:center; cursor:pointer; color:var(--r-accent); }
+.app-shell .report-chart-values ul { list-style:none; padding:0; margin:4px 0; }
+.app-shell .report-chart-values li { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid #2b2b2d; }
+.app-shell .report-chart-values strong { color:var(--r-text); font-size:12px; font-weight:500; text-align:right; white-space:nowrap; }
+.app-shell .report-chart-values table { width:100%; border-collapse:collapse; margin-top:7px; font-size:12px; }
+.app-shell .report-chart-values :is(th,td) { padding:10px 0; border-bottom:1px solid #2b2b2d; text-align:left; font-weight:400; }
+.app-shell .report-chart-values :is(th:last-child,td:last-child) { text-align:right; }
+.app-shell .report-trend { min-width:0; margin:0; }
+.app-shell .report-trend>svg { display:block; width:100%; height:auto; min-height:160px; overflow:visible; }
+.app-shell .report-trend text { fill:var(--r-muted); font-family:'DM Sans',Arial,sans-serif; font-size:12px; }
+.app-shell .report-chart-grid { stroke:#ffffff10; stroke-width:1; }
+.app-shell .report-trend-line { stroke:var(--r-accent); stroke-width:2.5; stroke-linejoin:round; vector-effect:non-scaling-stroke; }
+.app-shell .report-trend-zero { stroke:#8a9184; }
+.app-shell .report-trend-dot { fill:var(--r-accent); }
+.app-shell .report-team-section { margin-bottom:30px; }
+.app-shell .report-person-heading,.app-shell .report-person-row { display:grid; grid-template-columns:minmax(160px,1.5fr) repeat(3,minmax(95px,1fr)) 70px; align-items:center; gap:16px; }
+.app-shell .report-person-heading { min-height:38px; color:var(--r-muted); font-size:12px; }
+.app-shell .report-person-heading>span:not(:first-child) { text-align:right; }
+.app-shell .report-person-row { min-height:80px; padding:14px 0; border-top:1px solid #2b2b2d; }
+.app-shell .report-person-identity { display:flex; gap:12px; align-items:center; min-width:0; }
+.app-shell .report-person-identity>img,.app-shell .report-person-identity>span { width:36px; height:36px; border-radius:50%; object-fit:cover; flex:none; background:#2b3027; color:#cfdbc3; display:grid; place-items:center; font-size:12px; }
+.app-shell .report-person-identity>div { min-width:0; }
+.app-shell .report-person-identity strong { display:block; font-size:14px; font-weight:500; color:var(--r-text); overflow-wrap:anywhere; }
+.app-shell .report-person-identity small { display:block; font-size:12px; color:var(--r-muted); margin-top:5px; line-height:1.45; }
+.app-shell .report-person-number { text-align:right; min-width:0; }
+.app-shell .report-person-number strong { color:var(--r-text); font-size:14px; font-weight:500; white-space:nowrap; }
+.app-shell .report-person-number small { display:block; color:var(--r-muted); font-size:11px; margin-top:5px; }
+.app-shell .report-mobile-label { display:none; }
+.app-shell .report-person-goals { justify-self:end; min-height:44px; padding:8px 10px; border:1px solid #ffffff26; background:transparent; color:var(--r-text); border-radius:9px; font-size:12px; }
+.app-shell .report-context-note { padding-top:13px; margin-top:5px; border-top:1px solid #2b2b2d; color:var(--r-muted); font-size:12px; line-height:1.75; }
+.app-shell .report-context-note p { margin:0 0 5px; }
+.app-shell .report-context-note summary { display:flex; align-items:center; min-height:44px; cursor:pointer; color:var(--r-accent); }
+.app-shell .report-context-note[open] summary { margin-bottom:9px; }
+.app-shell .report-activity-section { padding-top:20px; border-top:1px solid #2b2b2d; }
+.app-shell .report-detail-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin:4px 0 16px; }
+.app-shell .report-detail-summary>div { padding:0 16px; border-left:1px solid #2b2b2d; }
+.app-shell .report-detail-summary>div:first-child { border-left:0; padding-left:0; }
+.app-shell .report-detail-summary small { display:block; color:var(--r-muted); font-size:12px; margin-bottom:8px; }
+.app-shell .report-detail-summary strong { color:var(--r-text); font-size:22px; font-weight:500; }
+.app-shell .report-chart-activity { border-top:1px solid #2b2b2d; padding-top:17px; margin-top:15px; margin-bottom:0; }
+.app-shell .report-detail-toggle { width:100%; min-height:44px; display:flex; justify-content:space-between; align-items:center; gap:12px; background:transparent; color:var(--r-text); padding:12px 0; font-size:14px; text-align:left; }
+.app-shell .report-appointment-list { padding-top:6px; }
+.app-shell .report-appointment-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; padding:14px 0; border-top:1px solid #2b2b2d; }
+.app-shell .report-appointment-row strong { display:block; color:var(--r-text); font-size:13px; font-weight:500; }
+.app-shell .report-appointment-row :is(small,time) { color:var(--r-muted); font-size:12px; line-height:1.6; }
+.app-shell .report-appointment-row small { display:block; margin-top:4px; }
+.app-shell .report-appointment-row>div:last-child { text-align:right; }
+.app-shell .report-empty { padding:20px 0; font-size:13px; line-height:1.7; color:var(--r-muted); }
+.app-shell .report-period-editor,.app-shell .report-goal-editor { padding:20px; }
+.app-shell .report-period-presets { display:grid; gap:7px; margin-bottom:20px; }
+.app-shell .report-period-presets button { min-height:44px; text-align:left; padding:11px 13px; background:#ffffff04; color:var(--r-text); border:1px solid #ffffff17; border-radius:10px; font-size:13px; }
+.app-shell .report-period-presets button[aria-pressed=true] { border-color:#a6bf8766; background:#a6bf8710; }
+.app-shell .report-period-fields { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.app-shell :is(.report-period-fields,.report-goal-editor) .field { color:var(--r-text); font-size:13px; font-weight:500; }
+.app-shell :is(.report-period-fields,.report-goal-editor) input { min-height:44px; font-size:16px; }
+.app-shell .report-editor-description { font-size:13px; line-height:1.75; color:var(--r-muted); margin:0 0 18px; }
+.app-shell .report-editor-description strong { color:var(--r-text); font-weight:500; }
+.app-shell .report-editor-footer { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+.app-shell .report-editor-footer button { min-height:44px; padding:10px 15px; }
+.app-shell .report-editor-error { padding:12px; margin:12px 0; background:#402c25; color:#f0c3b4; border-radius:9px; font-size:13px; line-height:1.7; }
+.app-shell .report-goal-fields { display:grid; gap:15px; }
+.app-shell .report-goal-fields .field { margin:0; }
+.app-shell .report-goal-fields .field small { color:var(--r-muted); font-size:12px; line-height:1.6; margin-top:5px; }
+.app-shell .report-goal-editor .report-goal-week { font-size:12px; line-height:1.7; color:var(--r-muted); margin:0 0 18px; }
+.app-shell .report-goal-editor button:disabled { opacity:1; color:#bdc2b7; background:#30322e; cursor:wait; }
+.app-shell .admin-professional-goals { margin:20px 0 10px; padding-top:18px; border-top:1px solid #ffffff18; }
+.app-shell .admin-professional-goals>div:first-child { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.app-shell .admin-professional-goals h3 { display:flex; align-items:center; gap:8px; margin:0; font-size:14px; font-weight:600; color:var(--r-text); }
+.app-shell .admin-professional-goals>p { font-size:12px; color:var(--r-muted); line-height:1.7; margin:10px 0 13px; }
+.app-shell .admin-professional-goals button { min-height:44px; padding:9px 11px; font-size:12px; background:#ffffff04; color:var(--r-text); border:1px solid #ffffff26; border-radius:9px; }
+.app-shell .admin-goal-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.app-shell .admin-goal-summary small { display:block; color:var(--r-muted); font-size:11px; margin:0 0 6px; line-height:1.5; }
+.app-shell .admin-goal-summary strong { color:var(--r-text); font-size:15px; font-weight:500; overflow-wrap:anywhere; }
+.app-shell .admin-goal-summary span { display:block; color:var(--r-muted); font-size:11px; line-height:1.5; }
+.app-shell .admin-goal-success { font-size:12px; line-height:1.6; color:var(--r-accent); margin:12px 0 0; }
+.app-shell :is(.machado-reports,.report-donut,.report-period-editor,.report-goal-editor,.admin-professional-goals) :is(button,a,select,input,summary):focus-visible { outline:2px solid var(--r-accent); outline-offset:3px; }
+@media(hover:hover) {
+  .app-shell button.report-legend-row:hover,.app-shell :is(.report-export,.report-period-trigger,.report-person-goals):hover { background:#ffffff07; }
+}
+@media(max-width:1100px) {
+  .app-shell .report-charts-grid { grid-template-columns:1fr; }
+  .app-shell .report-chart-section:has(.report-trend) { padding-bottom:12px; }
+  .app-shell .report-donut { grid-template-columns:minmax(140px,180px) minmax(0,1fr); max-width:620px; margin-inline:auto; }
+}
+@media(max-width:700px) {
+  .app-shell .page.machado-reports { padding-inline:16px; padding-bottom:calc(110px + env(safe-area-inset-bottom,0px)); }
+  .app-shell .report-heading { margin-bottom:18px; }
+  .app-shell .report-heading h1 { font-size:24px; }
+  .app-shell .report-export span { display:none; }
+  .app-shell .report-export { width:44px; height:44px; justify-content:center; padding:0; }
+  .app-shell .report-filterbar { gap:9px; margin-bottom:20px; }
+  .app-shell .report-professional-select { flex:1; }
+  .app-shell .report-professional-select>span { display:none; }
+  .app-shell .report-professional-select select { width:100%; min-width:0; font-size:14px; }
+  .app-shell .report-period-trigger { gap:6px; padding:10px; }
+  .app-shell .report-period-trigger>svg:last-child { display:none; }
+  .app-shell .report-summary-strip { grid-template-columns:1fr 1fr; gap:21px 0; padding:18px 0; margin-bottom:20px; }
+  .app-shell .report-summary-strip>div { padding:0 14px; }
+  .app-shell .report-summary-strip>div:nth-child(odd) { padding-left:0; border-left:0; }
+  .app-shell .report-summary-strip>div:nth-child(even) { padding-right:0; }
+  .app-shell .report-summary-strip strong { font-size:23px; margin:7px 0 4px; }
+  .app-shell .report-summary-strip>div:first-child strong { font-size:28px; }
+  .app-shell .report-summary-strip small { font-size:11px; }
+  .app-shell .report-charts-grid { gap:16px; margin-bottom:25px; }
+  .app-shell .report-chart-section { padding:17px; }
+  .app-shell .report-section-title { margin-bottom:14px; }
+  .app-shell .report-section-title :is(h2,h3) { font-size:15px; }
+  .app-shell .report-donut { grid-template-columns:minmax(112px,132px) minmax(0,1fr); gap:12px; }
+  .app-shell .report-legend-row { grid-template-columns:6px minmax(0,1fr); gap:3px 8px; min-height:49px; padding:5px 0; }
+  .app-shell .report-legend-row>span:nth-child(2) { font-size:12px; }
+  .app-shell .report-legend-row small { display:inline; font-size:11px; margin:0 0 0 5px; }
+  .app-shell .report-legend-row strong { grid-column:2; text-align:left; font-size:13px; }
+  .app-shell .report-trend>svg { min-height:155px; }
+  .app-shell .report-person-heading { display:none; }
+  .app-shell .report-person-row { grid-template-columns:minmax(0,1fr) auto; gap:12px; padding:15px 0; }
+  .app-shell .report-person-identity { grid-column:1; }
+  .app-shell .report-person-gross { grid-column:2; grid-row:1; }
+  .app-shell .report-person-secondary { grid-column:1; grid-row:3; text-align:left; padding-left:48px; }
+  .app-shell .report-person-secondary strong { font-size:13px; }
+  .app-shell .report-person-secondary small { display:block; margin:4px 0 0; }
+  .app-shell .report-mobile-label { display:inline; color:var(--r-muted); font-size:11px; }
+  .app-shell .report-person-received { grid-column:1; grid-row:2; text-align:left; padding-left:48px; }
+  .app-shell .report-person-received strong { font-size:13px; }
+  .app-shell .report-person-received small { display:inline; margin-left:7px; }
+  .app-shell .report-person-goals { grid-column:2; grid-row:2 / span 2; min-height:44px; align-self:center; }
+  .app-shell .report-context-note { font-size:12px; }
+  .app-shell .report-detail-summary>div { padding:0 10px; }
+  .app-shell .report-detail-summary small { font-size:11px; }
+  .app-shell .report-detail-summary strong { font-size:21px; }
+  .app-shell .report-period-editor,.app-shell .report-goal-editor { padding:17px; }
+}
+@media(max-width:370px) {
+  .app-shell .report-period-trigger { font-size:11px; }
+  .app-shell .report-donut { grid-template-columns:112px minmax(0,1fr); }
+  .app-shell .report-donut-total span { font-size:11px; }
+  .app-shell .report-summary-strip>div:first-child strong { font-size:26px; }
+  .app-shell .report-summary-strip strong { font-size:21px; }
+}
+@supports(-webkit-touch-callout:none) { .app-shell .report-professional-select select { font-size:16px; } }
+@media(prefers-reduced-motion:reduce) { .app-shell .report-donut-segment { transition:none; } }

@@ -1,0 +1,27 @@
+.access-shell { padding:28px 18px; }
+.auth-shell .access-layout { width:min(420px,100%); }
+.auth-shell .access-card { width:100%; max-width:420px; padding:28px; border-radius:18px; text-align:left; }
+.auth-shell .access-card .brand-mark { margin:0 0 20px; background:#486531; color:#f0f4e9; }
+.auth-shell .access-card h1 { margin:0 0 10px; font-size:26px; line-height:1.2; letter-spacing:-.03em; }
+.auth-shell .access-card>p { margin:0 0 24px; font-size:13px; line-height:1.65; }
+.auth-shell .access-card .field { display:grid; gap:7px; margin:0 0 15px; font-size:13px; font-weight:500; }
+.auth-shell .access-card .field>span { margin:0; }
+.auth-shell .access-card .field input { width:100%; min-height:46px; padding:11px 12px; font-size:16px; }
+.auth-shell .access-card .access-password-note { margin:-2px 0 18px; font-size:12px; }
+.auth-shell .access-card .access-submit { display:flex; width:100%; min-height:46px; margin-top:18px; font-size:13px; justify-content:center; }
+.access-secondary { display:flex; justify-content:space-between; gap:18px; margin-top:23px; align-items:center; }
+.auth-shell .access-secondary :is(a,button),.auth-shell .access-card .access-install,.access-recheck { color:var(--m-accent,#a6bf87); font-size:12px; line-height:1.5; }
+.access-secondary button,.access-back,.access-recheck { padding:0; border:0; background:transparent; cursor:pointer; }
+.auth-shell .access-card .access-install { display:block; margin-top:20px; }
+.access-back { display:inline-flex; align-items:center; gap:7px; margin-bottom:22px; color:var(--m-muted,#a6b1a0); font-size:12px; min-height:28px; }
+.access-recheck { margin-top:18px; text-align:left; }
+.auth-shell .access-card .access-success { padding:12px; margin:16px 0; border-radius:9px; font-size:12px; background:#5d7c3b16; color:#c3d8ad; }
+.auth-shell .access-card .form-error { font-size:12px; line-height:1.6; margin:16px 0; }
+.access-recovery-codes { display:grid; gap:12px; margin-bottom:20px; }
+.access-recovery-codes>div { padding:12px; border:1px solid #ffffff1c; border-radius:9px; background:#ffffff03; }
+.access-recovery-codes span { display:block; color:var(--m-muted,#a6b1a0); font-size:11px; margin-bottom:8px; }
+.access-recovery-codes code { display:block; overflow-wrap:anywhere; color:#dfebd4; font-size:13px; line-height:1.7; }
+.auth-shell .access-card .access-recovery-note { font-size:12px; }
+.access-copy { display:flex; justify-content:center; align-items:center; width:100%; gap:8px; min-height:44px; font-size:13px; }
+@media(max-width:380px) { .auth-shell .access-card { padding:23px 20px; } .access-secondary { gap:12px; } }
+@media(max-height:620px) { .auth-shell.access-shell { align-items:start; } }

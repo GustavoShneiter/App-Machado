@@ -6,6 +6,7 @@ import { Page, Modal } from "./ManagementPages";
 import { money } from "./operations";
 import { uploadCatalogPhoto } from "./media";
 import { CredentialModal, LoginFields, ProfessionalAccessPanel } from './professional/ProfessionalAccessPanel';
+import { AdminProfessionalGoals } from './reports/AdminProfessionalGoals';
 
 export function ServicesV2() {
   const { services, professionals, updateService, addService, deleteService } = useCatalog();
@@ -378,6 +379,7 @@ export function ProfessionalsV2() {
               Ativo no agendamento
             </label>
             {draft.id ? <ProfessionalAccessPanel professionalId={draft.id} /> : <section className="professional-access-row"><strong>Login do profissional</strong><p>Defina o e-mail e a senha que este barbeiro usará para entrar.</p><LoginFields {...login} change={values => setLogin(previous => ({ ...previous, ...values }))} /></section>}
+            {draft.id && <AdminProfessionalGoals professionalId={draft.id} />}
             {error && <p className="form-error">{error}</p>}
             <div className="row-actions">
               <button className="primary" disabled={busy}>

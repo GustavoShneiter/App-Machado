@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { CalendarDays, Download, KeyRound, Menu, Plus, RefreshCw, Smartphone, WalletCards } from 'lucide-react'
+import { CalendarDays, Download, KeyRound, Menu, Plus, Smartphone, WalletCards } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
 import { App as CapacitorApp } from '@capacitor/app'
 import { apiRequest, backend } from '../dataClient'
-import { CatalogProvider } from '../CatalogStore'
+import { CatalogProvider, useCatalog } from '../CatalogStore'
+import { RefreshGesture } from '../RefreshGesture'
 import { OperationsProvider, useOperations } from '../OperationsStore'
 import { Agenda } from '../ManagementPages'
 import { dismissTopLayer } from '../dismissibleLayers'
@@ -77,6 +78,9 @@ function ProfessionalGate() {
 function ProfessionalLayout({ access, signedOut, photoUpdated }: { access: ProfessionalAccess; signedOut: () => void; photoUpdated: (url: string | null) => void }) {
   const { profile } = access
   const { busy, loading, error, refresh, clearError } = useOperations()
+  const { refresh: refreshCatalog } = useCatalog()
+  const refreshTarget = useRef<HTMLElement>(null)
+  const refreshAll = async () => { await Promise.all([refresh(), refreshCatalog?.()]) }
   const location = useLocation(), navigate = useNavigate()
   const cash = location.pathname.endsWith('/caixa')
   const menu = location.pathname.endsWith('/menu')
@@ -96,8 +100,9 @@ function ProfessionalLayout({ access, signedOut, photoUpdated }: { access: Profe
     return () => { disposed = true; if (remove) void remove() }
   }, [navigate])
   return <div className="app-shell professional-app">
-    <main className="main">
-      <header className="topbar"><div className="pro-header-identity"><span className="pro-header-avatar">{profile.photo_url ? <img src={profile.photo_url} alt="" /> : profile.name.trim().split(/\s+/).map(part => part[0]).slice(0, 2).join('')}</span><div><span className="eyebrow">Machado Profissional</span><strong>{profile.name}</strong></div></div><div className="top-actions"><button className="icon-btn" aria-label="Atualizar meus dados" title="Atualizar" disabled={busy} onClick={() => void refresh()}><RefreshCw size={18} /></button><button className="icon-btn" aria-label="Minha conta" title="Minha conta" onClick={() => setAccountOpen(true)}><KeyRound size={18} /></button></div></header>
+    <main className="main" ref={refreshTarget}>
+      <RefreshGesture target={refreshTarget} refresh={refreshAll} disabled={busy || loading} />
+      <header className="topbar"><div className="pro-header-identity"><span className="pro-header-avatar">{profile.photo_url ? <img src={profile.photo_url} alt="" /> : profile.name.trim().split(/\s+/).map(part => part[0]).slice(0, 2).join('')}</span><div><span className="eyebrow">Machado Profissional</span><strong>{profile.name}</strong></div></div><div className="top-actions"><button className="icon-btn" aria-label="Minha conta" title="Minha conta" onClick={() => setAccountOpen(true)}><KeyRound size={18} /></button></div></header>
       {error && <div className="pro-load-error" role="alert">{error}<button className="outline small" onClick={() => void refresh()}>Tentar novamente</button></div>}
       {loading ? <p className="pro-loading" role="status">Carregando seus dados…</p> : <div className="section-transition" key={section}><Routes><Route path="agenda" element={<Agenda professionalOnly />} /><Route path="caixa" element={<ProfessionalCash professionalId={profile.id} />} /><Route path="menu" element={<ProfessionalMenu profile={profile} photoUpdated={photoUpdated} account={() => setAccountOpen(true)} />} /><Route path="*" element={<Navigate to="/profissional/agenda" replace />} /></Routes></div>}
     </main>

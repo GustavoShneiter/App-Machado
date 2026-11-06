@@ -56,14 +56,15 @@ export async function professionalFor(client,session,requestedId) {
   const profile=requestedId?rows.find(row=>row.id===requestedId):rows[0]
   if(!profile)throw fail('Você só pode acessar os dados do profissional conectado.',403)
   await client.query('select require_schedule_access($1)',[profile.id])
-  return {profile:{...profile,email:session.user.email},administrative:false,choices:[]}
+  const business=(await client.query('select name from business_settings where id=true')).rows[0]
+  return {profile:{...profile,email:session.user.email,business_name:business?.name||'Barbearia Machado'},administrative:false,choices:[]}
 }
 
 export async function professionalCatalog(client,id) {
   return {
     services:(await client.query('select s.* from services s join professional_services ps on ps.service_id=s.id where ps.professional_id=$1 and s.active order by s.name',[id])).rows,
     professionals:(await client.query('select id,name,phone,specialties,photo_url,active from professionals where id=$1',[id])).rows,
-    links:[],business:null,
+    links:[],business:(await client.query('select name,phone,email,street,city,state from business_settings where id=true')).rows[0]??null,
   }
 }
 export async function professionalSnapshot(client,id) {
@@ -77,13 +78,17 @@ export async function professionalSnapshot(client,id) {
 
 const cards=['earned','pending','paid','services','customers']
 export async function readProfessionalPreferences(client,id) {
-  return (await client.query('select * from professional_preferences where professional_id=$1',[id])).rows[0]||{weekly_commission_goal_cents:0,weekly_service_goal:0,weekly_customer_goal:0,visible_cards:cards,show_goals:true}
+  const value=(await client.query('select * from professional_preferences where professional_id=$1',[id])).rows[0]||{weekly_commission_goal_cents:0,weekly_service_goal:0,weekly_customer_goal:0,visible_cards:cards,show_goals:true}
+  return {...value,goals_managed_by_admin:true,goals_assigned_by:value.goals_assigned_by??null,goals_updated_at:value.goals_updated_at??null}
 }
 export async function professionalPreferences(client,id,payload) {
-  const amount=Number(payload.weekly_commission_goal_cents),services=Number(payload.weekly_service_goal),customers=Number(payload.weekly_customer_goal)
-  if(!Number.isInteger(amount)||amount<0||amount>100000000||!Number.isInteger(services)||services<0||services>10000||!Number.isInteger(customers)||customers<0||customers>10000||!Array.isArray(payload.visible_cards)||payload.visible_cards.length>cards.length||!payload.visible_cards.length||payload.visible_cards.some(value=>!cards.includes(value))||new Set(payload.visible_cards).size!==payload.visible_cards.length)throw fail('Confira as metas e escolha pelo menos um indicador.')
+  if(!payload||typeof payload!=='object'||Array.isArray(payload))throw fail('Confira suas preferências.')
+  const current=await readProfessionalPreferences(client,id)
+  for(const field of ['weekly_commission_goal_cents','weekly_service_goal','weekly_customer_goal'])if(payload[field]!==undefined&&payload[field]!==current[field])throw fail('As metas são definidas pela administração. Você pode escolher o que mostrar no seu Caixa.',403)
+  if(!Array.isArray(payload.visible_cards)||payload.visible_cards.length>cards.length||!payload.visible_cards.length||payload.visible_cards.some(value=>!cards.includes(value))||new Set(payload.visible_cards).size!==payload.visible_cards.length)throw fail('Escolha pelo menos um indicador.')
   if(payload.show_goals!==undefined&&typeof payload.show_goals!=='boolean')throw fail('Confira a opção de exibir metas.')
-  return (await client.query('insert into professional_preferences(professional_id,weekly_commission_goal_cents,weekly_service_goal,weekly_customer_goal,visible_cards,show_goals) values($1,$2,$3,$4,$5,coalesce($6,true)) on conflict(professional_id) do update set weekly_commission_goal_cents=$2,weekly_service_goal=$3,weekly_customer_goal=$4,visible_cards=$5,show_goals=coalesce($6,professional_preferences.show_goals),updated_at=now() returning *',[id,amount,services,customers,payload.visible_cards,payload.show_goals??null])).rows[0]
+  await client.query('insert into professional_preferences(professional_id,visible_cards,show_goals) values($1,$2,coalesce($3,true)) on conflict(professional_id) do update set visible_cards=$2,show_goals=coalesce($3,professional_preferences.show_goals),updated_at=now()',[id,payload.visible_cards,payload.show_goals??null])
+  return readProfessionalPreferences(client,id)
 }
 export async function professionalCash(client,id,from,to) {
   const validDate=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value+'T12:00:00Z'))&&new Date(value+'T12:00:00Z').toISOString().slice(0,10)===value

@@ -2,11 +2,28 @@ import { useState } from 'react'
 import { ArrowDownLeft, CalendarDays, ChevronRight, WalletCards } from 'lucide-react'
 import { Modal } from '../ManagementPages'
 import { dateTime, money } from '../operations'
-import type { ProfessionalEntry } from './types'
+import { DonutChart } from '../reports/ReportCharts'
+import type { ProfessionalCashData, ProfessionalEntry } from './types'
+import { shortDate } from './periods'
 
 export const periods = [{ id: 'current', label: 'Esta semana' }, { id: 'previous', label: 'Semana passada' }, { id: 'older', label: 'Semana retrasada' }, { id: 'custom', label: 'Escolher período' }]
 export function BalanceDialog({ close }: { close: () => void }) {
   return <Modal title="Meu saldo a receber" close={close}><div className="pro-info-dialog"><span className="pro-dialog-symbol"><WalletCards size={25} /></span><h3>O que este valor representa?</h3><p>É a soma de suas comissões que ainda aguardam repasse, incluindo todos os períodos.</p><p>Os indicadores abaixo mostram apenas o período selecionado. Uma comissão recebida deixa de fazer parte do saldo pendente, mas continua no histórico.</p><p>Para conferir quando será feito um repasse, converse com a administração da barbearia.</p><button className="primary pro-dialog-save" onClick={close}>Entendi</button></div></Modal>
+}
+export function ProfessionalReportDialog({ selected, weeks, loading, close, period }: { selected: ProfessionalCashData; weeks: ProfessionalCashData[]; loading: boolean; close: () => void; period: () => void }) {
+  const composition = [
+    { id: 'services', label: 'Serviços', value: selected.entries.filter(entry => entry.type === 'service').reduce((sum, entry) => sum + entry.commission_cents, 0) },
+    { id: 'products', label: 'Produtos', value: selected.entries.filter(entry => entry.type === 'product').reduce((sum, entry) => sum + entry.commission_cents, 0) },
+  ]
+  const highest = Math.max(...weeks.map(week => week.earned), 1)
+  return <Modal title="Meu relatório" close={close}><div className="pro-wallet-report" aria-busy={loading}>
+    <div className="pro-report-range"><p>Suas comissões · {shortDate(selected.from)} a {shortDate(selected.to)}</p><button className="outline" onClick={period}><CalendarDays size={16} />Período</button></div>
+    {loading && <p className="pro-updating" role="status">Atualizando relatório…</p>}
+    <section className="pro-report-section"><h3>Origem das comissões</h3><DonutChart segments={composition} label="Distribuição das suas comissões entre serviços e produtos" totalLabel="Comissão no período" formatValue={money} compact /></section>
+    <section className="pro-report-section"><h3>Evolução semanal</h3><p>Comissões geradas em cada semana.</p><div className="pro-report-weeks">{weeks.map((week, index) => <div key={week.from}><div><span>{periods[index].label}<small>{shortDate(week.from)} a {shortDate(week.to)}</small></span><strong>{money(week.earned)}</strong></div><div className="pro-report-week-track" aria-hidden="true"><span style={{ width: `${week.earned / highest * 100}%` }} /></div></div>)}</div></section>
+    <dl className="pro-report-activity"><div><dt>Serviços no período</dt><dd>{selected.services}</dd></div><div><dt>Clientes atendidos</dt><dd>{selected.customers}</dd></div></dl>
+    <p className="pro-report-note">Somente suas comissões e atendimentos. Valores de faturamento e dados de outros profissionais não aparecem neste relatório.</p>
+  </div></Modal>
 }
 export function EntryDialog({ entry, close }: { entry: ProfessionalEntry; close: () => void }) {
   return <Modal title="Detalhes da comissão" close={close}><div className="pro-info-dialog pro-entry-detail"><span className={'pro-entry-symbol ' + entry.status}>{entry.status === 'paid' ? <ArrowDownLeft size={24} /> : <WalletCards size={24} />}</span><strong>{money(entry.commission_cents)}</strong><span className={'pro-entry-state ' + entry.status}>{entry.status === 'paid' ? 'Comissão recebida' : 'Aguardando repasse'}</span><dl><div><dt>{entry.type === 'product' ? 'Produto' : 'Serviço'}</dt><dd>{entry.description}</dd></div><div><dt>Cliente</dt><dd>{entry.customer_name || 'Atendimento'}</dd></div><div><dt>Quantidade</dt><dd>{entry.quantity}</dd></div><div><dt>Atendimento</dt><dd>{dateTime(entry.occurred_at)}</dd></div>{entry.paid_at && <div><dt>Repasse</dt><dd>{dateTime(entry.paid_at)}</dd></div>}</dl><button className="primary pro-dialog-save" onClick={close}>Concluir</button></div></Modal>

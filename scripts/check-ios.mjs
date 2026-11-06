@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
-import { spawnSync } from 'node:child_process'
 import xcode from 'xcode'
 import plist from 'plist'
 
@@ -14,23 +13,21 @@ assert.equal(app.UIUserInterfaceStyle, 'Dark')
 assert.ok(app.NSCameraUsageDescription && app.NSPhotoLibraryUsageDescription)
 assert.ok(!app.NSAppTransportSecurity?.NSAllowsArbitraryLoads, 'Conexões inseguras não são necessárias.')
 const sources = project.pbxSourcesBuildPhaseObj(project.getFirstTarget().uuid).files.map(file => file.comment).join('\n')
-assert.match(sources, /ManagedAccessPlugin.swift/); assert.match(sources, /MachadoViewController.swift/)
+assert.doesNotMatch(sources, /ManagedAccess/); assert.match(sources, /MachadoViewController.swift/)
 assert.match(sources, /MachadoDevicePlugin.swift/)
 const resources = project.pbxResourcesBuildPhaseObj(project.getFirstTarget().uuid).files.map(file => file.comment).join('\n')
-assert.match(resources, /ManagedAccess.private.plist/); assert.match(resources, /PrivacyInfo.xcprivacy/)
+assert.doesNotMatch(resources, /ManagedAccess|\.private/); assert.match(resources, /PrivacyInfo.xcprivacy/)
 const scene = await readFile(`${root}/SceneDelegate.swift`, 'utf8')
 assert.match(scene, /rootViewController = MachadoViewController\(\)/)
 const bridge = await readFile(`${root}/MachadoViewController.swift`, 'utf8')
-assert.match(bridge, /registerPluginInstance\(ManagedAccessPlugin\(\)\)/)
+assert.doesNotMatch(bridge, /ManagedAccess/)
 assert.match(bridge, /registerPluginInstance\(MachadoDevicePlugin\(\)\)/)
-const plugin = await readFile(`${root}/ManagedAccessPlugin.swift`, 'utf8')
-assert.match(plugin, /jsName = "ManagedAccess"/); assert.match(plugin, /name: "credentials"/)
 const configurations = Object.values(project.pbxXCBuildConfigurationSection()).filter(config => config?.buildSettings?.PRODUCT_BUNDLE_IDENTIFIER)
 assert.equal(configurations.length, 2)
 for (const config of configurations) {
   assert.equal(config.buildSettings.PRODUCT_BUNDLE_IDENTIFIER, 'com.barbeariamachado.gestao')
   assert.equal(String(config.buildSettings.MARKETING_VERSION), pkg.version)
-  assert.equal(Number(config.buildSettings.CURRENT_PROJECT_VERSION), 29)
+  assert.equal(Number(config.buildSettings.CURRENT_PROJECT_VERSION), 30)
 }
 const privacy = plist.parse(await readFile(`${root}/PrivacyInfo.xcprivacy`, 'utf8'))
 assert.equal(privacy.NSPrivacyTracking, false)
@@ -41,11 +38,7 @@ const config = JSON.parse(await readFile(`${root}/capacitor.config.json`, 'utf8'
 assert.equal(config.server?.url, undefined)
 assert.equal(config.ios?.contentInset, 'never')
 for (const name of ['AppPlugin', 'FilesystemPlugin', 'SharePlugin']) assert.ok(config.packageClassList.includes(name))
-const nativeAccess = `${root}/ManagedAccess.private.plist`
-const ignored = spawnSync('git', ['check-ignore', nativeAccess], { encoding: 'utf8' }); assert.equal(ignored.status, 0)
-const tracked = spawnSync('git', ['ls-files', '--', nativeAccess], { encoding: 'utf8' }); assert.equal(tracked.stdout.trim(), '')
 assert.match(await readFile('.vercelignore', 'utf8'), /^ios\//m)
-const access = plist.parse(await readFile(nativeAccess, 'utf8'))
-assert.ok(access.email && access.password.length >= 12)
+assert.doesNotMatch(await readFile('src/dataClient.ts','utf8'), /ManagedAccess|managedAccess\.credentials/)
 assert.equal((await readFile(`${root}/public/index.html`, 'utf8')).includes('/src/main.tsx'), false, 'Sincronize o build de produção.')
-console.log(`PASS iOS: projeto Xcode, Swift, plugins, recursos, versão, ícone, privacidade, pacote web local e isolamento das credenciais (${access.verificationOnly ? 'verificação sem acesso' : 'distribuição privada'}).`)
+console.log('PASS iOS: projeto Xcode, Swift, plugins, versão, privacidade e pacote web local; login normal e ausência de acesso fixo nos recursos da distribuição.')

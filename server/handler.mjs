@@ -7,6 +7,8 @@ import { pool, transaction } from './db.mjs'
 import { createBackup, archiveBackup } from './backups.mjs'
 import { ensureProfessionalAccess, professionalDirectory, professionalFor, professionalCatalog, professionalSnapshot, professionalCash, professionalPreferences, readProfessionalPreferences, professionalAction } from './professionals.mjs'
 import { saveProfessionalPhoto } from './professional-photo.mjs'
+import { registerOfficeAccount } from './registration.mjs'
+import { adminProfessionalGoals } from './professional-goals.mjs'
 
 const publicRpcs = new Set(['public_booking_slots','public_available_slots','create_public_appointment'])
 const rpcArguments = {
@@ -46,7 +48,7 @@ async function readBody(req,maxBytes=1024*1024) {
 async function sessionFor(req,professional=false) {
   const session=await (professional?getProfessionalAuth():getAuth()).api.getSession({headers:fromNodeHeaders(req.headers)})
   if (!session) return null
-  const profile=await pool.query('select id,role from profiles where id=$1::uuid and active',[session.user.id])
+  const profile=await pool.query('select id,role,tenant_id from profiles where id=$1::uuid and active',[session.user.id])
   return profile.rows[0] ? { ...session, profile:profile.rows[0] } : null
 }
 async function officeSession(req,owner=false) {
@@ -81,7 +83,26 @@ export default async function handler(req,res) {
       const cookies=response.headers.getSetCookie(); if(cookies.length)res.setHeader('Set-Cookie',cookies)
       res.statusCode=response.status; res.end(Buffer.from(await response.arrayBuffer())); return
     }
-    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.19.8',professionalVersion:'1.1.2',backend:'vercel',database:'neon'}); return }
+    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.19.9',professionalVersion:'1.2.0',backend:'vercel',database:'neon'}); return }
+    if(path==='/api/register') {
+      if(req.method!=='POST')throw fail('Operação inválida.',405)
+      await rateLimit(req,'unit-registration',8,3600)
+      const data=await registerOfficeAccount(await readBody(req,8192))
+      send(res,201,{data});return
+    }
+    if(path==='/api/professional-goals') {
+      if(!['GET','POST'].includes(req.method))throw fail('Operação inválida.',405)
+      const session=await officeSession(req)
+      if(req.method==='POST')await rateLimit(req,'professional-goals',30)
+      const body=req.method==='POST'?await readBody(req):null
+      const id=body?.professional_id??url.searchParams.get('professional_id')
+      const data=await transaction(session.user.id,async client=>{
+        const value=await adminProfessionalGoals(client,id,body??undefined)
+        if(body)await client.query("insert into audit_logs(actor_profile_id,operation,entity_type,request_summary,result) values($1,'professional:goals','professional',jsonb_build_object('professional_id',$2::text),'success')",[session.user.id,id])
+        return value
+      },{readOnly:req.method==='GET'})
+      send(res,200,{data});return
+    }
     if(path==='/api/professional/manifest'&&req.method==='GET') {
       send(res,200,{id:'/profissional/',name:'Machado Profissional',short_name:'Machado Pro',lang:'pt-BR',start_url:'/profissional/agenda',scope:'/profissional/',display:'standalone',background_color:'#f4f7f5',theme_color:'#177245',icons:[{src:'/professional-icon-192.png',sizes:'192x192',type:'image/png'},{src:'/professional-icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'}]}); return
     }
@@ -129,15 +150,19 @@ export default async function handler(req,res) {
     }
     if(path==='/api/catalog' && req.method==='GET') {
       const session=await sessionFor(req)
-      const data=await transaction(session?.user.id,async client=>{
-        if(session && ['owner','admin'].includes(session.profile.role)) return {
+      const unitSlug=url.searchParams.get('unit')
+      const administrative=!unitSlug&&session&&['owner','admin'].includes(session.profile.role)
+      const data=await transaction(administrative?session.user.id:null,async client=>{
+        const unit=(await client.query('select slug from business_units where id=current_business_id()')).rows[0]
+        if(administrative) return {
           services:(await client.query('select * from services order by name')).rows,
           professionals:(await client.query('select * from professionals order by name')).rows,
           links:(await client.query('select professional_id,service_id,commission_percent from professional_services')).rows,
-          business:(await client.query('select * from business_settings where id=true')).rows[0],
+          business:{...(await client.query('select * from business_settings where id=true')).rows[0],unit_slug:unit?.slug},
         }
-        return (await client.query('select public_catalog() as value')).rows[0].value
-      })
+        const value=(await client.query('select public_catalog() as value')).rows[0].value
+        return {...value,business:{...value.business,unit_slug:unit?.slug}}
+      },{readOnly:true,businessSlug:unitSlug||undefined})
       send(res,200,{data,error:null}); return
     }
     if(path==='/api/rpc' && req.method==='POST') {
@@ -164,7 +189,7 @@ export default async function handler(req,res) {
         }
         if(session && name!=='office_snapshot' && name!=='can_access_admin') await client.query("insert into audit_logs(actor_profile_id,operation,entity_type,result) values($1,$2,'operation','success')",[session.user.id,name==='office_action'?`office_action:${String(params.action).slice(0,70)}`:name])
         return result
-      })
+      },{businessSlug:publicRpcs.has(name)?url.searchParams.get('unit')||undefined:undefined})
       send(res,200,{data,error:null});return
     }
     if(path==='/api/recovery' && req.method==='POST') {
@@ -174,14 +199,15 @@ export default async function handler(req,res) {
       const digest=createHash('sha256').update(code.trim().toLowerCase()).digest('hex')
       const passwordHash=await hashPassword(password)
       await transaction(null,async client=>{
-        const result=await client.query('select r.id,r.user_id from recovery_codes r join auth_user u on u.id=r.user_id join profiles p on p.id::text=u.id where lower(u.email)=lower($1) and r.code_hash=$2 and r.used_at is null and p.active and p.role=\'owner\' for update of r',[email.trim(),digest])
+        const result=await client.query('select r.id,r.user_id,p.tenant_id from recovery_codes r join auth_user u on u.id=r.user_id join profiles p on p.id::text=u.id where lower(u.email)=lower($1) and r.code_hash=$2 and r.used_at is null and p.active and p.role=\'owner\' for update of r',[email.trim(),digest])
         if(!result.rows.length) throw fail('Código inválido, utilizado ou conta indisponível.')
         const row=result.rows[0]
+        await client.query("select set_config('request.business_id',$1,true)",[row.tenant_id])
         await client.query('update auth_account set password=$1,"updatedAt"=now() where "userId"=$2 and "providerId"=\'credential\'',[passwordHash,row.user_id])
         await client.query('update recovery_codes set used_at=now() where id=$1',[row.id])
         await client.query('delete from auth_session where "userId"=$1',[row.user_id])
         await client.query("insert into audit_logs(actor_profile_id,operation,entity_type,result) values($1,'recover_access','account','success')",[row.user_id])
-      })
+      },{internal:true})
       send(res,200,{ok:true});return
     }
     if(path==='/api/upload' && req.method==='POST') {
@@ -197,15 +223,15 @@ export default async function handler(req,res) {
       const file=await put(`${folder}/${randomUUID()}.${extensions[mimeType]}`,buffer,{access:'public',contentType:mimeType,token:process.env.BLOB_READ_WRITE_TOKEN})
       send(res,200,{url:file.url});return
     }
-    if(path==='/api/backup' && req.method==='GET') {await officeSession(req,true);send(res,200,await createBackup());return}
-    if(path==='/api/backup' && req.method==='POST') {await officeSession(req,true);await rateLimit(req,'backup',3,300);send(res,200,await archiveBackup());return}
+    if(path==='/api/backup' && req.method==='GET') {const session=await officeSession(req,true);send(res,200,await createBackup(session.user.id));return}
+    if(path==='/api/backup' && req.method==='POST') {const session=await officeSession(req,true);await rateLimit(req,'backup',3,300);send(res,200,await archiveBackup(session.user.id));return}
     if(path==='/api/backup-daily' && req.method==='GET') {
       if(!sameSecret(req.headers.authorization,`Bearer ${process.env.CRON_SECRET||''}`)||!process.env.CRON_SECRET) throw fail('Acesso negado.',401)
       const result=await archiveBackup(); await pool.query("delete from request_limits where bucket<now()-interval '2 days'");send(res,200,result);return
     }
     if(path==='/api/system-status' && req.method==='GET') {
-      await officeSession(req)
-      send(res,200,{version:'1.19.8',professionalVersion:'1.1.2',backend:'Vercel',database:'Neon',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs order by created_at desc limit 1')).rows[0]??null});return
+      const session=await officeSession(req)
+      send(res,200,{version:'1.19.9',professionalVersion:'1.2.0',backend:'Vercel',database:'Neon',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs where tenant_id=$1 order by created_at desc limit 1',[session.profile.tenant_id])).rows[0]??null});return
     }
     throw fail('Página não encontrada.',404)
   } catch(error) {
