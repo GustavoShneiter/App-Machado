@@ -4,17 +4,19 @@ import { transaction, pool } from './db.mjs'
 
 export const businessTables = ['profiles','services','professionals','professional_services','professional_products','business_settings','business_hours','customers','appointments','schedule_blocks','commands','command_items','payments','commission_entries','cash_sessions','cash_movements','products','stock_movements','service_packages','service_package_items','package_sales','package_sale_balances','package_redemptions','notifications','audit_logs']
 businessTables.push('recurring_schedule_blocks','professional_preferences')
+businessTables.push('agent_integrations','agent_settings','agent_contacts','agent_booking_drafts','agent_outbox','agent_runtime_status','agent_delivery_events')
 export const identityTables = ['auth_user','auth_account','recovery_codes']
 
 export async function createBackup(userId) {
   return transaction(userId??null, async client => {
     const tables = {}
     for (const table of [...businessTables,...identityTables]) {
+      if(!(await client.query('select to_regclass($1) present',['public.'+table])).rows[0].present)continue
       const scope=userId&&table==='auth_user'?' where t.id in (select id::text from profiles)':userId&&table==='auth_account'?' where t."userId" in (select id::text from profiles)':''
       tables[table] = (await client.query(`select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) as rows from public."${table}" t${scope}`)).rows[0].rows
     }
     tables.business_units=(await client.query('select * from business_units order by created_at')).rows
-    return { format: 'machado-backup', version: 2, schemaVersion: 12, createdAt: new Date().toISOString(), tables }
+    return { format: 'machado-backup', version: 2, schemaVersion: 13, createdAt: new Date().toISOString(), tables }
   }, { readOnly: true,internal:!userId })
 }
 

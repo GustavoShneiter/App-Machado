@@ -38,6 +38,7 @@ import { registerDismissibleLayer } from "./dismissibleLayers";
 import { AgendaCreateModal } from './AgendaScheduling';
 import { AgendaDatePicker } from './AgendaDatePicker';
 import { agendaTimes, recurringForDay } from './schedule';
+import { AgentContactConsent } from './AgentWhatsApp';
 
 export function Page({
   title,
@@ -296,7 +297,7 @@ export function AppointmentIdentity({
         {a.service_name} · {money(a.expected_price_cents)}
       </span>
       <small>
-        {dateTime(a.starts_at)} · {labels[a.status] ?? a.status}
+        {dateTime(a.starts_at)} · {labels[a.status] ?? a.status}{a.source==='whatsapp_agent'?' · WhatsApp':''}
       </small>
     </div>
   );
@@ -1227,6 +1228,7 @@ export function Customers({
               )}
             </div>
           </form>
+          {draft.id && <AgentContactConsent phone={draft.phone} />}
         </Modal>
       )}
       {history && (

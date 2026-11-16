@@ -17,7 +17,7 @@
 | Versão para iPhone pelo Safari | [Abrir no iPhone](https://barbearia-machado-rose.vercel.app/app) |
 | Instruções de instalação no iPhone | [Adicionar à Tela de Início](https://barbearia-machado-rose.vercel.app/app/instalar) |
 
-A edição administrativa web e a edição para iPhone usam o mesmo endereço. No iPhone, o Safari permite adicionar o ícone à Tela de Início. O Android administrativo 1.19.10 também usa login individual. [Baixar Machado Gestão](https://github.com/GustavoShneiter/App-Machado/releases/download/gestao-v1.19.10/Machado-Gestao-v1.19.10.apk).
+A edição administrativa web e a edição para iPhone usam o mesmo endereço. No iPhone, o Safari permite adicionar o ícone à Tela de Início. O Android administrativo 1.20.0 também usa login individual. [Baixar Machado Gestão](https://github.com/GustavoShneiter/App-Machado/raw/refs/heads/main/releases/android/Machado-Gestao-v1.20.0.apk).
 
 ## Profissionais
 

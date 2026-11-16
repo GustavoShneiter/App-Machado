@@ -1,0 +1,110 @@
+import assert from 'node:assert/strict'
+import { randomBytes,randomUUID,createHash } from 'node:crypto'
+import { readFile,readdir } from 'node:fs/promises'
+import pg from 'pg'
+import { pool } from '../server/db.mjs'
+import { administrativeAgent } from '../server/agent-settings.mjs'
+import { agentAction,externalAgent } from '../server/agent.mjs'
+import { defaultConfig,validateConfig,renderMessage,actions } from '../shared/agent-config.mjs'
+
+const suffix=randomBytes(6).toString('hex'),database='machado_qa_agent_'+suffix,role='machado_agent_qa_'+suffix
+const token=randomBytes(48).toString('base64url')
+const target=new URL(process.env.DATABASE_URL);target.pathname='/'+database;target.searchParams.delete('sslmode')
+let temp,created=false
+process.env.AGENT_ENABLED='true'
+try {
+ await pool.query(`create database "${database}"`);created=true
+ temp=new pg.Pool({connectionString:target.toString(),ssl:{rejectUnauthorized:true},max:3,statement_timeout:90000})
+ const client=await temp.connect()
+ try {
+  for(const file of (await readdir('database')).filter(f=>/^\d{3}_.*\.sql$/.test(f)).sort()) {
+   await client.query('begin');try{await client.query((await readFile('database/'+file,'utf8')).replaceAll('machado_runtime',role));await client.query('commit')}catch(e){await client.query('rollback');throw Object.assign(e,{migration:file})}
+  }
+  const units=(await client.query("insert into business_units(slug,name) values($1,'Teste A'),($2,'Teste B') returning id",['qa-a-'+suffix,'qa-b-'+suffix])).rows
+  const user=randomUUID()
+  await client.query('insert into auth.users(id,email,tenant_id) values($1,$2,$3)',[user,suffix+'@example.invalid',units[0].id])
+  await client.query("insert into profiles(id,name,role,tenant_id) values($1,'Teste','owner',$2)",[user,units[0].id])
+  const scoped=async(index,work)=>{
+   await client.query('begin');try{await client.query("select set_config('request.business_id',$1,true),set_config('request.jwt.claim.sub',$2,true)",[units[index].id,'']);await client.query(`set local role "${role}"`);const r=await work(client);await client.query('commit');return r}catch(e){await client.query('rollback');throw e}
+  }
+  let integration,customer,pro,service,appointment,financeBefore
+  await scoped(0,async c=>{
+   financeBefore=(await c.query('select count(*)::int n from commission_entries where status in(\'pending\',\'paid\')')).rows[0].n
+   await c.query("insert into business_settings(id,name) values(true,'Machado teste')")
+   integration=(await c.query("insert into agent_integrations(name,token_hash,permissions) values('Teste',$1,$2) returning *",[createHash('sha256').update(token).digest('hex'),actions])).rows[0]
+   customer=(await c.query("insert into customers(name,phone,birth_date) values('Cliente Teste','45999990000',current_date) returning id")).rows[0].id
+   pro=(await c.query("insert into professionals(name) values('Barbeiro') returning id")).rows[0].id
+   service=(await c.query("insert into services(name,price_cents,duration_minutes) values('Corte',4000,40) returning id")).rows[0].id
+   const cfg={...defaultConfig(),assistant_enabled:true,confirmations_enabled:true,reminders_enabled:true,birthday_enabled:true,reactivation_enabled:true,reminder_offsets_minutes:[1440,120]}
+   await administrativeAgent(c,'settings','POST',{...cfg,expected_revision:1},{id:user,role:'owner'})
+   appointment=(await c.query("insert into appointments(customer_id,professional_id,service_id,starts_at,ends_at,expected_price_cents) values($1,$2,$3,now()+interval '3 days',now()+interval '3 days 40 minutes',4000) returning id",[customer,pro,service])).rows[0].id
+  })
+  await assert.rejects(scoped(0,c=>administrativeAgent(c,'settings','POST',{...defaultConfig(),expected_revision:1},{id:user,role:'owner'})),e=>e.status===409)
+  await scoped(1,async c=>{assert.equal((await c.query('select * from agent_outbox')).rows.length,0);assert.equal((await c.query('select * from agent_booking_drafts')).rows.length,0)})
+  await scoped(0,async c=>{
+   const job=await agentAction(c,'claim_notification',{},integration);assert.equal(job.kind,'confirmation');assert.match(job.message_text,/Cliente Teste/);assert(job.settings_revision>0)
+   const snapshot=job.message_text
+   const row=await administrativeAgent(c,'settings','GET',{},{});const {revision,updated_at,...cfg}=row;void updated_at;cfg.message_templates.confirmation.text='Nova mensagem para {cliente}'
+   await administrativeAgent(c,'settings','POST',{...cfg,expected_revision:revision},{id:user,role:'owner'})
+   assert.equal((await c.query('select message_text from agent_outbox where id=$1',[job.id])).rows[0].message_text,snapshot)
+   await agentAction(c,'delivery_update',{event_id:'read1',provider_message_id:'provider1',status:'read',occurred_at:new Date().toISOString()},integration)
+   const ack={id:job.id,claim_token:job.claim_token,status:'sent',provider_message_id:'provider1'}
+   assert((await agentAction(c,'ack_notification',ack,integration)).acknowledged)
+   assert((await agentAction(c,'ack_notification',ack,integration)).acknowledged)
+   assert.equal((await c.query('select status from agent_outbox where id=$1',[job.id])).rows[0].status,'read')
+   await c.query('update appointments set expected_price_cents=5000 where id=$1',[appointment]);assert.equal((await c.query('select count(*)::int n from agent_outbox')).rows[0].n,1)
+   await c.query("update appointments set starts_at=starts_at+interval '1 day',ends_at=ends_at+interval '1 day' where id=$1",[appointment]);assert.equal((await c.query('select count(*)::int n from agent_outbox')).rows[0].n,2)
+   await c.query("update appointments set status='cancelled' where id=$1",[appointment]);assert.equal(await agentAction(c,'claim_notification',{},integration),null)
+   await administrativeAgent(c,'contact-consent','POST',{phone:'45999990000',marketing_opt_in:true,evidence:'Autorização presencial do cliente.'},{id:user})
+   await agentAction(c,'enqueue_campaigns',{},integration);await agentAction(c,'opt_out',{phone:'45999990000'},integration)
+   assert.equal((await c.query("select count(*)::int n from agent_outbox where kind='birthday' and status='pending'")).rows[0].n,0)
+   assert.equal((await c.query("select count(*)::int n from commission_entries where status in('pending','paid')")).rows[0].n,financeBefore)
+   await c.query('insert into professional_services(professional_id,service_id) values($1,$2)',[pro,service])
+   await c.query("insert into business_hours(weekday,opens_at,closes_at) select n,'06:00','23:00' from generate_series(1,7)n")
+   const slot=(await c.query("select ((current_date+5+s.slot_time) at time zone 'America/Sao_Paulo') starts_at from public_available_slots($1,current_date+5,$2)s limit 1",[service,pro])).rows[0]
+   assert(slot)
+   const payload={phone:'45999990000',customer_name:'Cliente Teste',service_id:service,professional_id:pro,starts_at:slot.starts_at.toISOString(),message_id:'origin1'}
+   const draft=await agentAction(c,'prepare_booking',payload,integration)
+   assert.equal((await agentAction(c,'prepare_booking',payload,integration)).id,draft.id)
+   const confirm={draft_id:draft.id,phone:payload.phone,message_id:'confirm1',message_text:'sim'}
+   const booked=await agentAction(c,'confirm_booking',confirm,integration)
+   assert.equal((await agentAction(c,'confirm_booking',confirm,integration)).appointment_id,booked.appointment_id)
+   assert.equal((await c.query('select count(*)::int n from payments')).rows[0].n,0)
+   await c.query("update appointments set starts_at=now()+interval '23 hours 50 minutes',ends_at=now()+interval '24 hours 30 minutes' where id=$1",[booked.appointment_id])
+   await c.query("update appointments set notification_cycle_at=now()-interval '2 days' where id=$1",[booked.appointment_id])
+   assert.equal((await agentAction(c,'enqueue_reminders',{},integration)).queued,1)
+   assert.equal((await agentAction(c,'enqueue_reminders',{},integration)).queued,0)
+   const reminderJob=(await c.query("select * from agent_outbox where kind='reminder' and status='pending'")).rows[0]
+   assert(reminderJob)
+   await c.query("update agent_outbox set status='suppressed' where kind='confirmation' and status='pending'")
+   const remind=await agentAction(c,'claim_notification',{},integration)
+   assert.equal(remind.kind,'reminder');assert.equal(remind.reminder_index,1)
+   assert.match(remind.message_text,/24 horas/)
+   await agentAction(c,'ack_notification',{id:remind.id,claim_token:remind.claim_token,status:'uncertain',provider_message_id:null},integration)
+   assert.equal(await agentAction(c,'claim_notification',{},integration),null)
+  })
+  assert.throws(()=>validateConfig({...defaultConfig(),confirmation_delay_minutes:61}))
+  assert.throws(()=>validateConfig({...defaultConfig(),reminder_offsets_minutes:[60,60]}))
+  assert.throws(()=>renderMessage('birthday','Olá {servico}',{cliente:'Teste'}))
+  assert.match(renderMessage('birthday','Olá {cliente}',{cliente:'Teste'}),/responda SAIR/)
+  const call=async(action,payload={},secret=token)=>{
+   let result
+   await externalAgent({method:'POST',headers:{authorization:'Bearer '+secret}},{},{pool:temp,readBody:async()=>({action,payload}),send:(_res,_code,value)=>{result=value.data},transaction:(_actor,work)=>scoped(0,work)})
+   return result
+  }
+  assert.equal((await call('capabilities')).contract_revision,'2.1')
+  await assert.rejects(call('capabilities',{},'x'.repeat(64)),e=>e.status===401)
+  await assert.rejects(call('reset_database'),e=>e.status===403)
+  await assert.rejects(call('catalog',{tenant_id:units[1].id}),e=>e.status===400)
+  await call('heartbeat',{component:'bridge',instance_name:'teste',connection_state:'open',assistant_state:'active',notifications_state:'paused',last_success_at:new Date().toISOString()})
+  await scoped(0,async c=>assert.equal((await administrativeAgent(c,'status','GET',{},{})).runtime.stale,false))
+  await scoped(0,c=>c.query('update agent_integrations set active=false where id=$1',[integration.id]))
+  await assert.rejects(call('capabilities'),e=>e.status===401)
+  console.log('PASS: full schema migrations, tenant isolation, settings conflicts, queue snapshots, callback-before-ack, repeat ack, revision/cancellation, consent and template validation. No production fixtures.')
+ } finally {client.release()}
+} finally {
+ await temp?.end()
+ if(created)await pool.query(`drop database "${database}" with(force)`)
+ await pool.query(`drop role if exists "${role}"`)
+ await pool.end()
+}

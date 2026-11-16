@@ -9,6 +9,8 @@ import { ensureProfessionalAccess, professionalDirectory, professionalFor, profe
 import { saveProfessionalPhoto } from './professional-photo.mjs'
 import { registerOfficeAccount } from './registration.mjs'
 import { adminProfessionalGoals } from './professional-goals.mjs'
+import { externalAgent } from './agent.mjs'
+import { administrativeAgent } from './agent-settings.mjs'
 
 const publicRpcs = new Set(['public_booking_slots','public_available_slots','create_public_appointment'])
 const rpcArguments = {
@@ -83,7 +85,22 @@ export default async function handler(req,res) {
       const cookies=response.headers.getSetCookie(); if(cookies.length)res.setHeader('Set-Cookie',cookies)
       res.statusCode=response.status; res.end(Buffer.from(await response.arrayBuffer())); return
     }
-    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.19.10',professionalVersion:'1.2.1',backend:'vercel',database:'neon'}); return }
+    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.20.0',professionalVersion:'1.2.1',backend:'vercel',database:'neon'}); return }
+    if(path==='/api/agent') return await externalAgent(req,res,{readBody,send,pool,transaction})
+    if(path.startsWith('/api/agent/')) {
+      const route=path.slice('/api/agent/'.length)
+      const methods={settings:['GET','POST'],status:['GET'],activity:['GET'],'contact-consent':['GET','POST'],'credentials/rotate':['POST'],'credentials/revoke':['POST']}
+      if(!methods[route]?.includes(req.method))throw fail('Operação inválida.',405)
+      const session=await officeSession(req,route.startsWith('credentials/'))
+      if(req.method==='POST')await rateLimit(req,'agent-settings',30)
+      const body=req.method==='POST'?await readBody(req,24000):Object.fromEntries(url.searchParams)
+      const data=await transaction(session.user.id,async client=>{
+        const result=await administrativeAgent(client,route,req.method,body,{id:session.user.id,role:session.profile.role})
+        if(req.method==='POST')await client.query("insert into audit_logs(actor_profile_id,operation,entity_type,result) values($1,$2,'agent','success')",[session.user.id,'agent-admin:'+route])
+        return result
+      })
+      send(res,200,{data});return
+    }
     if(path==='/api/register') {
       if(req.method!=='POST')throw fail('Operação inválida.',405)
       await rateLimit(req,'unit-registration',8,3600)
@@ -231,7 +248,7 @@ export default async function handler(req,res) {
     }
     if(path==='/api/system-status' && req.method==='GET') {
       const session=await officeSession(req)
-      send(res,200,{version:'1.19.10',professionalVersion:'1.2.1',backend:'Vercel',database:'Neon',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs where tenant_id=$1 order by created_at desc limit 1',[session.profile.tenant_id])).rows[0]??null});return
+      send(res,200,{version:'1.20.0',professionalVersion:'1.2.1',backend:'Vercel',database:'Neon',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs where tenant_id=$1 order by created_at desc limit 1',[session.profile.tenant_id])).rows[0]??null});return
     }
     throw fail('Página não encontrada.',404)
   } catch(error) {

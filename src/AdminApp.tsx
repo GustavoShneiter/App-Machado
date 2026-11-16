@@ -51,6 +51,7 @@ import { BackupPanel } from './BackupPanel';
 import { AgendaCreateModal } from './AgendaScheduling';
 import { copyText } from './deviceTools';
 import { isAppExperience } from './appExperience';
+import { AgentWhatsApp } from './AgentWhatsApp';
 
 const navItems = [
   { to: "/admin", label: "Início", icon: LayoutDashboard },
@@ -59,6 +60,7 @@ const navItems = [
   { to: "/admin/caixa", label: "Caixa", icon: WalletCards },
   { to: "/admin/comandas", label: "Comandas", icon: ClipboardList },
   { to: "/admin/relatorios", label: "Relatórios", icon: LayoutDashboard },
+  { to: "/admin/agente", label: "Agente WhatsApp", icon: Settings },
   { to: "/admin/produtos", label: "Produtos", icon: Package },
   { to: "/admin/servicos", label: "Serviços", icon: Scissors },
   { to: "/admin/profissionais", label: "Profissionais", icon: Users },
@@ -215,6 +217,7 @@ export function AdminLayout() {
               }
             />
             <Route path="relatorios" element={<AdminReports />} />
+            <Route path="agente" element={<AgentWhatsApp />} />
             <Route path="produtos" element={<Products />} />
             <Route path="servicos" element={<ServicesV2 />} />
             <Route path="profissionais" element={<ProfessionalsV2 />} />
@@ -340,6 +343,7 @@ function SettingsPage() {
           <ArrowRight />
         </Link>
       </section>
+      <Link className="outline" to="/admin/agente">Agente WhatsApp <ArrowRight size={18} /></Link>
       <section className="panel operation-panel admin-access-panel">
         <h3>Link de agendamento</h3>
         <div className="copy-field">
