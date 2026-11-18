@@ -13,7 +13,7 @@ const result = await build({
     import {AppointmentModal} from './src/ManagementPages'
     import {CatalogProvider} from './src/CatalogStore'
     import {TestContext} from './src/OperationsStore'
-    import {emptyOperations,summarize,cashBalance,commandTotal,dayKey,csvCell} from './src/operations'
+    import {emptyOperations,summarize,cashBalance,commandTotal,dayKey,csvCell,receivedOnDay} from './src/operations'
     import {fixture} from './scripts/operations-fixture.mjs'
     import {addDays,addMonths,agendaTimes,recurringForDay} from './src/schedule'
     const pages=['','agenda','caixa','comandas','clientes','produtos','servicos','profissionais','pacotes','empresa','relatorios','configuracoes']
@@ -38,6 +38,9 @@ const result = await build({
     assert.equal(summarize(fixture,'2026-09-19','2026-09-19').gross,0)
     assert.equal(cashBalance(fixture,fixture.sessions[0]),9000,'Pix must not increase physical cash')
     assert.equal(commandTotal(fixture,fixture.commands[0]),4000)
+    assert.equal(receivedOnDay(fixture,'2026-09-18'),4000)
+    assert.equal(receivedOnDay(fixture,'2026-09-17'),7000)
+    assert.equal(receivedOnDay(fixture,'2026-09-18','cash'),0)
     assert.equal(dayKey('2026-09-19T01:00:00Z'),'2026-09-18')
     assert.equal(csvCell('=1+1').charCodeAt(1),39)
     assert.equal(csvCell('  =1+1').charCodeAt(1),39)

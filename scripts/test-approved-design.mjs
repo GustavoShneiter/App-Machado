@@ -26,7 +26,7 @@ for(const [engine,width,name] of [[chromium,390,'android'],[webkit,390,'iphone']
   if(url.pathname.endsWith('/rpc'))result=body.name==='can_access_admin'?true:data
   else if(url.pathname.endsWith('/catalog'))result=url.pathname.includes('/professional/')?{...catalog,professionals:[professionals[0]]}:catalog
   else if(url.pathname.endsWith('/professional/access'))result={profile:{id:'p1',name:'Araújo',email:'teste@example.invalid',photo_url:null,business_name:'Barbearia Machado'}}
-  else if(url.pathname.endsWith('/professional/snapshot'))result={...data,appointments:data.appointments.filter(a=>a.professional_id==='p1'),commissions:data.commissions.filter(c=>c.professional_id==='p1')}
+  else if(url.pathname.endsWith('/professional/snapshot'))result={...data,appointments:data.appointments.filter(a=>a.professional_id==='p1'),commissions:[]}
   else if(url.pathname.endsWith('/professional/preferences'))result=preferences
   else if(url.pathname.endsWith('/professional/cash'))result={from:url.searchParams.get('from'),to:url.searchParams.get('to'),totalPending:1600,earned:1600,pending:1600,paid:0,services:1,customers:1,entries:[{...data.commissions[0],occurred_at:today+'T12:00:00Z',description:'Corte de cabelo',quantity:1,customer_name:'Rafael Costa',type:'service',commission_percent:40}],preferences}
   else if(url.pathname.endsWith('/agent/settings'))result={...defaultConfig(),revision:1}
@@ -43,7 +43,7 @@ for(const [engine,width,name] of [[chromium,390,'android'],[webkit,390,'iphone']
  }
  try{
   await page.goto(base+'/admin');await page.getByRole('heading',{name:'Próximos horários',exact:true}).waitFor()
-  await capture('inicio')
+  assert.match(await page.locator('.approved-balance>strong').innerText(),/110,00/);await capture('inicio')
   if(width<=900){const links=page.locator('.mobile-nav a');assert.equal(await links.nth(2).innerText(),'Início');assert.match(await links.nth(2).getAttribute('class'),/active/)}
   await page.goto(base+'/admin/agenda');await page.locator('.agenda-list-row').first().waitFor();await capture('agenda')
   await page.locator('.agenda-list-row').first().click();let modal=page.getByRole('dialog');await modal.waitFor();

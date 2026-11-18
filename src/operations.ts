@@ -24,6 +24,11 @@ export const labels: Record<string, string> = { scheduled: 'Agendado', confirmed
 export const methods: Record<string, string> = { cash: 'Dinheiro', pix: 'Pix', debit: 'Débito', credit: 'Crédito', other: 'Outro' }
 export const commandTotal = (state: Operations, command: Command) => state.items.filter(i => i.command_id === command.id).reduce((s, i) => s + i.unit_price_cents * i.quantity, 0) - command.discount_cents + command.surcharge_cents
 export const cashBalance = (state: Operations, session: CashSession) => session.opening_balance_cents + state.movements.filter(m => m.session_id === session.id && m.payment_method === 'cash').reduce((s, m) => s + m.amount_cents, 0)
+export function receivedOnDay(state: Operations, day: string, method = 'all') {
+  const matches = (value: string) => method === 'all' || (method === 'cards' ? ['debit', 'credit'].includes(value) : value === method)
+  return state.payments.filter(p => !p.reversed_at && dayKey(p.paid_at) === day && matches(p.method)).reduce((sum,p) => sum+p.amount_cents,0)
+    + state.packageSales.filter(p => p.status !== 'cancelled' && dayKey(p.sold_at) === day && matches(p.method)).reduce((sum,p) => sum+p.amount_cents,0)
+}
 export function summarize(state: Operations, from: string, to: string, professional = '') {
   const appointments = state.appointments.filter(a => dayKey(a.starts_at) >= from && dayKey(a.starts_at) <= to && (!professional || a.professional_id === professional))
   const completed = appointments.filter(a => a.status === 'completed')

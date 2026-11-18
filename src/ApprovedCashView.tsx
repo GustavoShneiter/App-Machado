@@ -3,7 +3,7 @@ import { ArrowDownToLine, ArrowUpRight, ChevronRight, CreditCard, Eye, EyeOff, L
 import { useOperations } from './OperationsStore'
 import { useCatalog } from './CatalogStore'
 import { Modal } from './ManagementPages'
-import { cashBalance, commandTotal, dateTime, dayKey, methods, money } from './operations'
+import { cashBalance, commandTotal, dateTime, dayKey, methods, money, receivedOnDay } from './operations'
 
 export function ApprovedCashView({ receive, pay, open }: { receive:(id:string)=>void; pay:(professional:string,entries:string[])=>void; open:(dialog:string)=>void }) {
  const {data,busy}=useOperations(),{professionals}=useCatalog()
@@ -12,7 +12,7 @@ export function ApprovedCashView({ receive, pay, open }: { receive:(id:string)=>
  const active=data.sessions.find(s=>!s.closed_at),shown=data.sessions.find(s=>s.id===chosen)??active??data.sessions[0]
  const today=dayKey(),movements=data.movements.filter(m=>m.session_id===shown?.id)
  const matchesMethod=(value:string)=>method==='all'||(method==='cards'?['debit','credit'].includes(value):method===value)
- const receipts=data.payments.filter(p=>!p.reversed_at&&dayKey(p.paid_at)===today&&matchesMethod(p.method)).reduce((s,p)=>s+p.amount_cents,0)+data.packageSales.filter(p=>p.status!=='cancelled'&&dayKey(p.sold_at)===today&&matchesMethod(p.method)).reduce((s,p)=>s+p.amount_cents,0)
+ const receipts=receivedOnDay(data,today,method)
  const pending=data.commands.filter(c=>c.status==='awaiting_payment'),pendingTotal=pending.reduce((s,c)=>s+commandTotal(data,c),0)
  const commissions=data.commissions.filter(c=>c.commission_cents>0&&c.status===payoutStatus&&(!professional||c.professional_id===professional))
  const allPending=data.commissions.filter(c=>c.status==='pending'&&c.commission_cents>0)

@@ -4,7 +4,7 @@ import { ChevronRight, Clock3, CreditCard, Eye, EyeOff, Plus } from 'lucide-reac
 import { useOperations } from './OperationsStore'
 import { useCatalog } from './CatalogStore'
 import { AgendaCreateModal } from './AgendaScheduling'
-import { commandTotal, dayKey, money } from './operations'
+import { commandTotal, dayKey, money, receivedOnDay } from './operations'
 import { apiRequest } from './dataClient'
 import type { ProfessionalCashData } from './professional/types'
 
@@ -25,7 +25,7 @@ export function ApprovedHome({ professional = false, professionalId }: { profess
   const pending = data.commands.filter(c => c.status === 'awaiting_payment')
   const received = professional
     ? ownCash?.earned??0
-    : data.payments.filter(p => !p.reversed_at && dayKey(p.paid_at) === today).reduce((s,p) => s+p.amount_cents,0)
+    : receivedOnDay(data,today)
   const pendingValue = professional ? ownCash?.totalPending??0 : pending.reduce((s,c)=>s+commandTotal(data,c),0)
   return <section className="page approved-home" aria-label={professional ? 'Meu início' : 'Início da gestão'}>
     <header className="home-identity"><img src="/logo-machado.png" alt="" /><div><h1>{professional ? 'Meu dia' : business?.name?.replace(/^Barbearia\s+/i,'') || 'Machado'}</h1><p>{new Date(today+'T12:00:00-03:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})}</p></div></header>
