@@ -1,0 +1,9 @@
+[Unit]
+Description=Encrypted Machado application backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/machado-app/source/deploy/backup.sh
+UMask=0077

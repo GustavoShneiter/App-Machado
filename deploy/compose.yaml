@@ -1,0 +1,52 @@
+name: machado-app
+services:
+  database:
+    image: postgres:18-bookworm
+    container_name: machado-app-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: machado_cluster_admin
+      POSTGRES_PASSWORD_FILE: /run/secrets/cluster-password
+      POSTGRES_DB: postgres
+    secrets: [cluster-password]
+    command: [postgres, -c, ssl=on, -c, ssl_cert_file=/certs/server.crt, -c, ssl_key_file=/certs/server.key, -c, max_connections=50]
+    volumes:
+      - database:/var/lib/postgresql
+      - ./private/tls:/certs:ro
+    networks: [database]
+    mem_limit: 1g
+    cpus: 1.5
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U machado_cluster_admin -d postgres]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    logging: {driver: json-file, options: {max-size: 10m, max-file: '3'}}
+  web:
+    build:
+      context: ./source
+      dockerfile: deploy/Dockerfile
+      args: {PUBLIC_SITE_URL: 'https://app-machado.45-140-203-243.sslip.io'}
+    container_name: machado-app-web
+    restart: unless-stopped
+    env_file:
+      - {path: ./private/app.env, format: raw}
+    environment:
+      DATABASE_SSL_CA_FILE: /run/secrets/database-ca
+    secrets: [database-ca]
+    volumes: [app-data:/var/lib/machado]
+    networks: [database, edge]
+    mem_limit: 768m
+    cpus: 1
+    depends_on:
+      database: {condition: service_healthy}
+    logging: {driver: json-file, options: {max-size: 10m, max-file: '3'}}
+volumes:
+  database:
+  app-data:
+networks:
+  database: {internal: true}
+  edge: {external: true, name: machado-whatsapp-evolution_default}
+secrets:
+  cluster-password: {file: ./private/cluster-password}
+  database-ca: {file: ./private/tls/ca.crt}

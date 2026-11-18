@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-professional
+.git
+.private
+.env*
+android
+ios
+releases
+docs
+test-results
+playwright-report

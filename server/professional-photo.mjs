@@ -1,5 +1,4 @@
-import { randomUUID } from 'node:crypto'
-import { put,del } from '@vercel/blob'
+import {savePhoto,removePhoto} from './file-storage.mjs'
 
 const fail=message=>Object.assign(new Error(message),{status:400})
 export async function saveProfessionalPhoto(client,id,payload) {
@@ -15,8 +14,8 @@ export async function saveProfessionalPhoto(client,id,payload) {
   const magic=buffer.subarray(0,12)
   const valid=mimeType==='image/jpeg'?magic[0]===255&&magic[1]===216:mimeType==='image/png'?magic.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])):magic.subarray(0,4).toString()==='RIFF'&&magic.subarray(8,12).toString()==='WEBP'
   if(!valid)throw fail('O conteúdo não corresponde a uma imagem válida.')
-  const file=await put(`professionals/${id}/${randomUUID()}.${extensions[mimeType]}`,buffer,{access:'public',contentType:mimeType,token:process.env.BLOB_READ_WRITE_TOKEN})
+  const file=await savePhoto('professionals',buffer,mimeType)
   try { await client.query('update professionals set photo_url=$2 where id=$1',[id,file.url]) }
-  catch(error) {await del(file.url,{token:process.env.BLOB_READ_WRITE_TOKEN}).catch(()=>{});throw error}
+  catch(error) {await removePhoto(file.url).catch(()=>{});throw error}
   return {photo_url:file.url}
 }

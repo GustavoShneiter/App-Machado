@@ -5,6 +5,7 @@ import { compare } from 'bcryptjs'
 import { pool } from './db.mjs'
 
 export const origins = ['https://barbearia-machado-rose.vercel.app', 'https://barbearia-machado-machado14.vercel.app', 'https://localhost', 'capacitor://localhost']
+if(process.env.AUTH_BASE_URL)origins.push(new URL(process.env.AUTH_BASE_URL).origin)
 if (process.env.VERCEL_URL) origins.push(`https://${process.env.VERCEL_URL}`)
 if (!process.env.VERCEL) origins.push('http://localhost:5173', 'http://127.0.0.1:5173', 'http://127.0.0.1:5188', 'http://127.0.0.1:3000')
 

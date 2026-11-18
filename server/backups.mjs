@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { put } from '@vercel/blob'
+import {saveBackup} from './file-storage.mjs'
 import { transaction, pool } from './db.mjs'
 
 export const businessTables = ['profiles','services','professionals','professional_services','professional_products','business_settings','business_hours','customers','appointments','schedule_blocks','commands','command_items','payments','commission_entries','cash_sessions','cash_movements','products','stock_movements','service_packages','service_package_items','package_sales','package_sale_balances','package_redemptions','notifications','audit_logs']
@@ -27,7 +27,7 @@ export async function archiveBackup(userId) {
   const tenantId=userId?data.tables.profiles.find(profile=>profile.id===userId)?.tenant_id:null
   if(userId&&!tenantId)throw new Error('Não foi possível identificar a unidade da cópia de segurança.')
   const pathname = `${tenantId?'units/'+tenantId:'daily'}/${new Date().toISOString().replaceAll(':','-')}.json`
-  const file = await put(pathname, json, { access: 'private', contentType: 'application/json', token: process.env.BACKUP_READ_WRITE_TOKEN, addRandomSuffix: true })
+  const file = await saveBackup(pathname,json)
   await pool.query('insert into backup_runs(pathname,sha256,bytes,tables_count,tenant_id) values($1,$2,$3,$4,$5)', [file.pathname,digest,Buffer.byteLength(json),Object.keys(data.tables).length,tenantId])
   return { createdAt: data.createdAt, sha256: digest, bytes: Buffer.byteLength(json), tables: Object.keys(data.tables).length }
 }

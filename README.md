@@ -1,14 +1,14 @@
 # Machado Gestão
 
-Gestão, agendamento e acompanhamento da equipe da Barbearia Machado. React/Vite, aplicativos Capacitor, API na Vercel, Neon Postgres, Better Auth e Vercel Blob. Administração 1.20.0; Profissional 1.2.1.
+Gestão, agendamento e acompanhamento da equipe da Barbearia Machado. React/Vite, aplicativos Capacitor, API Node na Contabo, PostgreSQL 18, Better Auth e armazenamento persistente. Administração 1.21.5; Profissional 1.3.5.
 
-- [Site e agendamento](https://barbearia-machado-rose.vercel.app/).
-- [Administração no PC](https://barbearia-machado-rose.vercel.app/admin).
-- [Administração web / iPhone, com a interface do Android](https://barbearia-machado-rose.vercel.app/app).
-- [Profissionais web / iPhone](https://barbearia-machado-rose.vercel.app/profissional).
+- [Site e agendamento](https://app-machado.45-140-203-243.sslip.io/).
+- [Administração no PC](https://app-machado.45-140-203-243.sslip.io/admin).
+- [Administração web / iPhone, com a interface do Android](https://app-machado.45-140-203-243.sslip.io/app).
+- [Profissionais web / iPhone](https://app-machado.45-140-203-243.sslip.io/profissional).
 - [Central de links e downloads](docs/CENTRAL-DE-ACESSOS.md).
-- [Entrega e uso desta atualização](docs/ENTREGA-1.20.0.md).
-- Agente WhatsApp: tempos, textos e automações em Menu → Agente WhatsApp. Integração preparada e desligada até homologação do canal.
+- [Migração, backups e operação](docs/MIGRACAO-CONTABO-2026-11-18.md).
+- Agente WhatsApp: tempos, textos e automações em Menu → Agente WhatsApp. Integração por API restrita, com banco separado do agente.
 - [Cadastro e isolamento das unidades](docs/UNIDADES-E-CADASTRO.md).
 
 ## Contas e unidades
@@ -21,7 +21,7 @@ O responsável define o login dos barbeiros em **Menu → Profissionais**. Todos
 
 Somente a administração define metas semanais de comissão, serviços e clientes, pelo perfil profissional ou por Relatórios. O barbeiro acompanha o progresso e pode ocultar a visualização, sem editar valores. Relatórios administrativos têm filtros de período e profissional, gráfico de participação, evolução diária e exportação CSV. O profissional vê apenas seus resultados.
 
-O Caixa profissional destaca saldo, progresso, histórico semanal e extrato compacto, com detalhes em janelas. O visual carvão e verde musgo é compartilhado entre Android, web e iPhone. Para atualizar os dados, puxe a tela para baixo a partir do topo; o comando também fica acessível pelo teclado. Os links das versões web estão no Menu de cada edição.
+O Caixa profissional destaca saldo, progresso, histórico semanal e extrato compacto, com detalhes em janelas. O visual claro e verde é compartilhado entre Android, web e iPhone. Para atualizar os dados, puxe a tela para baixo a partir do topo; o comando também fica acessível pelo teclado. Os links das versões web estão no Menu de cada edição.
 
 ## Desenvolvimento e verificações
 
@@ -33,7 +33,7 @@ npm run lint e npm run build verificam código, tipos, renderização e cálculo
 
 As migrações ficam em database/. A 011 adiciona unidades, políticas RLS, referências compostas e papel de execução sem BYPASSRLS; a012 torna as metas administradas pela gestão e identifica backups por unidade. Use npm run db:units -- --check para ensaiar sem persistir e --apply somente no processo de publicação documentado.
 
-O backup exportado por um proprietário contém só a unidade dele, incluindo hashes das contas e códigos de recuperação, sem senhas em texto nem sessões ativas. Guarde-o em local privado. O cron protegido /api/backup-daily produz a cópia global de recuperação no Blob privado. A verificação de restauração usa tabelas temporárias e não muda a operação. Os arquivos supabase/ são históricos; a operação atual usa Neon.
+O backup exportado por um proprietário contém só a unidade dele, incluindo hashes das contas e códigos de recuperação, sem senhas em texto nem sessões ativas. Guarde-o em local privado. Na Contabo, o backup completo cifrado roda diariamente no servidor e tem uma cópia verificada neste computador quando ele está conectado. Veja o guia da migração para restauração e limites. Os arquivos supabase/ são históricos.
 
 ## Android e iPhone
 

@@ -4,29 +4,29 @@
 
 | Destino | Link |
 |---|---|
-| Landing page com Agendar e WhatsApp | [Barbearia Machado](https://barbearia-machado-rose.vercel.app/) |
-| Escolher serviço e agendar diretamente | [Agendamento](https://barbearia-machado-rose.vercel.app/agendar/horarios) |
+| Landing page com Agendar e WhatsApp | [Barbearia Machado](https://app-machado.45-140-203-243.sslip.io/) |
+| Escolher serviço e agendar diretamente | [Agendamento](https://app-machado.45-140-203-243.sslip.io/agendar/horarios) |
 | WhatsApp da barbearia | [Abrir WhatsApp](https://wa.me/554588186553) |
 
 ## Administração
 
 | Destino | Link |
 |---|---|
-| Painel web para PC | [Machado Gestão no computador](https://barbearia-machado-rose.vercel.app/admin) |
-| Aplicativo web, mesma interface do Android | [Machado Gestão](https://barbearia-machado-rose.vercel.app/app) |
-| Versão para iPhone pelo Safari | [Abrir no iPhone](https://barbearia-machado-rose.vercel.app/app) |
-| Instruções de instalação no iPhone | [Adicionar à Tela de Início](https://barbearia-machado-rose.vercel.app/app/instalar) |
+| Painel web para PC | [Machado Gestão no computador](https://app-machado.45-140-203-243.sslip.io/admin) |
+| Aplicativo web, mesma interface do Android | [Machado Gestão](https://app-machado.45-140-203-243.sslip.io/app) |
+| Versão para iPhone pelo Safari | [Abrir no iPhone](https://app-machado.45-140-203-243.sslip.io/app) |
+| Instruções de instalação no iPhone | [Adicionar à Tela de Início](https://app-machado.45-140-203-243.sslip.io/app/instalar) |
 
-A edição administrativa web e a edição para iPhone usam o mesmo endereço. No iPhone, o Safari permite adicionar o ícone à Tela de Início. O Android administrativo 1.20.0 também usa login individual. [Baixar Machado Gestão](https://github.com/GustavoShneiter/App-Machado/raw/refs/heads/main/releases/android/Machado-Gestao-v1.20.0.apk).
+A edição administrativa web e a edição para iPhone usam o mesmo endereço. No iPhone, o Safari permite adicionar o ícone à Tela de Início. O Android administrativo 1.21.5 também usa login individual. [Baixar Machado Gestão](https://github.com/GustavoShneiter/App-Machado/raw/refs/heads/main/releases/android/Machado-Gestao-v1.21.5.apk).
 
 ## Profissionais
 
 | Destino | Link único para toda a equipe |
 |---|---|
-| Web / iPhone | [Machado Profissional](https://barbearia-machado-rose.vercel.app/profissional) |
-| Instalação no iPhone | [Adicionar à Tela de Início](https://barbearia-machado-rose.vercel.app/profissional/instalar) |
+| Web / iPhone | [Machado Profissional](https://app-machado.45-140-203-243.sslip.io/profissional) |
+| Instalação no iPhone | [Adicionar à Tela de Início](https://app-machado.45-140-203-243.sslip.io/profissional/instalar) |
 
-**Android profissional:** [baixar Machado Profissional 1.2.1](https://github.com/GustavoShneiter/App-Machado/releases/download/profissional-v1.2.1/Machado-Profissional-v1.2.1.apk). É o mesmo APK para a equipe; cada profissional entra com a própria conta. A conta administrativa permanece no aplicativo Machado Gestão.
+**Android profissional:** [baixar Machado Profissional 1.3.5](https://github.com/GustavoShneiter/App-Machado/raw/refs/heads/main/releases/android/Machado-Profissional-v1.3.5.apk). É o mesmo APK para a equipe; cada profissional entra com a própria conta. A conta administrativa permanece no aplicativo Machado Gestão.
 
 O login determina a agenda e as comissões exibidas. Não há site nem APK diferente para cada barbeiro. Endereços pessoais antigos redirecionam ao portal comum e respeitam a conta conectada.
 
@@ -44,10 +44,14 @@ No iPhone: **Safari → Compartilhar → Adicionar à Tela de Início**; habilit
 - [Edição administrativa](../apps/administracao/README.md).
 - [Novidades e configuração do profissional 1.1.0](PROFISSIONAL-1.1.0.md).
 - [Histórico de verificações da versão 1.0.1](VERIFICACOES-PROFISSIONAIS-1.0.1.md).
-- [Release do Android profissional](https://github.com/GustavoShneiter/App-Machado/releases/tag/profissional-v1.2.1).
+- [Release do Android profissional](https://github.com/GustavoShneiter/App-Machado/tree/main/releases/android).
 
 As edições têm navegação, sessões e pacotes distintos e compartilham o mesmo banco operacional para manter o trabalho sincronizado.
 
 ## Novas unidades e metas
 
 **Criar conta** no Machado Gestão cadastra outra unidade isolada. Para acessar a atual, use sua conta existente. A administração define metas semanais em Profissionais ou Relatórios; o barbeiro acompanha e pode ocultar a visualização. [Guia desta atualização](ENTREGA-1.19.10.md).
+
+## Servidor e backups
+
+Servidor Contabo, banco da aplicação separado do agente e cópias cifradas. [Guia da migração](MIGRACAO-CONTABO-2026-11-18.md). O endereço antigo da Vercel permanece apenas como caminho de transição para os links e APKs anteriores.

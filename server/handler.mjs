@@ -1,7 +1,7 @@
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto'
 import { fromNodeHeaders } from 'better-auth/node'
 import { hashPassword } from 'better-auth/crypto'
-import { put } from '@vercel/blob'
+import {savePhoto} from './file-storage.mjs'
 import { getAuth, getProfessionalAuth, origins } from './auth.mjs'
 import { pool, transaction } from './db.mjs'
 import { createBackup, archiveBackup } from './backups.mjs'
@@ -85,7 +85,7 @@ export default async function handler(req,res) {
       const cookies=response.headers.getSetCookie(); if(cookies.length)res.setHeader('Set-Cookie',cookies)
       res.statusCode=response.status; res.end(Buffer.from(await response.arrayBuffer())); return
     }
-    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.21.4',professionalVersion:'1.3.4',backend:'vercel',database:'neon'}); return }
+    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.21.5',professionalVersion:'1.3.5',backend:process.env.HOSTING_PLATFORM||'vercel',database:process.env.HOSTING_PLATFORM==='contabo'?'postgresql':'neon',mode:process.env.APP_MODE||'production'}); return }
     if(path==='/api/agent') return await externalAgent(req,res,{readBody,send,pool,transaction})
     if(path.startsWith('/api/agent/')) {
       const route=path.slice('/api/agent/'.length)
@@ -237,7 +237,7 @@ export default async function handler(req,res) {
       const magic=buffer.subarray(0,12)
       const valid=mimeType==='image/jpeg'?magic[0]===255&&magic[1]===216:mimeType==='image/png'?magic.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])):magic.subarray(0,4).toString()==='RIFF'&&magic.subarray(8,12).toString()==='WEBP'
       if(!valid)throw fail('O conteúdo não corresponde a uma imagem válida.')
-      const file=await put(`${folder}/${randomUUID()}.${extensions[mimeType]}`,buffer,{access:'public',contentType:mimeType,token:process.env.BLOB_READ_WRITE_TOKEN})
+      const file=await savePhoto(folder,buffer,mimeType)
       send(res,200,{url:file.url});return
     }
     if(path==='/api/backup' && req.method==='GET') {const session=await officeSession(req,true);send(res,200,await createBackup(session.user.id));return}
@@ -248,7 +248,7 @@ export default async function handler(req,res) {
     }
     if(path==='/api/system-status' && req.method==='GET') {
       const session=await officeSession(req)
-      send(res,200,{version:'1.21.4',professionalVersion:'1.3.4',backend:'Vercel',database:'Neon',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs where tenant_id=$1 order by created_at desc limit 1',[session.profile.tenant_id])).rows[0]??null});return
+      send(res,200,{version:'1.21.5',professionalVersion:'1.3.5',backend:process.env.HOSTING_PLATFORM==='contabo'?'Contabo':'Vercel',database:process.env.HOSTING_PLATFORM==='contabo'?'PostgreSQL':'Neon',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs where tenant_id=$1 order by created_at desc limit 1',[session.profile.tenant_id])).rows[0]??null});return
     }
     throw fail('Página não encontrada.',404)
   } catch(error) {
