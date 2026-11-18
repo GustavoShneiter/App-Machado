@@ -34,8 +34,24 @@ export async function agentAction(client,action,p,integration) {
  }
  if(action==='availability') {
   if(!/^\d{4}-\d{2}-\d{2}$/.test(p.day||'')||!Number.isFinite(Date.parse(p.day))||new Date(p.day).toISOString().slice(0,10)!==p.day)throw fail('Dia inválido.')
-  const rows=(await client.query(`select to_char(d.day,'YYYY-MM-DD') day,s.slot_time::text,s.professional_id,pr.name professional_name,((d.day::date+s.slot_time) at time zone 'America/Sao_Paulo') starts_at from generate_series($1::date,$1::date+13,interval '1 day') d(day) cross join lateral public_available_slots($2::uuid,d.day::date,$3::uuid) s join professionals pr on pr.id=s.professional_id order by d.day,s.slot_time,pr.id limit 6`,[p.day,uuid(p.service_id),p.professional_id?uuid(p.professional_id):null])).rows
-  return {requested_day:p.day,search_days:14,slots:rows}
+  const preferredTime=p.preferred_time??null,period=p.period??null
+  if(preferredTime!==null&&(typeof preferredTime!=='string'||!/^([01]\d|2[0-3]):[0-5]\d$/.test(preferredTime)))throw fail('Horário de preferência inválido.')
+  if(period!==null&&!['morning','afternoon','evening'].includes(period))throw fail('Período inválido.')
+  // Rank actual available slots, never manufacture a time by rounding the request.
+  // Day remains first so later dates cannot outrank a vacancy on the requested day.
+  const rows=(await client.query(`
+   select to_char(d.booking_day,'YYYY-MM-DD') as day,s.slot_time::text,s.professional_id,
+    pr.name as professional_name,((d.booking_day::date+s.slot_time) at time zone 'America/Sao_Paulo') as starts_at
+   from generate_series($1::date,$1::date+13,interval '1 day') d(booking_day)
+   cross join lateral public_available_slots($2::uuid,d.booking_day::date,$3::uuid) s
+   join professionals pr on pr.id=s.professional_id
+   where $5::text is null
+    or ($5='morning' and s.slot_time<time '12:00')
+    or ($5='afternoon' and s.slot_time>=time '12:00' and s.slot_time<time '18:00')
+    or ($5='evening' and s.slot_time>=time '18:00')
+   order by d.booking_day,abs(extract(epoch from (s.slot_time-$4::time))),s.slot_time,pr.id
+   limit 6`,[p.day,uuid(p.service_id),p.professional_id?uuid(p.professional_id):null,preferredTime,period])).rows
+  return {requested_day:p.day,search_days:14,slots:rows,preferred_time:preferredTime,period}
  }
  if(action==='pending_booking')return (await client.query('select id,customer_name,service_id,professional_id,starts_at,appointment_id,expires_at from agent_booking_drafts where phone=$1 and expires_at>now() order by created_at desc limit 1',[cleanPhone(p.phone)])).rows[0]??null
  if(action==='prepare_booking') {

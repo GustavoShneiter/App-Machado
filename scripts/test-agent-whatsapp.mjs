@@ -93,6 +93,39 @@ try {
    return result
   }
   assert.equal((await call('capabilities')).contract_revision,'2.1')
+  // Exercise the API action and its complete SQL, not only the slot function.
+  const day=(await client.query("select to_char(current_date+5,'YYYY-MM-DD') as day")).rows[0].day
+  const availability={service_id:service,day,professional_id:pro}
+  const chronological=await call('availability',availability)
+  assert.equal(chronological.requested_day,day);assert.equal(chronological.search_days,14)
+  assert.equal(chronological.slots.length,6);assert.equal(chronological.slots[0].slot_time,'06:00:00')
+  const nearest=await call('availability',{...availability,preferred_time:'15:29'})
+  assert.equal(nearest.preferred_time,'15:29');assert.equal(nearest.period,null)
+  assert.equal(nearest.slots[0].slot_time,'15:20:00')
+  assert(nearest.slots.every(s=>s.day===day&&s.professional_id===pro))
+  const tied=await call('availability',{...availability,preferred_time:'15:40'})
+  assert.deepEqual(tied.slots.slice(0,2).map(s=>s.slot_time),['15:20:00','16:00:00'])
+  for(const [period,min,max] of [['morning',0,12],['afternoon',12,18],['evening',18,24]]) {
+   const result=await call('availability',{...availability,preferred_time:'15:29',period})
+   assert.equal(result.period,period);assert(result.slots.length>0)
+   assert(result.slots.every(s=>Number(s.slot_time.slice(0,2))>=min&&Number(s.slot_time.slice(0,2))<max))
+  }
+  assert.equal((await call('availability',{...availability,professional_id:null})).slots.length,6)
+  assert.equal((await call('availability',{...availability,service_id:randomUUID()})).slots.length,0)
+  for(const extra of [{preferred_time:'24:00'},{preferred_time:'15:60'},{preferred_time:1529},{period:'night'},{day:'2026-02-30'}]) {
+   await assert.rejects(call('availability',{...availability,...extra}),e=>e.status===400)
+  }
+  // A real booking already made above must be absent; block its entire day and
+  // require fallback to the next actual day, while respecting the period.
+  const firstBooked=(await scoped(0,c=>c.query('select starts_at from appointments where id in(select appointment_id from agent_booking_drafts where appointment_id is not null)'))).rows[0]
+  const bookedLocal=(await client.query("select to_char($1::timestamptz at time zone 'America/Sao_Paulo','YYYY-MM-DD') as day,($1::timestamptz at time zone 'America/Sao_Paulo')::time::text as time",[firstBooked.starts_at])).rows[0]
+  const occupied=await call('availability',{...availability,day:bookedLocal.day,preferred_time:bookedLocal.time.slice(0,5)})
+  assert(!occupied.slots.some(s=>s.day===bookedLocal.day&&s.slot_time===bookedLocal.time))
+  await scoped(0,c=>c.query("insert into schedule_blocks(professional_id,starts_at,ends_at,reason) values($1,($2::date at time zone 'America/Sao_Paulo'),(($2::date+1) at time zone 'America/Sao_Paulo'),'QA full day')",[pro,day]))
+  const fallback=await call('availability',{...availability,preferred_time:'15:29',period:'afternoon'})
+  assert.equal(fallback.slots.length,6);assert(fallback.slots.every(s=>s.day>day))
+  assert.equal(fallback.slots[0].slot_time,'15:20:00')
+  await scoped(1,async c=>assert.equal((await agentAction(c,'settings',{},integration)).assistant_enabled,false))
   await assert.rejects(call('capabilities',{},'x'.repeat(64)),e=>e.status===401)
   await assert.rejects(call('reset_database'),e=>e.status===403)
   await assert.rejects(call('catalog',{tenant_id:units[1].id}),e=>e.status===400)
