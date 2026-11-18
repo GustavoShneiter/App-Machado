@@ -162,3 +162,12 @@
  .pro-preview { font-size:10px; gap:7px; }
 }
 @media(prefers-reduced-motion:reduce) { .pro-period-buttons button,.pro-cash-content { transition:none; } }
+.command-quick-actions.professional-command-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: visible;
+}
+.command-quick-actions.professional-command-actions button {
+  width: 100%;
+  min-height: 44px;
+}

@@ -73,7 +73,8 @@ export async function professionalSnapshot(client,id) {
     appointments:(await client.query("select a.id,a.customer_id,a.professional_id,a.service_id,a.starts_at,a.ends_at,a.expected_price_cents,a.status,a.source,a.is_fit_in,coalesce(nullif(a.attendee_name,''),c.name) customer_name,c.phone customer_phone,p.name professional_name,s.name service_name from appointments a join customers c on c.id=a.customer_id join professionals p on p.id=a.professional_id join services s on s.id=a.service_id where a.professional_id=$1 order by a.starts_at",[id])).rows,
     blocks:(await client.query('select id,professional_id,starts_at,ends_at,reason,created_at from schedule_blocks where professional_id=$1 order by starts_at',[id])).rows,
     recurringBlocks:(await client.query('select id,professional_id,starts_on,until_on,weekdays,start_time,end_time,reason from recurring_schedule_blocks where professional_id=$1 order by starts_on',[id])).rows,
-    customers:[],commissions:[],sessions:[],movements:[],products:[],packages:[],packageSales:[],business:[],
+    products:(await client.query('select id,name,sale_price_cents,quantity,active from products where active and quantity>0 order by name,id')).rows,
+    customers:[],commissions:[],sessions:[],movements:[],packages:[],packageSales:[],business:[],
     ...await professionalCommands(client,id),
   }
 }

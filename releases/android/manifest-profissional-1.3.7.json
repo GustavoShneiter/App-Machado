@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-18",
+  "version": "1.3.7",
+  "versionCode": 15,
+  "applicationId": "com.barbeariamachado.profissional",
+  "file": "releases/android/Machado-Profissional-v1.3.7.apk",
+  "bytes": 7196756,
+  "sha256": "77a6640c35f85cba6703a8d5607667079ecb18f4f50a0a8c0fb4c9c710860044",
+  "backend": "contabo",
+  "canonicalUrl": "https://app-machado.45-140-203-243.sslip.io/profissional",
+  "status": "available",
+  "verification": [
+    "signed with existing release certificate",
+    "local Windows Defender scan passed",
+    "isolated database financial tests passed",
+    "compiled mobile command actions checked"
+  ]
+}

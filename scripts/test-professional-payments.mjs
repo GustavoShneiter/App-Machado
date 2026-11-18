@@ -11,7 +11,7 @@ const url=new URL(process.env.DATABASE_URL);url.pathname='/'+database;url.search
 let temp,created=false
 try{
  await pool.query(`create database "${database}"`);created=true
- temp=new pg.Pool({connectionString:url.toString(),ssl:{rejectUnauthorized:true},max:5,statement_timeout:90000})
+ temp=new pg.Pool({connectionString:url.toString(),ssl:{rejectUnauthorized:true,...(process.env.DATABASE_SSL_CA_FILE?{ca:await readFile(process.env.DATABASE_SSL_CA_FILE,'utf8')}:{})},max:5,statement_timeout:90000})
  for(const file of (await readdir('database')).filter(f=>/^\d{3}_.*\.sql$/.test(f)).sort())await temp.query((await readFile('database/'+file,'utf8')).replaceAll('machado_runtime',role))
  const units=(await temp.query("insert into business_units(slug,name) values($1,'QA A'),($2,'QA B') returning id",['pay-a-'+suffix,'pay-b-'+suffix])).rows
  const owner=randomUUID(),user=randomUUID(),otherUser=randomUUID()
@@ -34,6 +34,39 @@ try{
   item=(await c.query('select id from command_items where command_id=$1',[command])).rows[0].id
  })
  const action=(actor,pid,name,payload,unit)=>scoped(actor,c=>professionalAction(c,pid,name,payload),unit)
+ let product,extraCommand,extraVisit
+ await scoped(owner,async c=>{
+  product=(await c.query("insert into products(name,sale_price_cents,cost_cents,quantity,commission_percent) values('Pomada',2000,500,4,20) returning id")).rows[0].id
+  extraVisit=(await c.query("insert into appointments(customer_id,professional_id,service_id,starts_at,ends_at,expected_price_cents) select customer_id,professional_id,service_id,starts_at+interval '1 hour',ends_at+interval '1 hour',4000 from appointments where id=$1 returning id",[appointment])).rows[0].id
+  await c.query("update appointments set status='in_service' where id=$1",[extraVisit])
+  extraCommand=(await c.query('select id from commands where appointment_id=$1',[extraVisit])).rows[0].id
+ })
+ const edit=(name,fields={})=>action(user,pro,name,{command_id:extraCommand,...fields})
+ const line=await edit('add_command_product',{product_id:product,quantity:2,amount:1})
+ assert.equal((await scoped(user,c=>professionalSnapshot(c,pro))).products[0].quantity,2)
+ await assert.rejects(edit('add_command_product',{product_id:product,quantity:3}),/Estoque/)
+ await assert.rejects(action(otherUser,otherPro,'delete_command',{id:extraCommand}),e=>e.status===403)
+ await assert.rejects(edit('remove_command_item',{id:null}),/inválido/)
+ await edit('set_command_adjustments',{discount:500})
+ await edit('set_command_adjustments',{surcharge:200})
+ await scoped(owner,async c=>{
+  const summary=(await c.query('select office_snapshot() snap')).rows[0].snap
+  const sale=summary.commands.find(row=>row.id===extraCommand)
+  assert.equal(sale.discount_cents,500);assert.equal(sale.surcharge_cents,200)
+  assert.equal(summary.items.find(row=>row.id===line.id).unit_price_cents,2000)
+  assert(!summary.commissions.some(row=>row.command_item_id===line.id))
+  await c.query("update appointments set status='completed' where id=$1",[extraVisit])
+ })
+ await scoped(owner,async c=>assert.equal((await c.query('select commission_cents from commission_entries where command_item_id=$1',[line.id])).rows[0].commission_cents,800))
+ await edit('remove_command_item',{id:line.id})
+ await edit('add_command_product',{product_id:product,quantity:1})
+ await edit('delete_command',{id:extraCommand})
+ await scoped(owner,async c=>{
+  assert.equal((await c.query('select quantity from products where id=$1',[product])).rows[0].quantity,4)
+  assert.equal((await c.query('select id from appointments where id=$1',[extraVisit])).rowCount,0)
+  assert.equal((await c.query('select id from commands where id=$1',[extraCommand])).rowCount,0)
+  assert.equal((await c.query('select id from customers')).rowCount,1)
+ })
  await assert.rejects(action(otherUser,otherPro,'receive',{id:command,method:'pix',expected_total:7500}),e=>e.status===403)
  await assert.rejects(action(user,pro,'receive',{id:command,method:'pix',expected_total:7500}),/abrir o caixa/)
  await assert.rejects(action(user,pro,'edit_command_service',{command_id:command,item_id:item,service_id:secondService,amount:-1}),/valor válido/)
@@ -52,6 +85,9 @@ try{
  assert(!JSON.stringify(before.items).includes('commission_'),'No internal commission rules in command payload')
  const alien=await scoped(otherUser,c=>professionalSnapshot(c,otherPro));assert.deepEqual(alien.commands,[]);assert.deepEqual(alien.payments,[])
  await assert.rejects(action(user,pro,'receive',{id:command,method:'pix',expected_total:1}),e=>e.status===409)
+ await action(user,pro,'add_command_product',{command_id:command,product_id:product,quantity:1})
+ await action(user,pro,'set_command_adjustments',{command_id:command,discount:2200})
+ await action(user,pro,'set_command_adjustments',{command_id:command,surcharge:200})
  const receipts=await Promise.all([action(user,pro,'receive',{id:command,method:'pix',expected_total:7500}),action(user,pro,'receive',{id:command,method:'pix',expected_total:7500})])
  assert.equal(receipts.filter(r=>r.already_received).length,1)
  await scoped(owner,async c=>{

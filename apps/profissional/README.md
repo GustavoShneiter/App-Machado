@@ -1,7 +1,7 @@
-# Machado Profissional 1.3.6
+# Machado Profissional 1.3.7
 
 - [Web / iPhone](https://app-machado.45-140-203-243.sslip.io/profissional).
-- [Android 1.3.6](https://raw.githubusercontent.com/GustavoShneiter/App-Machado/main/releases/android/Machado-Profissional-v1.3.6.apk). Novos APKs assinados, verificados localmente no Defender sem ameaças detectadas. As versões anteriores Gestão 1.21.0 e Profissional 1.3.0 continuam suspensas..
+- [Android 1.3.7](https://raw.githubusercontent.com/GustavoShneiter/App-Machado/main/releases/android/Machado-Profissional-v1.3.7.apk). Novos APKs assinados, verificados localmente no Defender sem ameaças detectadas. As versões anteriores Gestão 1.21.0 e Profissional 1.3.0 continuam suspensas..
 - [Instalar no iPhone](https://app-machado.45-140-203-243.sslip.io/profissional/instalar).
 - [Central de acessos](../../docs/CENTRAL-DE-ACESSOS.md).
 
@@ -9,11 +9,13 @@ Um único aplicativo e endereço para toda a equipe. Cada profissional entra com
 
 **Minha Agenda:** agenda própria, novos agendamentos, encaixes, bloqueios pontuais e recorrentes. Grade de 06h a 23h em intervalos de 40 min, compacta e preservada. A API limita ações ao profissional conectado.
 
-**Meu Caixa:** saldo de comissões a receber, resultados do período, metas, evolução semanal e extrato agrupado por dia. Detalhes dos lançamentos, comparação de semanas e gráfico ficam em janelas. Só a administração define metas de comissão, serviços e clientes. O barbeiro acompanha e pode ocultar a visualização. Ocultar não apaga os valores. Recebimentos da barbearia e repasses continuam na administração.
+**Minhas comandas:** produtos e serviços do catálogo da Gestão, descontos, gorjetas, recebimento e exclusão das próprias comandas em aberto ou prontas. Produtos removidos voltam ao estoque.
+
+**Meu Caixa:** saldo de comissões a receber, resultados do período, metas, evolução semanal e extrato agrupado por dia. Detalhes dos lançamentos, comparação de semanas e gráfico ficam em janelas. Só a administração define metas de comissão, serviços e clientes. O barbeiro acompanha e pode ocultar a visualização. Ocultar não apaga os valores. Os pagamentos das próprias comandas entram no Caixa da Gestão. O registro de repasses continua na administração.
 
 **Menu:** foto, conta e senha, indicadores, visibilidade das metas e **Versão web**. Para recarregar dados, puxe para baixo a partir do topo. Duas atualizações no mesmo segundo também renovam Caixa e preferências. Animações de progresso respeitam a preferência por reduzir movimento.
 
-No iPhone, abra o link no Safari e use **Compartilhar → Adicionar à Tela de Início**. É a edição web instalável, com a mesma interface do Android e login individual; exige internet. O pacote Android com.barbeariamachado.profissional, código 6, pode coexistir com o administrativo.
+No iPhone, abra o link no Safari e use **Compartilhar → Adicionar à Tela de Início**. É a edição web instalável, com a mesma interface do Android e login individual; exige internet. O pacote Android com.barbeariamachado.profissional, código 15, pode coexistir com o administrativo.
 
 Fontes em src/professional/, API em server/professionals.mjs. Preferências são persistidas por perfil; metas são escritas somente por server/professional-goals.mjs com autorização administrativa. O banco é compartilhado entre edições e isolado por unidade.
 

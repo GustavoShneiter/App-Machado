@@ -1121,28 +1121,8 @@ export function Orders({
   const [surcharge, setSurcharge] = useState("0");
   const [editingService, setEditingService] = useState("");
   const [servicePrice, setServicePrice] = useState("0");
-  const requestedCommand = searchParams.get("comanda") ?? "";
-  const openedRequested = useRef("");
-  useEffect(() => {
-    if (!requestedCommand) openedRequested.current = "";
-    if (
-      requestedCommand &&
-      openedRequested.current !== requestedCommand &&
-      data.commands.some((item) => item.id === requestedCommand)
-    ) {
-      openedRequested.current = requestedCommand;
-      setDetails(requestedCommand);
-    }
-  }, [requestedCommand, data.commands]);
-  const selected = data.commands.find((c) => c.id === receive);
-  const command = data.commands.find((c) => c.id === details);
-  const visible = data.commands.filter((c) => !filter || c.status === filter);
-  const products = data.products.filter((p) => p.active && p.quantity > 0);
-  const statusCount = (status: string) =>
-    data.commands.filter((c) => c.status === status).length;
-  const openDetails = (id: string) => {
-    const current = data.commands.find((item) => item.id === id);
-    setDetails(id);
+  const openDetails = (current: (typeof data.commands)[number]) => {
+    setDetails(current.id);
     setCommandAction("");
     setProductId("");
     setQuantity("1");
@@ -1151,6 +1131,26 @@ export function Orders({
     setDiscount(String((current?.discount_cents ?? 0) / 100));
     setSurcharge(String((current?.surcharge_cents ?? 0) / 100));
   };
+  const requestedCommand = searchParams.get("comanda") ?? "";
+  const openedRequested = useRef("");
+  useEffect(() => {
+    const current = data.commands.find(item => item.id === requestedCommand);
+    if (!requestedCommand) openedRequested.current = "";
+    if (
+      requestedCommand &&
+      openedRequested.current !== requestedCommand &&
+      current
+    ) {
+      openedRequested.current = requestedCommand;
+      openDetails(current);
+    }
+  }, [requestedCommand, data.commands]);
+  const selected = data.commands.find((c) => c.id === receive);
+  const command = data.commands.find((c) => c.id === details);
+  const visible = data.commands.filter((c) => !filter || c.status === filter);
+  const products = data.products.filter((p) => p.active && p.quantity > 0);
+  const statusCount = (status: string) =>
+    data.commands.filter((c) => c.status === status).length;
   useEffect(() => {
     if (requestedNew) {
       setCustomerName("");
@@ -1206,7 +1206,7 @@ export function Orders({
             <article className={`command-card ${c.status}`} key={c.id}>
               <button
                 className="command-card-main"
-                onClick={() => openDetails(c.id)}
+                onClick={() => openDetails(c)}
               >
                 <div className="command-card-top">
                   <span
@@ -1263,7 +1263,7 @@ export function Orders({
                   )}
                   <button
                     className="text-button"
-                    onClick={() => openDetails(c.id)}
+                    onClick={() => openDetails(c)}
                   >
                     Itens
                   </button>
@@ -1372,9 +1372,9 @@ export function Orders({
           const manualOpen =
             command.status === "open" && !command.appointment_id;
           const canEdit = ["open", "awaiting_payment"].includes(command.status);
-          const canAddService = canEdit && (!professionalOnly || command.status === 'awaiting_payment');
-          const canAddProduct = canEdit && !professionalOnly;
-          const canAdjust = canEdit && !professionalOnly;
+          const itemEditable = (item: (typeof data.items)[number]) =>
+            canEdit && !data.packageRedemptions.some(row => row.command_item_id === item.id)
+            && !(command.status === "open" && item.type === "service" && item.service_id === appointment?.service_id);
           const items = data.items.filter(
             (item) => item.command_id === command.id,
           );
@@ -1420,10 +1420,10 @@ export function Orders({
               )}
               {canEdit && (
                 <div
-                  className="command-quick-actions"
+                  className={professionalOnly ? "command-quick-actions professional-command-actions" : "command-quick-actions"}
                   aria-label="Ações da comanda"
                 >
-                  {!professionalOnly && <button
+                  <button
                     type="button"
                     className={
                       commandAction === "product" ? "active product" : "product"
@@ -1435,10 +1435,9 @@ export function Orders({
                     }
                   >
                     + produto
-                  </button>}
+                  </button>
                   <button
                     type="button"
-                    disabled={!canAddService}
                     className={
                       commandAction === "service" ? "active service" : "service"
                     }
@@ -1450,7 +1449,7 @@ export function Orders({
                   >
                     + serviço
                   </button>
-                  {!professionalOnly && <button
+                  <button
                     type="button"
                     className="payment"
                     disabled={command.status !== "awaiting_payment"}
@@ -1460,8 +1459,8 @@ export function Orders({
                     }}
                   >
                     + pagamento
-                  </button>}
-                  {!professionalOnly && <button
+                  </button>
+                  <button
                     type="button"
                     className={
                       commandAction === "discount"
@@ -1475,8 +1474,8 @@ export function Orders({
                     }
                   >
                     + desconto
-                  </button>}
-                  {!professionalOnly && <button
+                  </button>
+                  <button
                     type="button"
                     className={commandAction === "tip" ? "active tip" : "tip"}
                     onClick={() =>
@@ -1484,8 +1483,8 @@ export function Orders({
                     }
                   >
                     + gorjeta
-                  </button>}
-                  {!professionalOnly && <button
+                  </button>
+                  <button
                     type="button"
                     className="delete"
                     aria-label="Excluir comanda"
@@ -1493,7 +1492,7 @@ export function Orders({
                     onClick={async () => {
                       if (
                         window.confirm(
-                          "Excluir definitivamente esta comanda, seu agendamento, pagamentos e comissões? Esta ação não pode ser desfeita.",
+                          professionalOnly ? "Excluir esta comanda e seu agendamento? Os produtos voltarão ao estoque. O cadastro do cliente será mantido." : "Excluir definitivamente esta comanda, seu agendamento, pagamentos e comissões? Esta ação não pode ser desfeita.",
                         ) &&
                         (await run("delete_command", { id: command.id }))
                       )
@@ -1501,7 +1500,7 @@ export function Orders({
                     }}
                   >
                     <Trash2 size={15} />
-                  </button>}
+                  </button>
                 </div>
               )}
               <section className="command-items">
@@ -1513,14 +1512,14 @@ export function Orders({
                     <strong>
                       {money(item.unit_price_cents * item.quantity)}
                     </strong>
-                    {professionalOnly && canAddService && item.type === 'service' && !data.packageRedemptions.some(r=>r.command_item_id===item.id) && <button className="text-button" type="button" disabled={busy} onClick={()=>{setEditingService(item.id);setServiceId(item.service_id??'');setServicePrice(String(item.unit_price_cents/100));setCommandAction('edit-service')}}>Editar serviço</button>}
-                    {manualOpen && (
+                    {professionalOnly && itemEditable(item) && item.type === 'service' && <button className="text-button" type="button" disabled={busy} onClick={()=>{setEditingService(item.id);setServiceId(item.service_id??'');setServicePrice(String(item.unit_price_cents/100));setCommandAction('edit-service')}}>Editar serviço</button>}
+                    {(manualOpen || (professionalOnly && itemEditable(item))) && (
                       <button
                         className="text-button danger-text"
                         type="button"
                         disabled={busy}
                         onClick={() =>
-                          void run("remove_command_item", { id: item.id })
+                          void run("remove_command_item", { id: item.id, command_id: command.id })
                         }
                       >
                         Remover
@@ -1532,16 +1531,20 @@ export function Orders({
                   <Empty>Inclua serviços ou produtos para continuar.</Empty>
                 )}
               </section>
-              {professionalOnly && command.status === 'open' && <p className="form-hint">Conclua o atendimento na Agenda para ajustar os serviços realizados e receber.</p>}
+              {professionalOnly && (command.discount_cents > 0 || command.surcharge_cents > 0) && <div className="command-items">
+                {command.discount_cents > 0 && <div><span>Desconto</span><strong>− {money(command.discount_cents)}</strong></div>}
+                {command.surcharge_cents > 0 && <div><span>Gorjeta</span><strong>+ {money(command.surcharge_cents)}</strong></div>}
+              </div>}
+              {professionalOnly && command.status === 'open' && <p className="form-hint">Finalize o atendimento para editar o serviço originalmente agendado ou registrar o pagamento.</p>}
               {professionalOnly && command.status === 'closed' && <p className="form-hint">Pagamento registrado. Este atendimento também está pago na gestão. O repasse da comissão é registrado separadamente pela gestão.</p>}
-              {professionalOnly && canAddService && commandAction === 'edit-service' && <form className="command-product-form" onSubmit={async event=>{event.preventDefault();if(await run('edit_command_service',{command_id:command.id,item_id:editingService,service_id:serviceId,amount:Math.round(Number(servicePrice)*100)}))setCommandAction('')}}>
+              {professionalOnly && canEdit && commandAction === 'edit-service' && <form className="command-product-form" onSubmit={async event=>{event.preventDefault();if(await run('edit_command_service',{command_id:command.id,item_id:editingService,service_id:serviceId,amount:Math.round(Number(servicePrice)*100)}))setCommandAction('')}}>
                 <h3>Editar serviço realizado</h3>
                 <label className="field"><span>Serviço</span><select required value={serviceId} onChange={event=>{setServiceId(event.target.value);setServicePrice(String(services.find(s=>s.id===event.target.value)?.preco??0))}}><option value="">Escolha um serviço</option>{services.filter(s=>s.ativo).map(s=><option key={s.id} value={s.id}>{s.nome}</option>)}</select></label>
                 <label className="field"><span>Valor (R$)</span><input required type="number" min="0" max="1000000" step="0.01" value={servicePrice} onChange={event=>setServicePrice(event.target.value)}/></label>
                 <button className="primary" disabled={busy}>{busy?'Salvando…':'Salvar serviço'}</button>
                 <button className="outline" type="button" disabled={busy} onClick={()=>setCommandAction('')}>Cancelar edição</button>
               </form>}
-              {canAddService && commandAction === "service" && (
+              {canEdit && commandAction === "service" && (
                 <form
                   className="command-product-form"
                   onSubmit={async (event) => {
@@ -1604,7 +1607,7 @@ export function Orders({
                   {professionalOnly && <button className="outline" type="button" disabled={busy} onClick={()=>setCommandAction('')}>Cancelar</button>}
                 </form>
               )}
-              {canAddProduct && commandAction === "product" && (
+              {canEdit && commandAction === "product" && (
                 <form
                   className="command-product-form"
                   onSubmit={async (event) => {
@@ -1614,7 +1617,7 @@ export function Orders({
                         command_id: command.id,
                         product_id: productId,
                         quantity: Number(quantity),
-                        professional_id: professionalId,
+                        professional_id: professionalOnly ? professionals[0]?.id : professionalId,
                       })
                     ) {
                       setProductId("");
@@ -1642,13 +1645,13 @@ export function Orders({
                           ))}
                         </select>
                       </label>
-                      <label className="field">
+                      {!professionalOnly && <label className="field">
                         <span>Profissional responsável pela venda</span>
                         <select required value={professionalId} onChange={event => setProfessionalId(event.target.value)}>
                           <option value="">Escolha um profissional</option>
                           {professionals.filter(pro => pro.ativo).map(pro => <option key={pro.id} value={pro.id}>{pro.nome}</option>)}
                         </select>
-                      </label>
+                      </label>}
                       <label className="field">
                         <span>Quantidade</span>
                         <input
@@ -1660,7 +1663,7 @@ export function Orders({
                           onChange={(e) => setQuantity(e.target.value)}
                         />
                       </label>
-                      <button className="outline" disabled={busy || !productId || !professionalId}>
+                      <button className="outline" disabled={busy || !productId || (!professionalOnly && !professionalId)}>
                         Adicionar produto
                       </button>
                     </>
@@ -1671,7 +1674,7 @@ export function Orders({
                   )}
                 </form>
               )}
-              {canAdjust &&
+              {canEdit &&
                 commandAction === "discount" &&
                 items.length > 0 &&
                 total > 0 && (
@@ -1683,7 +1686,7 @@ export function Orders({
                         await run("set_command_adjustments", {
                           command_id: command.id,
                           discount: Math.round(Number(discount) * 100),
-                          surcharge: Math.round(Number(surcharge) * 100),
+                          ...(!professionalOnly && { surcharge: Math.round(Number(surcharge) * 100) }),
                         })
                       )
                         setCommandAction("");
@@ -1707,7 +1710,7 @@ export function Orders({
                     </button>
                   </form>
                 )}
-              {canAdjust && commandAction === "tip" && items.length > 0 && (
+              {canEdit && commandAction === "tip" && items.length > 0 && (
                 <form
                   className="command-adjustments"
                   onSubmit={async (event) => {
@@ -1715,7 +1718,7 @@ export function Orders({
                     if (
                       await run("set_command_adjustments", {
                         command_id: command.id,
-                        discount: Math.round(Number(discount) * 100),
+                        ...(!professionalOnly && { discount: Math.round(Number(discount) * 100) }),
                         surcharge: Math.round(Number(surcharge) * 100),
                       })
                     )
@@ -1765,7 +1768,7 @@ export function Orders({
                       await run("set_status", {
                         id: appointment.id,
                         status: "completed",
-                      })
+                      }) && !professionalOnly
                     )
                       setDetails("");
                   }}

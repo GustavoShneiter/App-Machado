@@ -26,7 +26,7 @@ A edição administrativa web e a edição para iPhone usam o mesmo endereço. N
 | Web / iPhone | [Machado Profissional](https://app-machado.45-140-203-243.sslip.io/profissional) |
 | Instalação no iPhone | [Adicionar à Tela de Início](https://app-machado.45-140-203-243.sslip.io/profissional/instalar) |
 
-**Android profissional:** [baixar Machado Profissional 1.3.6](https://github.com/GustavoShneiter/App-Machado/raw/refs/heads/main/releases/android/Machado-Profissional-v1.3.6.apk). É o mesmo APK para a equipe; cada profissional entra com a própria conta. A conta administrativa permanece no aplicativo Machado Gestão.
+**Android profissional:** [baixar Machado Profissional 1.3.7](https://github.com/GustavoShneiter/App-Machado/raw/refs/heads/main/releases/android/Machado-Profissional-v1.3.7.apk). É o mesmo APK para a equipe; cada profissional entra com a própria conta. A conta administrativa permanece no aplicativo Machado Gestão.
 
 O login determina a agenda e as comissões exibidas. Não há site nem APK diferente para cada barbeiro. Endereços pessoais antigos redirecionam ao portal comum e respeitam a conta conectada.
 

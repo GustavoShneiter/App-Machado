@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core'
 
 export const androidDownloadsAvailable = true
-export const professionalVersion = '1.3.6'
+export const professionalVersion = '1.3.7'
 export const professionalApkUrl = `https://raw.githubusercontent.com/GustavoShneiter/App-Machado/main/releases/android/Machado-Profissional-v${professionalVersion}.apk`
 export const appVersion = import.meta.env.VITE_APP_EDITION === 'professional' ? professionalVersion : '1.21.6'
 export const publicSiteUrl = import.meta.env.VITE_PUBLIC_SITE_URL || 'https://app-machado.45-140-203-243.sslip.io'
