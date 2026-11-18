@@ -709,7 +709,7 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
         <Modal title="Agendamento" close={() => setFocused(null)}>
           <AppointmentIdentity appointment={focused} />
           <div className="row-actions agenda-detail-actions">
-            {!professionalOnly&&data.commands.some(c=>c.appointment_id===focused.id)&&<button className="approved-secondary" onClick={()=>navigate('/admin/comandas?comanda='+data.commands.find(c=>c.appointment_id===focused.id)?.id)}>Ver atendimento e pagamento</button>}
+            {data.commands.some(c=>c.appointment_id===focused.id)&&<button className="approved-secondary" onClick={()=>navigate((professionalOnly?'/profissional/atendimentos':'/admin/comandas')+'?comanda='+data.commands.find(c=>c.appointment_id===focused.id)?.id)}>Ver atendimento e pagamento</button>}
             {!["completed", "cancelled", "no_show"].includes(
               focused.status,
             ) && (
@@ -1096,9 +1096,11 @@ export function Customers({
 export function Orders({
   requestedNew = false,
   onRequestedNewHandled = () => {},
+  professionalOnly = false,
 }: {
   requestedNew?: boolean;
   onRequestedNewHandled?: () => void;
+  professionalOnly?: boolean;
 }) {
   const { data, run, busy, error } = useOperations();
   const { services, professionals } = useCatalog();
@@ -1117,13 +1119,20 @@ export function Orders({
   const [customerPhone, setCustomerPhone] = useState("");
   const [discount, setDiscount] = useState("0");
   const [surcharge, setSurcharge] = useState("0");
+  const [editingService, setEditingService] = useState("");
+  const [servicePrice, setServicePrice] = useState("0");
   const requestedCommand = searchParams.get("comanda") ?? "";
+  const openedRequested = useRef("");
   useEffect(() => {
+    if (!requestedCommand) openedRequested.current = "";
     if (
       requestedCommand &&
+      openedRequested.current !== requestedCommand &&
       data.commands.some((item) => item.id === requestedCommand)
-    )
+    ) {
+      openedRequested.current = requestedCommand;
       setDetails(requestedCommand);
+    }
   }, [requestedCommand, data.commands]);
   const selected = data.commands.find((c) => c.id === receive);
   const command = data.commands.find((c) => c.id === details);
@@ -1152,9 +1161,9 @@ export function Orders({
   }, [requestedNew, onRequestedNewHandled]);
   return (
     <Page
-      title="Comandas"
+      title={professionalOnly ? "Meus atendimentos" : "Comandas"}
       action={
-        <button
+        !professionalOnly && <button
           className="primary"
           onClick={() => {
             setCustomerName("");
@@ -1238,7 +1247,7 @@ export function Orders({
                 <strong>{money(total)}</strong>
                 <div>
                   {c.status === "open" && a && (
-                    <Link className="outline small" to="/admin/agenda">
+                    <Link className="outline small" to={professionalOnly?'/profissional/agenda':'/admin/agenda'}>
                       Atender
                     </Link>
                   )}
@@ -1346,7 +1355,7 @@ export function Orders({
                 disabled={busy}
                 onClick={async () => {
                   const action = planOnly ? "close_package_command" : "receive";
-                  if (await run(action, { id: receive, method }))
+                  if (await run(action, { id: receive, method, ...(professionalOnly ? { expected_total: total } : {}) }))
                     setReceive("");
                 }}
               >
@@ -1363,9 +1372,9 @@ export function Orders({
           const manualOpen =
             command.status === "open" && !command.appointment_id;
           const canEdit = ["open", "awaiting_payment"].includes(command.status);
-          const canAddService = canEdit;
-          const canAddProduct = canEdit;
-          const canAdjust = canEdit;
+          const canAddService = canEdit && (!professionalOnly || command.status === 'awaiting_payment');
+          const canAddProduct = canEdit && !professionalOnly;
+          const canAdjust = canEdit && !professionalOnly;
           const items = data.items.filter(
             (item) => item.command_id === command.id,
           );
@@ -1414,7 +1423,7 @@ export function Orders({
                   className="command-quick-actions"
                   aria-label="Ações da comanda"
                 >
-                  <button
+                  {!professionalOnly && <button
                     type="button"
                     className={
                       commandAction === "product" ? "active product" : "product"
@@ -1426,9 +1435,10 @@ export function Orders({
                     }
                   >
                     + produto
-                  </button>
+                  </button>}
                   <button
                     type="button"
+                    disabled={!canAddService}
                     className={
                       commandAction === "service" ? "active service" : "service"
                     }
@@ -1440,7 +1450,7 @@ export function Orders({
                   >
                     + serviço
                   </button>
-                  <button
+                  {!professionalOnly && <button
                     type="button"
                     className="payment"
                     disabled={command.status !== "awaiting_payment"}
@@ -1450,8 +1460,8 @@ export function Orders({
                     }}
                   >
                     + pagamento
-                  </button>
-                  <button
+                  </button>}
+                  {!professionalOnly && <button
                     type="button"
                     className={
                       commandAction === "discount"
@@ -1465,8 +1475,8 @@ export function Orders({
                     }
                   >
                     + desconto
-                  </button>
-                  <button
+                  </button>}
+                  {!professionalOnly && <button
                     type="button"
                     className={commandAction === "tip" ? "active tip" : "tip"}
                     onClick={() =>
@@ -1474,8 +1484,8 @@ export function Orders({
                     }
                   >
                     + gorjeta
-                  </button>
-                  <button
+                  </button>}
+                  {!professionalOnly && <button
                     type="button"
                     className="delete"
                     aria-label="Excluir comanda"
@@ -1491,7 +1501,7 @@ export function Orders({
                     }}
                   >
                     <Trash2 size={15} />
-                  </button>
+                  </button>}
                 </div>
               )}
               <section className="command-items">
@@ -1503,6 +1513,7 @@ export function Orders({
                     <strong>
                       {money(item.unit_price_cents * item.quantity)}
                     </strong>
+                    {professionalOnly && canAddService && item.type === 'service' && !data.packageRedemptions.some(r=>r.command_item_id===item.id) && <button className="text-button" type="button" disabled={busy} onClick={()=>{setEditingService(item.id);setServiceId(item.service_id??'');setServicePrice(String(item.unit_price_cents/100));setCommandAction('edit-service')}}>Editar serviço</button>}
                     {manualOpen && (
                       <button
                         className="text-button danger-text"
@@ -1521,6 +1532,15 @@ export function Orders({
                   <Empty>Inclua serviços ou produtos para continuar.</Empty>
                 )}
               </section>
+              {professionalOnly && command.status === 'open' && <p className="form-hint">Conclua o atendimento na Agenda para ajustar os serviços realizados e receber.</p>}
+              {professionalOnly && command.status === 'closed' && <p className="form-hint">Pagamento registrado. Este atendimento também está pago na gestão. O repasse da comissão é registrado separadamente pela gestão.</p>}
+              {professionalOnly && canAddService && commandAction === 'edit-service' && <form className="command-product-form" onSubmit={async event=>{event.preventDefault();if(await run('edit_command_service',{command_id:command.id,item_id:editingService,service_id:serviceId,amount:Math.round(Number(servicePrice)*100)}))setCommandAction('')}}>
+                <h3>Editar serviço realizado</h3>
+                <label className="field"><span>Serviço</span><select required value={serviceId} onChange={event=>{setServiceId(event.target.value);setServicePrice(String(services.find(s=>s.id===event.target.value)?.preco??0))}}><option value="">Escolha um serviço</option>{services.filter(s=>s.ativo).map(s=><option key={s.id} value={s.id}>{s.nome}</option>)}</select></label>
+                <label className="field"><span>Valor (R$)</span><input required type="number" min="0" max="1000000" step="0.01" value={servicePrice} onChange={event=>setServicePrice(event.target.value)}/></label>
+                <button className="primary" disabled={busy}>{busy?'Salvando…':'Salvar serviço'}</button>
+                <button className="outline" type="button" disabled={busy} onClick={()=>setCommandAction('')}>Cancelar edição</button>
+              </form>}
               {canAddService && commandAction === "service" && (
                 <form
                   className="command-product-form"
@@ -1530,7 +1550,7 @@ export function Orders({
                       await run("add_command_service", {
                         command_id: command.id,
                         service_id: serviceId,
-                        professional_id: professionalId,
+                        professional_id: professionalOnly ? professionals[0]?.id : professionalId,
                       })
                     ) {
                       setServiceId("");
@@ -1558,7 +1578,7 @@ export function Orders({
                         ))}
                     </select>
                   </label>
-                  <label className="field">
+                  {!professionalOnly && <label className="field">
                     <span>Profissional</span>
                     <select
                       required
@@ -1574,13 +1594,14 @@ export function Orders({
                           </option>
                         ))}
                     </select>
-                  </label>
+                  </label>}
                   <button
                     className="outline"
-                    disabled={busy || !serviceId || !professionalId}
+                    disabled={busy || !serviceId || (!professionalOnly && !professionalId)}
                   >
                     Adicionar serviço
                   </button>
+                  {professionalOnly && <button className="outline" type="button" disabled={busy} onClick={()=>setCommandAction('')}>Cancelar</button>}
                 </form>
               )}
               {canAddProduct && commandAction === "product" && (
@@ -1752,7 +1773,7 @@ export function Orders({
                   Finalizar atendimento
                 </button>
               )}
-              {command.status === "awaiting_payment" && (
+              {command.status === "awaiting_payment" && (!professionalOnly || !commandAction) && (
                 <button
                   className="primary"
                   disabled={busy}
@@ -1763,7 +1784,7 @@ export function Orders({
                 >
                   {packageInfo?.redeemed && total === 0
                     ? "Concluir com plano"
-                    : "Receber no Caixa"}
+                    : professionalOnly ? "Receber pagamento" : "Receber no Caixa"}
                 </button>
               )}
               {error && <p className="form-error">{error}</p>}

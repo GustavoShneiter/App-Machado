@@ -1,6 +1,7 @@
 import { randomBytes, randomUUID } from 'node:crypto'
 import { hashPassword } from 'better-auth/crypto'
 import { z } from 'zod'
+import { commandActions, professionalCommands, professionalCommandAction } from './professional-commands.mjs'
 
 const fail=(message,status=400)=>Object.assign(new Error(message),{status})
 const uuid=value=>typeof value==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
@@ -72,7 +73,8 @@ export async function professionalSnapshot(client,id) {
     appointments:(await client.query("select a.id,a.customer_id,a.professional_id,a.service_id,a.starts_at,a.ends_at,a.expected_price_cents,a.status,a.source,a.is_fit_in,coalesce(nullif(a.attendee_name,''),c.name) customer_name,c.phone customer_phone,p.name professional_name,s.name service_name from appointments a join customers c on c.id=a.customer_id join professionals p on p.id=a.professional_id join services s on s.id=a.service_id where a.professional_id=$1 order by a.starts_at",[id])).rows,
     blocks:(await client.query('select id,professional_id,starts_at,ends_at,reason,created_at from schedule_blocks where professional_id=$1 order by starts_at',[id])).rows,
     recurringBlocks:(await client.query('select id,professional_id,starts_on,until_on,weekdays,start_time,end_time,reason from recurring_schedule_blocks where professional_id=$1 order by starts_on',[id])).rows,
-    customers:[],commands:[],items:[],payments:[],commissions:[],sessions:[],movements:[],products:[],packages:[],packageSales:[],packageRedemptions:[],business:[],
+    customers:[],commissions:[],sessions:[],movements:[],products:[],packages:[],packageSales:[],business:[],
+    ...await professionalCommands(client,id),
   }
 }
 
@@ -113,8 +115,9 @@ export async function professionalCash(client,id,from,to) {
 
 const allowedActions=new Set(['create_appointment','set_status','set_price','cancel_appointment','create_schedule_block','delete_schedule_block','create_recurring_block','delete_recurring_block'])
 export async function professionalAction(client,id,action,payload) {
-  if(!allowedActions.has(action)||!payload||typeof payload!=='object'||Array.isArray(payload))throw fail('Operação não disponível para profissionais.',403)
+  if((!allowedActions.has(action)&&!commandActions.has(action))||!payload||typeof payload!=='object'||Array.isArray(payload))throw fail('Operação não disponível para profissionais.',403)
   if(payload.professional_id&&payload.professional_id!==id)throw fail('Você só pode alterar a sua própria agenda.',403)
+  if(commandActions.has(action))return professionalCommandAction(client,id,action,payload)
   const flat=action==='create_recurring_block'?payload.payload:payload
   if(!flat||typeof flat!=='object'||Array.isArray(flat)||(flat.professional_id&&flat.professional_id!==id))throw fail('Você só pode alterar a sua própria agenda.',403)
   return (await client.query('select professional_schedule_action($1,$2) value',[action,{...flat,professional_id:id}])).rows[0].value

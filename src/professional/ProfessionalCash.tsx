@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { CalendarDays, ChevronDown, ChevronRight, CircleHelp, ReceiptText, Settings2 } from 'lucide-react'
 import { apiRequest } from '../dataClient'
+import { Link } from 'react-router-dom'
 import { Modal } from '../ManagementPages'
 import { useOperations } from '../OperationsStore'
 import { money } from '../operations'
@@ -38,7 +39,8 @@ function CommissionList({ entries, loading, choose }: { entries: ProfessionalEnt
 }
 
 export function ProfessionalCash({ professionalId, reportOnly = false }: { professionalId: string; reportOnly?: boolean }) {
-  const { refreshed, refreshVersion } = useOperations()
+  const { data, refreshed, refreshVersion } = useOperations()
+  const pendingPayments=data.commands.filter(command=>command.status==='awaiting_payment')
   const [period, setPeriod] = useState('current'), [custom, setCustom] = useState(weekRange())
   const [selected, setSelected] = useState<ProfessionalCashData | null>(null), [weeks, setWeeks] = useState<ProfessionalCashData[]>([])
   const [error, setError] = useState(''), [loading, setLoading] = useState(true), [reload, setReload] = useState(0)
@@ -71,6 +73,7 @@ export function ProfessionalCash({ professionalId, reportOnly = false }: { profe
   </div>
   return <section className="page pro-wallet">
     <header className="pro-wallet-heading"><h1>{reportOnly?'Meu relatório':'Meu Caixa'}</h1><button className="pro-customize" aria-label="Personalizar meu Caixa" onClick={() => setPopup('settings')} disabled={!prefs}><Settings2 size={19} /></button></header>
+    {!reportOnly && <Link className="pro-wallet-show-all" to="/profissional/atendimentos"><ReceiptText size={18}/><span>Pagamentos dos clientes</span><span>{pendingPayments.length ? `${pendingPayments.length} a receber` : 'Ver atendimentos'}</span><ChevronRight size={16}/></Link>}
     {error && <div className="form-error" role="alert">{error}<button className="outline small" onClick={() => setReload(value => value + 1)}>Tentar novamente</button></div>}
     {loading && !selected && !error && <div className="pro-cash-skeleton" role="status"><span>Preparando suas comissões…</span></div>}
     {selected && current && prefs && (reportOnly ? <ProfessionalReportDialog inline selected={selected} weeks={weeks} loading={loading} close={()=>{}} period={()=>setPopup('period')}/> : <>
