@@ -20,3 +20,5 @@ A habilitação da permissão para a integração existente do Machado usa `scri
 Fluxos visuais em 360px/390px/1440px, Chrome e WebKit móvel, com dados fictícios e respostas simuladas nas duas edições compiladas; capturas revisadas. Banco temporário descartável: cliente conhecido/desconhecido/ambíguo, campos do cadastro, telefone com DDI, permissão, pausa e isolamento por unidade, além dos testes existentes do agente. Nenhum cadastro de teste foi inserido na operação real. Compilação/análise de código e assinatura dos APKs verificadas. Defender local sem ameaças detectadas nos APKs completos; nenhum arquivo enviado para análise externa.
 
 Não representa teste autenticado dos APKs em aparelho físico. Hashes e versões: `releases/android/manifest-1.21.3.json`.
+
+Publicação verificada: /api/health respondeu Gestão 1.21.3 e Profissional 1.3.3; downloads públicos correspondem aos hashes e passaram pela verificação local. Permissão customer_context habilitada na integração ativa do Machado, preservando a revisão e o conteúdo da configuração de mensagens.
