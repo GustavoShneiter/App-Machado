@@ -18,6 +18,7 @@ import {
   Home,
   LayoutDashboard,
   Menu,
+  MessageCircle,
   Package,
   Scissors,
   Users,
@@ -344,8 +345,8 @@ function SettingsPage() {
           </span>
           <ArrowRight />
         </Link>
+        <Link to="/admin/agente"><MessageCircle/><span><strong>Agente de WhatsApp</strong></span><ArrowRight/></Link>
       </section>
-      <Link className="outline" to="/admin/agente">Agente WhatsApp <ArrowRight size={18} /></Link>
       <section className="panel operation-panel admin-access-panel">
         <h3>Link de agendamento</h3>
         <div className="copy-field">

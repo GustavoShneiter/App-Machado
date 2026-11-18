@@ -6,6 +6,7 @@ import { pool } from '../server/db.mjs'
 import { administrativeAgent } from '../server/agent-settings.mjs'
 import { agentAction,externalAgent } from '../server/agent.mjs'
 import { professionalSnapshot } from '../server/professionals.mjs'
+import { customerContext } from '../server/agent-customer.mjs'
 import { defaultConfig,validateConfig,renderMessage,actions } from '../shared/agent-config.mjs'
 
 const suffix=randomBytes(6).toString('hex'),database='machado_qa_agent_'+suffix,role='machado_agent_qa_'+suffix
@@ -93,7 +94,29 @@ try {
    await externalAgent({method:'POST',headers:{authorization:'Bearer '+secret}},{},{pool:temp,readBody:async()=>({action,payload}),send:(_res,_code,value)=>{result=value.data},transaction:(_actor,work)=>scoped(0,work)})
    return result
   }
-  assert.equal((await call('capabilities')).contract_revision,'2.1')
+  assert.equal((await call('capabilities')).contract_revision,'2.2')
+  await scoped(0,c=>c.query('update customers set notes=$2 where id=$1',[customer,'Prefere atendimento silencioso.']))
+  const known=await call('customer_context',{phone:'5545999990000'})
+  assert.equal(known.found,true);assert.equal(known.business.name,'Machado teste');assert.equal(known.customer.id,customer)
+  assert.equal(known.customer.notes,'Prefere atendimento silencioso.');assert.match(known.customer.birth_date,/^\d{4}-\d{2}-\d{2}$/)
+  assert(known.upcoming_appointments.length<=5);assert(!JSON.stringify(known).includes('price_cents'))
+  assert.equal((await call('customer_context',{phone:'45999990000'})).customer.id,customer)
+  assert.equal((await call('customer_context',{phone:'45999991111'})).found,false)
+  await assert.rejects(call('customer_context',{phone:'invalido'}),e=>e.status===400)
+  await assert.rejects(call('customer_context',{phone:'45999990000',tenant_id:units[1].id}),e=>e.status===400)
+  await scoped(1,async c=>{
+   assert.equal((await customerContext(c,{phone:'45999990000'})).found,false)
+   await assert.rejects(agentAction(c,'customer_context',{phone:'45999990000'},integration),e=>e.status===503)
+  })
+  await scoped(0,c=>c.query("update agent_integrations set permissions=array_remove(permissions,'customer_context') where id=$1",[integration.id]))
+  await assert.rejects(call('customer_context',{phone:'45999990000'}),e=>e.status===403)
+  await scoped(0,c=>c.query('update agent_integrations set permissions=$2 where id=$1',[integration.id,actions]))
+  await scoped(0,async c=>{
+   const duplicate=(await c.query("insert into customers(name,phone) values('Cadastro duplicado','5545999990000') returning id")).rows[0].id
+   const ambiguous=await customerContext(c,{phone:'45999990000'})
+   assert.equal(ambiguous.ambiguous,true);assert.equal(ambiguous.found,false);assert.equal(ambiguous.customer,null)
+   await c.query('delete from customers where id=$1',[duplicate])
+  })
   // Exercise the API action and its complete SQL, not only the slot function.
   const day=(await client.query("select to_char(current_date+5,'YYYY-MM-DD') as day")).rows[0].day
   const availability={service_id:service,day,professional_id:pro}

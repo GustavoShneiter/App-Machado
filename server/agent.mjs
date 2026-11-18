@@ -2,11 +2,12 @@ import { createHash } from 'node:crypto'
 import { actions,deliveryStates,cleanPhone,fail } from '../shared/agent-config.mjs'
 import { settings,effectiveSettings } from './agent-settings.mjs'
 import { enqueueReminders,enqueueCampaigns,claimNotification,acknowledge,reconcileDelivery } from './agent-queue.mjs'
+import { customerContext } from './agent-customer.mjs'
 const uuid=value=>{if(typeof value!=='string'||! /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value))throw fail('Identificador inválido.');return value}
 const instant=value=>{if(typeof value!=='string'||!/(?:Z|[+-]\d{2}:\d{2})$/.test(value)||!Number.isFinite(Date.parse(value)))throw fail('Data e horário inválidos.');return new Date(value).toISOString()}
 export async function agentAction(client,action,p,integration) {
  const cfg=effectiveSettings(await settings(client,true))
- if(action==='capabilities')return {contract_version:2,contract_revision:'2.1',notification_content:'claim_snapshot',timezone:'America/Sao_Paulo',draft_ttl_seconds:900,actions:integration.permissions,delivery_states:deliveryStates}
+ if(action==='capabilities')return {contract_version:2,contract_revision:'2.2',notification_content:'claim_snapshot',timezone:'America/Sao_Paulo',draft_ttl_seconds:900,actions:integration.permissions,delivery_states:deliveryStates}
  if(action==='settings')return cfg
  if(action==='heartbeat') {
   if(p.component!=='bridge'||!['open','connecting','close','unknown'].includes(p.connection_state)||!['active','paused','disabled'].includes(p.assistant_state)||!['active','paused','disabled'].includes(p.notifications_state))throw fail('Estado inválido.')
@@ -28,6 +29,7 @@ export async function agentAction(client,action,p,integration) {
   await reconcileDelivery(client,integration,p.provider_message_id);return {acknowledged:true}
  }
  if(!cfg.assistant_enabled)throw fail('Atendimento automático pausado.',503)
+ if(action==='customer_context')return customerContext(client,p)
  if(action==='catalog') {
   const value=(await client.query('select public_catalog() value')).rows[0].value
   return {services:value.services.map(s=>({id:s.id,name:s.name,price:s.price_cents,duration_minutes:s.duration_minutes})),professionals:value.professionals.map(p=>({id:p.id,name:p.name})),business:value.business}

@@ -1,9 +1,9 @@
 import { Capacitor } from '@capacitor/core'
 
 export const androidDownloadsAvailable = true
-export const professionalVersion = '1.3.2'
+export const professionalVersion = '1.3.3'
 export const professionalApkUrl = `https://raw.githubusercontent.com/GustavoShneiter/App-Machado/main/releases/android/Machado-Profissional-v${professionalVersion}.apk`
-export const appVersion = import.meta.env.VITE_APP_EDITION === 'professional' ? professionalVersion : '1.21.2'
+export const appVersion = import.meta.env.VITE_APP_EDITION === 'professional' ? professionalVersion : '1.21.3'
 export const publicSiteUrl = 'https://barbearia-machado-rose.vercel.app'
 export const bookingSiteUrl = Capacitor.isNativePlatform() || typeof window === 'undefined' ? publicSiteUrl : window.location.origin
 
