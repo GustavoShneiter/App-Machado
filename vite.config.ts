@@ -10,8 +10,8 @@ export default defineConfig({
         .replace('<title>Barbearia Machado</title>', '<title>Machado Profissional</title>')
         .replace('content="Machado Gestão"', 'content="Machado Pro"')
         .replace('/manifest.webmanifest', '/professional.webmanifest')
-        .replace('/apple-touch-icon.png', '/professional-icon-192.png')
-        .replace('/icon.svg', '/professional-icon.svg')
+        .replace('/apple-touch-icon.png', '/professional-apple-touch-icon.png')
+        .replace('/icon.svg', '/professional-icon-192.png')
     } },
   }],
   server: { proxy: { '/api': 'http://127.0.0.1:3000' }, watch: { ignored: ['**/android/**', '**/ios/**', '**/dist-professional/**', '**/.private/**'] } },

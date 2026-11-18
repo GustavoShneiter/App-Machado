@@ -10,9 +10,10 @@ export function WebAppMetadata() {
     const app = isWebApp()
     if (isProfessionalExperience()) {
       document.querySelector('link[rel="manifest"]')?.setAttribute('href', '/professional.webmanifest')
-      document.querySelector('link[rel="apple-touch-icon"]')?.setAttribute('href', '/professional-icon-192.png')
+      document.querySelector('link[rel="apple-touch-icon"]')?.setAttribute('href', '/professional-apple-touch-icon.png')
       document.querySelector('meta[name="apple-mobile-web-app-title"]')?.setAttribute('content', 'Machado Pro')
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#ffffff')
+      document.querySelector('link[rel="icon"]')?.setAttribute('href', '/professional-icon-192.png')
       document.title = 'Machado Profissional'
       return
     }
@@ -20,6 +21,8 @@ export function WebAppMetadata() {
     document.querySelector('link[rel="manifest"]')?.setAttribute('href', app ? '/app.webmanifest' : admin ? '/admin.webmanifest' : '/manifest.webmanifest')
     document.querySelector('meta[name="apple-mobile-web-app-title"]')?.setAttribute('content', admin ? 'Machado Gestão' : 'Barbearia Machado')
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', admin ? '#ffffff' : '#121212')
+    document.querySelector('link[rel="apple-touch-icon"]')?.setAttribute('href', admin ? '/admin-apple-touch-icon.png' : '/apple-touch-icon.png')
+    document.querySelector('link[rel="icon"]')?.setAttribute('href', admin ? '/admin-icon-192.png' : '/icon.svg')
     document.title = admin ? 'Machado Gestão' : 'Barbearia Machado'
   }, [pathname])
   return null

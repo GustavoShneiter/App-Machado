@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-18",
+  "admin": "1.21.4",
+  "professional": "1.3.4",
+  "status": "available",
+  "build": {
+    "minify": false
+  },
+  "scanner": {
+    "name": "Microsoft Defender Antivirus",
+    "engine": "1.1.26100.4",
+    "signatures": "1.463.360.0",
+    "scope": "complete APK files",
+    "result": "no_threats_detected"
+  },
+  "artifacts": [
+    {
+      "edition": "Gestao",
+      "version": "1.21.4",
+      "versionCode": 37,
+      "applicationId": "com.barbeariamachado.gestao",
+      "file": "releases/android/Machado-Gestao-v1.21.4.apk",
+      "bytes": 7280000,
+      "sha256": "361b528a9c5e84bec20f7b782ab856acb561a8d7df54250458c8583d89ab20ad",
+      "signed": true,
+      "defender": "no_threats_detected"
+    },
+    {
+      "edition": "Profissional",
+      "version": "1.3.4",
+      "versionCode": 12,
+      "applicationId": "com.barbeariamachado.profissional",
+      "file": "releases/android/Machado-Profissional-v1.3.4.apk",
+      "bytes": 7196540,
+      "sha256": "286c065828904e671035bb5b24896503812ac3673f28362d4f762a01d888a69d",
+      "signed": true,
+      "defender": "no_threats_detected"
+    }
+  ]
+}
