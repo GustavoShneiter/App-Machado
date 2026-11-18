@@ -15,5 +15,5 @@ export default defineConfig({
     } },
   }],
   server: { proxy: { '/api': 'http://127.0.0.1:3000' }, watch: { ignored: ['**/android/**', '**/ios/**', '**/dist-professional/**', '**/.private/**'] } },
-  build: { rollupOptions: { output: { manualChunks: { react: ['react','react-dom','react-router-dom'] } } } },
+  build: { minify: false, rollupOptions: { output: { manualChunks: { react: ['react','react-dom','react-router-dom'] } } } },
 })
