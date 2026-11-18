@@ -58,6 +58,14 @@ O rollback para a origem só é simples antes de haver novas gravações no dest
 
 Os testes de homologação estão em `scripts/test-contabo-staging.mjs` e `scripts/test-contabo-flows.mjs`. Exigem os arquivos privados do ensaio e recusam produção. Os scripts de congelamento/cópia são ferramentas de migração, não fazem parte do fluxo normal do usuário.
 
+## Resultado do corte
+
+Corte concluído em 18/11/2026. A comparação final preservou 46 tabelas e 328 registros, além das funções, donos e políticas. A única foto externa existente foi transferida com conferência dos bytes. A base antiga permanece bloqueada para escrita; nenhum cliente fictício do ensaio foi levado à base definitiva.
+
+O agente passou a consultar diretamente a API da Contabo. Foram conferidos o contrato 2.2, as 15 permissões, o vínculo com a unidade, a sessão da Evolution e as configurações originais. O teste interno de agenda retornou vagas sem criar reserva nem enviar mensagem artificial. Não houve mensagens ou recibos na fila durante a retenção nem envios incertos para reconciliar. Confirmações e heartbeat foram retomados e o primeiro ciclo real de ambos terminou com sucesso. Lembretes e campanhas permaneceram desativados, como antes do corte.
+
+Os dois APKs mantêm a identidade de assinatura da edição anterior e usam diretamente o novo endereço. Instale a versão nova sobre a existente. Os acessos continuam os mesmos; ao abrir um domínio novo na web, pode ser necessário entrar novamente, pois os cookies pertencem ao endereço anterior.
+
 ## Operação e custos
 
 Essa mudança utiliza a VPS já contratada. Não elimina a mensalidade da Contabo nem eventuais cobranças de IA/WhatsApp contratadas separadamente. Não foi contratado nenhum serviço pago adicional nesta migração.

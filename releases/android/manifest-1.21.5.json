@@ -38,5 +38,22 @@
     }
   ],
   "backend": "contabo",
-  "canonicalUrl": "https://app-machado.45-140-203-243.sslip.io"
+  "canonicalUrl": "https://app-machado.45-140-203-243.sslip.io",
+  "githubArtifactVerification": {
+    "commit": "e4f2397",
+    "sha256Matched": true,
+    "downloadedFilesDefender": "no_threats_detected"
+  },
+  "migration": {
+    "status": "completed",
+    "tablesVerified": 46,
+    "recordsVerifiedBeforeRelease": 328,
+    "permissionsPreserved": true,
+    "oldDatabaseWriteFrozen": true,
+    "agentContract": "2.2",
+    "agentPermissions": 15,
+    "agentResumed": true,
+    "sourceRoleAndFunctionDefinitionsPreserved": true,
+    "backupsEncrypted": true
+  }
 }
