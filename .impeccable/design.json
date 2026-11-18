@@ -1,0 +1,556 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-18T16:03:19.943973+00:00",
+  "title": "Design System: Machado Gestão e Machado Profissional",
+  "extensions": {
+    "colorMeta": {
+      "green": {
+        "role": "primary",
+        "displayName": "Verde floresta",
+        "tonalRamp": [
+          "oklch(15% 0.0175 169.78)",
+          "oklch(27% 0.0455 169.78)",
+          "oklch(39% 0.0629 169.78)",
+          "oklch(51% 0.0699 169.78)",
+          "oklch(63% 0.0699 169.78)",
+          "oklch(75% 0.0594 169.78)",
+          "oklch(87% 0.0350 169.78)",
+          "oklch(95% 0.0140 169.78)"
+        ]
+      },
+      "deep": {
+        "role": "primary",
+        "displayName": "Verde profundo",
+        "tonalRamp": [
+          "oklch(15% 0.0137 172.57)",
+          "oklch(27% 0.0355 172.57)",
+          "oklch(39% 0.0491 172.57)",
+          "oklch(51% 0.0546 172.57)",
+          "oklch(63% 0.0546 172.57)",
+          "oklch(75% 0.0464 172.57)",
+          "oklch(87% 0.0273 172.57)",
+          "oklch(95% 0.0109 172.57)"
+        ]
+      },
+      "mint": {
+        "role": "primary",
+        "displayName": "Menta",
+        "tonalRamp": [
+          "oklch(15% 0.0040 166.72)",
+          "oklch(27% 0.0103 166.72)",
+          "oklch(39% 0.0143 166.72)",
+          "oklch(51% 0.0159 166.72)",
+          "oklch(63% 0.0159 166.72)",
+          "oklch(75% 0.0135 166.72)",
+          "oklch(87% 0.0079 166.72)",
+          "oklch(95% 0.0032 166.72)"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Fundo claro",
+        "tonalRamp": [
+          "oklch(15% 0.0007 264.54)",
+          "oklch(27% 0.0019 264.54)",
+          "oklch(39% 0.0026 264.54)",
+          "oklch(51% 0.0029 264.54)",
+          "oklch(63% 0.0029 264.54)",
+          "oklch(75% 0.0024 264.54)",
+          "oklch(87% 0.0014 264.54)",
+          "oklch(95% 0.0006 264.54)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Branco de superfície",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(27% 0.0000 89.88)",
+          "oklch(39% 0.0000 89.88)",
+          "oklch(51% 0.0000 89.88)",
+          "oklch(63% 0.0000 89.88)",
+          "oklch(75% 0.0000 89.88)",
+          "oklch(87% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "raised": {
+        "role": "neutral",
+        "displayName": "Verde cinza tonal",
+        "tonalRamp": [
+          "oklch(15% 0.0015 153.77)",
+          "oklch(27% 0.0038 153.77)",
+          "oklch(39% 0.0052 153.77)",
+          "oklch(51% 0.0058 153.77)",
+          "oklch(63% 0.0058 153.77)",
+          "oklch(75% 0.0049 153.77)",
+          "oklch(87% 0.0029 153.77)",
+          "oklch(95% 0.0012 153.77)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Tinta verde escura",
+        "tonalRamp": [
+          "oklch(15% 0.0048 173.85)",
+          "oklch(27% 0.0126 173.85)",
+          "oklch(39% 0.0174 173.85)",
+          "oklch(51% 0.0194 173.85)",
+          "oklch(63% 0.0194 173.85)",
+          "oklch(75% 0.0165 173.85)",
+          "oklch(87% 0.0097 173.85)",
+          "oklch(95% 0.0039 173.85)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Texto secundário",
+        "tonalRamp": [
+          "oklch(15% 0.0041 168.78)",
+          "oklch(27% 0.0107 168.78)",
+          "oklch(39% 0.0148 168.78)",
+          "oklch(51% 0.0164 168.78)",
+          "oklch(63% 0.0164 168.78)",
+          "oklch(75% 0.0139 168.78)",
+          "oklch(87% 0.0082 168.78)",
+          "oklch(95% 0.0033 168.78)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Divisor suave",
+        "tonalRamp": [
+          "oklch(15% 0.0017 160.07)",
+          "oklch(27% 0.0043 160.07)",
+          "oklch(39% 0.0060 160.07)",
+          "oklch(51% 0.0067 160.07)",
+          "oklch(63% 0.0067 160.07)",
+          "oklch(75% 0.0057 160.07)",
+          "oklch(87% 0.0033 160.07)",
+          "oklch(95% 0.0013 160.07)"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Borda de campo",
+        "tonalRamp": [
+          "oklch(15% 0.0038 158.20)",
+          "oklch(27% 0.0099 158.20)",
+          "oklch(39% 0.0137 158.20)",
+          "oklch(51% 0.0152 158.20)",
+          "oklch(63% 0.0152 158.20)",
+          "oklch(75% 0.0130 158.20)",
+          "oklch(87% 0.0076 158.20)",
+          "oklch(95% 0.0030 158.20)"
+        ]
+      },
+      "blue": {
+        "role": "secondary",
+        "displayName": "Azul contextual",
+        "tonalRamp": [
+          "oklch(15% 0.0328 260.86)",
+          "oklch(27% 0.0853 260.86)",
+          "oklch(39% 0.1181 260.86)",
+          "oklch(51% 0.1312 260.86)",
+          "oklch(63% 0.1312 260.86)",
+          "oklch(75% 0.1115 260.86)",
+          "oklch(87% 0.0656 260.86)",
+          "oklch(95% 0.0262 260.86)"
+        ]
+      },
+      "blue-bg": {
+        "role": "secondary",
+        "displayName": "Azul claro contextual",
+        "tonalRamp": [
+          "oklch(15% 0.0046 265.98)",
+          "oklch(27% 0.0121 265.98)",
+          "oklch(39% 0.0167 265.98)",
+          "oklch(51% 0.0186 265.98)",
+          "oklch(63% 0.0186 265.98)",
+          "oklch(75% 0.0158 265.98)",
+          "oklch(87% 0.0093 265.98)",
+          "oklch(95% 0.0037 265.98)"
+        ]
+      },
+      "lilac": {
+        "role": "secondary",
+        "displayName": "Lilás contextual",
+        "tonalRamp": [
+          "oklch(15% 0.0276 294.48)",
+          "oklch(27% 0.0717 294.48)",
+          "oklch(39% 0.0992 294.48)",
+          "oklch(51% 0.1102 294.48)",
+          "oklch(63% 0.1102 294.48)",
+          "oklch(75% 0.0937 294.48)",
+          "oklch(87% 0.0551 294.48)",
+          "oklch(95% 0.0220 294.48)"
+        ]
+      },
+      "lilac-bg": {
+        "role": "secondary",
+        "displayName": "Lilás claro contextual",
+        "tonalRamp": [
+          "oklch(15% 0.0044 296.63)",
+          "oklch(27% 0.0114 296.63)",
+          "oklch(39% 0.0158 296.63)",
+          "oklch(51% 0.0176 296.63)",
+          "oklch(63% 0.0176 296.63)",
+          "oklch(75% 0.0150 296.63)",
+          "oklch(87% 0.0088 296.63)",
+          "oklch(95% 0.0035 296.63)"
+        ]
+      },
+      "amber": {
+        "role": "secondary",
+        "displayName": "Âmbar contextual",
+        "tonalRamp": [
+          "oklch(15% 0.0257 67.83)",
+          "oklch(27% 0.0668 67.83)",
+          "oklch(39% 0.0925 67.83)",
+          "oklch(51% 0.1028 67.83)",
+          "oklch(63% 0.1028 67.83)",
+          "oklch(75% 0.0874 67.83)",
+          "oklch(87% 0.0514 67.83)",
+          "oklch(95% 0.0206 67.83)"
+        ]
+      },
+      "amber-bg": {
+        "role": "secondary",
+        "displayName": "Âmbar claro contextual",
+        "tonalRamp": [
+          "oklch(15% 0.0073 80.66)",
+          "oklch(27% 0.0191 80.66)",
+          "oklch(39% 0.0264 80.66)",
+          "oklch(51% 0.0293 80.66)",
+          "oklch(63% 0.0293 80.66)",
+          "oklch(75% 0.0249 80.66)",
+          "oklch(87% 0.0147 80.66)",
+          "oklch(95% 0.0059 80.66)"
+        ]
+      },
+      "rose": {
+        "role": "secondary",
+        "displayName": "Rosa contextual",
+        "tonalRamp": [
+          "oklch(15% 0.0262 7.34)",
+          "oklch(27% 0.0681 7.34)",
+          "oklch(39% 0.0943 7.34)",
+          "oklch(51% 0.1047 7.34)",
+          "oklch(63% 0.1047 7.34)",
+          "oklch(75% 0.0890 7.34)",
+          "oklch(87% 0.0524 7.34)",
+          "oklch(95% 0.0209 7.34)"
+        ]
+      },
+      "rose-bg": {
+        "role": "secondary",
+        "displayName": "Rosa claro contextual",
+        "tonalRamp": [
+          "oklch(15% 0.0036 1.55)",
+          "oklch(27% 0.0095 1.55)",
+          "oklch(39% 0.0131 1.55)",
+          "oklch(51% 0.0146 1.55)",
+          "oklch(63% 0.0146 1.55)",
+          "oklch(75% 0.0124 1.55)",
+          "oklch(87% 0.0073 1.55)",
+          "oklch(95% 0.0029 1.55)"
+        ]
+      },
+      "danger": {
+        "role": "secondary",
+        "displayName": "Ação destrutiva",
+        "tonalRamp": [
+          "oklch(15% 0.0350 12.73)",
+          "oklch(27% 0.0910 12.73)",
+          "oklch(39% 0.1260 12.73)",
+          "oklch(51% 0.1400 12.73)",
+          "oklch(63% 0.1400 12.73)",
+          "oklch(75% 0.1190 12.73)",
+          "oklch(87% 0.0700 12.73)",
+          "oklch(95% 0.0280 12.73)"
+        ]
+      },
+      "focus": {
+        "role": "secondary",
+        "displayName": "Foco de teclado",
+        "tonalRamp": [
+          "oklch(15% 0.0209 169.18)",
+          "oklch(27% 0.0542 169.18)",
+          "oklch(39% 0.0751 169.18)",
+          "oklch(51% 0.0834 169.18)",
+          "oklch(63% 0.0834 169.18)",
+          "oklch(75% 0.0709 169.18)",
+          "oklch(87% 0.0417 169.18)",
+          "oklch(95% 0.0167 169.18)"
+        ]
+      },
+      "progress-track": {
+        "role": "neutral",
+        "displayName": "Trilha de progresso",
+        "tonalRamp": [
+          "oklch(15% 0.0037 158.24)",
+          "oklch(27% 0.0097 158.24)",
+          "oklch(39% 0.0135 158.24)",
+          "oklch(51% 0.0150 158.24)",
+          "oklch(63% 0.0150 158.24)",
+          "oklch(75% 0.0127 158.24)",
+          "oklch(87% 0.0075 158.24)",
+          "oklch(95% 0.0030 158.24)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "balance": {
+        "displayName": "Valor principal",
+        "purpose": "Destaque financeiro do Caixa; Início e Relatórios têm variantes de composição."
+      },
+      "headline": {
+        "displayName": "Título de página",
+        "purpose": "Contexto principal da função."
+      },
+      "title": {
+        "displayName": "Título de seção",
+        "purpose": "Grupos de conteúdo e listas."
+      },
+      "body": {
+        "displayName": "Conteúdo",
+        "purpose": "Texto de leitura e controles gerais."
+      },
+      "control": {
+        "displayName": "Ação primária",
+        "purpose": "Rótulo de botão principal."
+      },
+      "input": {
+        "displayName": "Campo editável",
+        "purpose": "Leitura e entrada, incluindo Safari."
+      },
+      "label": {
+        "displayName": "Contexto",
+        "purpose": "Filtros e ações compactas."
+      }
+    },
+    "shadows": [
+      {
+        "name": "floating-action",
+        "value": "0 5px 16px #103f3324",
+        "purpose": "Botão flutuante de agendar."
+      },
+      {
+        "name": "modal",
+        "value": "0 12px 40px #103f3326",
+        "purpose": "Janela sobre conteúdo."
+      }
+    ],
+    "motion": [
+      {
+        "name": "primary-feedback",
+        "value": "background-color .14s, opacity .14s",
+        "purpose": "Resposta da ação primária."
+      },
+      {
+        "name": "sheet-entry",
+        "value": "200ms ease-out; translateY(18px) / opacity .92 -> transform none / opacity 1",
+        "purpose": "Entrada da janela; desativada com movimento reduzido."
+      },
+      {
+        "name": "goal-progress",
+        "value": "950ms cubic-bezier(.22,1,.36,1); scaleX(previous / 100) -> scaleX(current / 100)",
+        "purpose": "Barra de metas; sem animação quando movimento reduzido está ativo."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-max",
+        "value": "380px"
+      },
+      {
+        "name": "mobile-max",
+        "value": "900px"
+      },
+      {
+        "name": "desktop-min",
+        "value": "901px"
+      }
+    ],
+    "focus": {
+      "value": "3px solid #38826a",
+      "offset": "3px",
+      "searchValue": "2px solid #155442",
+      "searchOffset": "2px"
+    },
+    "overlay": {
+      "backdrop": "#102b235e",
+      "blur": "none"
+    },
+    "evidence": {
+      "mode": "implemented-source-scan",
+      "date": "2026-11-18",
+      "styles": "src/approved-design.css",
+      "captures": ".private/screenshots/redesign-2026-11-18",
+      "captureData": "fixtures; no production writes",
+      "limitations": [
+        "No certification of real Android or iPhone testing",
+        "No certification of deployment, production data, or APK build",
+        "Compact labels and sub-44px secondary targets are observed limitations, not new minimum standards"
+      ],
+      "tonalRamps": "Synthesized in OKLCH for preview only; not additional implementation tokens.",
+      "scope": "Gestão/Profissional app shells; public booking excluded.",
+      "goalSource": "src/professional/ProfessionalGoals.tsx"
+    },
+    "typographyImplementation": {
+      "source": {
+        "path": "/fonts/Manrope.ttf",
+        "kind": "variable",
+        "weightRange": "200 800"
+      },
+      "deliveredFaces": [
+        {
+          "path": "/fonts/Manrope-400.ttf",
+          "weight": 400,
+          "kind": "static"
+        },
+        {
+          "path": "/fonts/Manrope-650.ttf",
+          "weight": 650,
+          "kind": "static"
+        },
+        {
+          "path": "/fonts/Manrope-750.ttf",
+          "weight": 750,
+          "kind": "static"
+        }
+      ],
+      "fontDisplay": "swap",
+      "license": "/fonts/OFL-Manrope.txt",
+      "selection": "font-weight selects the nearest delivered static face; retained font-variation-settings do not change static instances.",
+      "reason": "Avoid the observed Windows WebKit variable-font regression at weight 200. This does not certify real iPhone execution."
+    }
+  },
+  "components": [
+    {
+      "name": "Ação primária",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ação principal; altura mínima permite conteúdo maior.",
+      "html": "<button class=\"ds-primary\">Agendar</button>",
+      "css": ".ds-primary{min-height:48px;padding:12px 18px;border:0;border-radius:12px;font-size:14px;font-weight:750;font-variation-settings:\"wght\" 750;display:inline-flex;align-items:center;justify-content:center;gap:9px;box-shadow:none;font-family:Manrope,sans-serif;font-variant-numeric:tabular-nums;background:var(--green,#155442);color:var(--surface,#fff);transition:background-color .14s,opacity .14s}.ds-primary:hover{background:var(--deep,#103f33)}.ds-primary:focus-visible{outline:3px solid var(--focus,#38826a);outline-offset:3px}.ds-primary:active:not(:disabled){opacity:.74}.ds-primary:disabled{opacity:.45;cursor:default}.ds-primary:hover:not(:disabled){cursor:pointer}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}}"
+    },
+    {
+      "name": "Ação secundária",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Ação paralela ao destaque principal do Início.",
+      "html": "<button class=\"ds-secondary\">Receber</button>",
+      "css": ".ds-secondary{min-height:48px;padding:12px 18px;border:0;border-radius:12px;font-size:14px;font-weight:750;font-variation-settings:\"wght\" 750;display:inline-flex;align-items:center;justify-content:center;gap:9px;box-shadow:none;font-family:Manrope,sans-serif;font-variant-numeric:tabular-nums;background:var(--mint,#e7f4ee);color:var(--green,#155442)}.ds-secondary:focus-visible{outline:3px solid var(--focus,#38826a);outline-offset:3px}.ds-secondary:active:not(:disabled){opacity:.74}.ds-secondary:disabled{opacity:.45;cursor:default}.ds-secondary:hover:not(:disabled){cursor:pointer}"
+    },
+    {
+      "name": "Ação outline",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Ação complementar em formulário ou janela.",
+      "html": "<button class=\"ds-outline\">Cancelar</button>",
+      "css": ".ds-outline{font-family:Manrope,sans-serif;font-variant-numeric:tabular-nums;min-height:44px;padding:10px 14px;border-radius:12px;background:var(--surface,#fff);color:var(--green,#155442);border:1px solid var(--line,#e4e9e6);box-shadow:none;font-size:13px;font-weight:600;font-variation-settings:\"wght\" 650}.ds-outline:focus-visible{outline:3px solid var(--focus,#38826a);outline-offset:3px}.ds-outline:active:not(:disabled){opacity:.74}.ds-outline:disabled{opacity:.45;cursor:default}.ds-outline:hover:not(:disabled){cursor:pointer}"
+    },
+    {
+      "name": "Campo com rótulo",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Texto de entrada de 16px e rótulo persistente.",
+      "html": "<label class=\"ds-field\"><span>Nome</span><input class=\"ds-input\" placeholder=\"Nome do cliente\" /></label>",
+      "css": ".ds-field{font-family:Manrope,sans-serif;font-variant-numeric:tabular-nums;display:flex;flex-direction:column;gap:8px;color:var(--ink,#1c2925);font-size:13px;text-align:left;margin-bottom:20px}.ds-field>span{font-weight:650;font-variation-settings:\"wght\" 650}.ds-input{font-family:Manrope,sans-serif;font-variant-numeric:tabular-nums;min-height:50px;max-width:100%;min-width:0;padding:12px 14px;background:var(--surface,#fff);border:1px solid var(--line-strong,#cbd6cf);color:var(--ink,#1c2925);border-radius:12px;font-size:16px;font-weight:400;font-variation-settings:\"wght\" 400;box-shadow:none;caret-color:var(--green,#155442)}.ds-input::placeholder{color:var(--muted,#65716c);opacity:1}.ds-input:focus-visible{outline:3px solid var(--focus,#38826a);outline-offset:3px}.ds-input:active:not(:disabled){opacity:.74}.ds-input:disabled{opacity:.45;cursor:default}.ds-input:hover:not(:disabled){cursor:pointer}"
+    },
+    {
+      "name": "Navegação inferior da Gestão",
+      "kind": "nav",
+      "refersTo": "navigation-bottom",
+      "description": "Início no centro. No Profissional, Relatórios ocupa o quarto destino. Prévia estática sem posição fixa.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Navegação principal\"><a href=\"#agenda\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M8 2v4M16 2v4M3 10h18\"/><rect x=\"3\" y=\"4\" width=\"18\" height=\"18\" rx=\"2\"/></svg><span>Agenda</span></a><a href=\"#caixa\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 9h18M7 14h3\"/></svg><span>Caixa</span></a><a href=\"#inicio\" aria-current=\"page\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z\"/></svg><span>Início</span></a><a href=\"#clientes\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/></svg><span>Clientes</span></a><a href=\"#menu\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 6h16M4 12h16M4 18h16\"/></svg><span>Menu</span></a></nav>",
+      "css": ".ds-nav{font-family:Manrope,sans-serif;font-variant-numeric:tabular-nums;display:flex;min-height:76px;padding:7px 10px;background:var(--surface,#fff);border-top:1px solid var(--line,#e4e9e6);box-shadow:none}.ds-nav>a{position:relative;isolation:isolate;display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:60px;padding:8px 0;color:#6c7871;font-size:10px;line-height:1.25;font-weight:650;font-variation-settings:\"wght\" 650;text-decoration:none}.ds-nav>a[aria-current=page]{color:var(--green,#155442);font-weight:800}.ds-nav>a[aria-current=page]:before{content:\"\";position:absolute;top:3px;left:50%;transform:translateX(-50%);width:50px;height:32px;border-radius:20px;background:var(--mint,#e7f4ee);z-index:-1}.ds-nav>a:focus-visible{outline:3px solid var(--focus,#38826a);outline-offset:3px}.ds-nav>a:active:not(:disabled){opacity:.74}.ds-nav>a:disabled{opacity:.45;cursor:default}.ds-nav>a:hover:not(:disabled){cursor:pointer}"
+    },
+    {
+      "name": "Filtro selecionado",
+      "kind": "chip",
+      "refersTo": "filter-chip-selected",
+      "description": "Filtro de meio de recebimento; o rótulo e aria-pressed identificam a seleção.",
+      "html": "<button class=\"ds-chip\" aria-pressed=\"true\">Todos</button>",
+      "css": ".ds-chip{font-family:Manrope,sans-serif;font-variant-numeric:tabular-nums;min-height:40px;padding:8px 14px;font-size:12px;font-weight:650;font-variation-settings:\"wght\" 650;background:var(--surface,#fff);color:var(--muted,#65716c);border:0;border-radius:24px}.ds-chip[aria-pressed=true]{background:var(--green,#155442);color:var(--surface,#fff)}.ds-chip:focus-visible{outline:3px solid var(--focus,#38826a);outline-offset:3px}.ds-chip:active:not(:disabled){opacity:.74}.ds-chip:disabled{opacity:.45;cursor:default}.ds-chip:hover:not(:disabled){cursor:pointer}"
+    },
+    {
+      "name": "Meta semanal compacta",
+      "kind": "custom",
+      "refersTo": "goal-compact",
+      "description": "Primeira meta configurada e progresso; todas as metas ficam no diálogo Ver progresso. Prévia estática com valores ilustrativos, sem edição da meta.",
+      "html": "<section class=\"ds-goal\"><header><h2>Metas da semana</h2><span>Semana atual</span></header><div class=\"ds-goal-value\"><span>Comissão</span><strong>R$ 0,00 <small>/ R$ 100,00</small></strong></div><div class=\"ds-goal-track\" role=\"progressbar\" aria-label=\"Meta de comissão\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"0\"><span></span></div><button>3 metas · Ver progresso<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></button></section>",
+      "css": ".ds-goal{font-family:Manrope,sans-serif;font-variant-numeric:tabular-nums;background:var(--surface,#fff);color:var(--ink,#1c2925);border-radius:16px;padding:16px 18px;margin-top:16px;min-height:0}.ds-goal>header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.ds-goal h2{font-size:15px;font-weight:750;margin:0}.ds-goal header>span{font-size:10px;color:var(--muted,#65716c)}.ds-goal-value{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px}.ds-goal-value strong{font-size:14px;color:var(--green,#155442);font-weight:750}.ds-goal-value small{font-size:11px;color:var(--muted,#65716c)}.ds-goal-track{margin-top:10px;height:6px;border-radius:3px;overflow:hidden;background:var(--progress-track,#e1ece5)}.ds-goal-track>span{height:100%;display:block;transform-origin:left;transform:scaleX(0);border-radius:3px;background:var(--green,#155442)}.ds-goal>button{font-family:Manrope,sans-serif;font-variant-numeric:tabular-nums;display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:8px;min-height:38px;padding:8px 0 0;border:0;background:transparent;font-size:12px;color:var(--green,#155442)}.ds-goal>button:focus-visible{outline:3px solid var(--focus,#38826a);outline-offset:3px}.ds-goal>button:active:not(:disabled){opacity:.74}.ds-goal>button:disabled{opacity:.45;cursor:default}.ds-goal>button:hover:not(:disabled){cursor:pointer}"
+    },
+    {
+      "name": "Saldo de destaque",
+      "kind": "card",
+      "refersTo": "card-balance",
+      "description": "Estrutura do saldo do Início; valor da prévia é apenas ilustrativo.",
+      "html": "<section class=\"ds-balance\"><h2>Recebido hoje</h2><strong>R$ 0,00</strong></section>",
+      "css": ".ds-balance{font-family:Manrope,sans-serif;font-variant-numeric:tabular-nums;background:var(--green,#155442);border-radius:16px;color:var(--surface,#fff);padding:20px 22px;box-shadow:none;text-align:left}.ds-balance h2{font-size:15px;font-weight:650;font-variation-settings:\"wght\" 750;margin:0;color:inherit}.ds-balance>strong{display:block;color:inherit;font-size:36px;font-weight:750;font-variation-settings:\"wght\" 750;letter-spacing:-.035em;line-height:1.4;margin:18px 0 22px}"
+    },
+    {
+      "name": "Abas do Caixa",
+      "kind": "nav",
+      "refersTo": "context-tabs",
+      "description": "Alterna Hoje, Extrato e Repasses dentro do Caixa; a prévia mostra seleção estática.",
+      "html": "<nav class=\"ds-context\" aria-label=\"Visões do Caixa\"><button aria-pressed=\"true\">Hoje</button><button aria-pressed=\"false\">Extrato</button><button aria-pressed=\"false\">Repasses</button></nav>",
+      "css": ".ds-context{font-family:Manrope,sans-serif;font-variant-numeric:tabular-nums;display:flex;gap:4px;background:#ebefed;border-radius:12px;padding:4px}.ds-context button{font-family:Manrope,sans-serif;font-variant-numeric:tabular-nums;flex:1;border:0;border-radius:9px;color:var(--muted,#65716c);font-size:13px;font-weight:750;font-variation-settings:\"wght\" 650;min-height:44px;background:transparent}.ds-context button[aria-pressed=true]{background:var(--surface,#fff);color:var(--green,#155442)}.ds-context button:focus-visible{outline:3px solid var(--focus,#38826a);outline-offset:3px}.ds-context button:active:not(:disabled){opacity:.74}.ds-context button:disabled{opacity:.45;cursor:default}.ds-context button:hover:not(:disabled){cursor:pointer}"
+    },
+    {
+      "name": "Linha financeira",
+      "kind": "custom",
+      "refersTo": "transaction-row",
+      "description": "Descrição flexível e valor alinhado; demonstra a composição de pendências.",
+      "html": "<button class=\"ds-money-row\"><span class=\"ds-money-icon\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 9h18M7 14h3\"/></svg></span><span class=\"ds-money-copy\"><strong>A receber de clientes</strong><small>Nenhum atendimento pendente</small></span><b>R$ 0,00</b><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m9 18 6-6-6-6\"/></svg></button>",
+      "css": ".ds-money-row{font-family:Manrope,sans-serif;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:12px;min-height:85px;padding:18px 0;border:0;border-bottom:1px solid var(--line,#e4e9e6);width:100%;text-align:left;background:transparent;color:var(--ink,#1c2925)}.ds-money-icon{display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:13px;background:var(--amber-bg,#fff3df);color:var(--amber,#8b5814)}.ds-money-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:5px}.ds-money-copy strong{font-size:13px;font-weight:750;font-variation-settings:\"wght\" 750;overflow-wrap:anywhere}.ds-money-copy small{font-size:11px;color:var(--muted,#65716c);line-height:1.6}.ds-money-row>b{font-size:13px;flex:none;white-space:nowrap;font-weight:750;font-variation-settings:\"wght\" 750}.ds-money-row>svg{flex:none;color:var(--muted,#65716c)}.ds-money-row:focus-visible{outline:3px solid var(--focus,#38826a);outline-offset:3px}.ds-money-row:active:not(:disabled){opacity:.74}.ds-money-row:disabled{opacity:.45;cursor:default}.ds-money-row:hover:not(:disabled){cursor:pointer}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Rotina por camadas",
+    "overview": "A direção aprovada organiza a rotina do balcão em superfícies claras, valores legíveis e ações em verde. Cada tela apresenta seu contexto principal; listas, abas locais e grupos tonais expõem os detalhes conforme a tarefa, sem repetir o mesmo painel em todas as funções.\n\nGestão e Profissional compartilham a linguagem visual, preservando as permissões e o significado dos dados de cada edição. A densidade se adapta ao espaço: navegação inferior no celular, área ampla de trabalho no PC e detalhes em janelas ou painéis inferiores.",
+    "keyCharacteristics": [
+      "Fundo claro, superfícies brancas e verde reservado às ações e aos destaques operacionais.",
+      "Manrope local, números tabulares e hierarquia por tamanho e peso.",
+      "Listas por função, abas de contexto e detalhes progressivos.",
+      "Início no centro da navegação inferior, com rótulos persistentes."
+    ],
+    "rules": [
+      {
+        "name": "The Context Color Rule",
+        "body": "A cor apoia o tipo de ação ou o estado; não substitui o nome, a data, a situação nem o sinal do valor.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "Novas telas dos dois shells usam Manrope local; não herdam Space Grotesk, DM Sans ou a tipografia da página pública.",
+        "section": "typography"
+      },
+      {
+        "name": "The Context First Rule",
+        "body": "Cada função escolhe sua organização de dados: Agenda por dia/profissional, Caixa por Hoje/Extrato/Repasses e Relatórios por métrica/período. Não transformar essas telas em cópias do Início.",
+        "section": "layout"
+      },
+      {
+        "name": "The Tonal Depth Rule",
+        "body": "Use fundo, branco, menta e divisores para agrupar conteúdo; preserve sombras apenas nas camadas flutuantes existentes.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do manter Início no centro e os cinco destinos próprios de cada edição.",
+      "Do usar Manrope local, números tabulares, reais com duas casas e períodos explícitos.",
+      "Do agrupar registros em listas e escolher abas, gráficos e grupos tonais conforme a função.",
+      "Do preservar foco visível, estados de carregamento/erro/vazio e movimento reduzido.",
+      "Do preservar permissões por unidade/profissional e distinguir faturamento, recebimento, comissão, despesa e dinheiro na gaveta."
+    ],
+    "donts": [
+      "Don't restaurar o carvão/Space Grotesk como identidade dos shells ou criar outra direção visual.",
+      "Don't adicionar menus de navegação no topo ou transformar cada métrica em um cartão isolado.",
+      "Don't usar valores dos protótipos como dados reais nem atribuir ao profissional a visão administrativa.",
+      "Don't apresentar capturas com fixtures como validação em dispositivo real ou publicação em produção."
+    ]
+  }
+}

@@ -85,7 +85,7 @@ export default async function handler(req,res) {
       const cookies=response.headers.getSetCookie(); if(cookies.length)res.setHeader('Set-Cookie',cookies)
       res.statusCode=response.status; res.end(Buffer.from(await response.arrayBuffer())); return
     }
-    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.20.0',professionalVersion:'1.2.1',backend:'vercel',database:'neon'}); return }
+    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.21.0',professionalVersion:'1.3.0',backend:'vercel',database:'neon'}); return }
     if(path==='/api/agent') return await externalAgent(req,res,{readBody,send,pool,transaction})
     if(path.startsWith('/api/agent/')) {
       const route=path.slice('/api/agent/'.length)
@@ -121,7 +121,7 @@ export default async function handler(req,res) {
       send(res,200,{data});return
     }
     if(path==='/api/professional/manifest'&&req.method==='GET') {
-      send(res,200,{id:'/profissional/',name:'Machado Profissional',short_name:'Machado Pro',lang:'pt-BR',start_url:'/profissional/agenda',scope:'/profissional/',display:'standalone',background_color:'#f4f7f5',theme_color:'#177245',icons:[{src:'/professional-icon-192.png',sizes:'192x192',type:'image/png'},{src:'/professional-icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'}]}); return
+      send(res,200,{id:'/profissional/',name:'Machado Profissional',short_name:'Machado Pro',lang:'pt-BR',start_url:'/profissional/inicio',scope:'/profissional/',display:'standalone',background_color:'#f7f8fa',theme_color:'#ffffff',icons:[{src:'/professional-icon-192.png',sizes:'192x192',type:'image/png'},{src:'/professional-icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'}]}); return
     }
     if(path==='/api/professional-accounts'&&req.method==='GET') {
       const session=await officeSession(req)
@@ -248,7 +248,7 @@ export default async function handler(req,res) {
     }
     if(path==='/api/system-status' && req.method==='GET') {
       const session=await officeSession(req)
-      send(res,200,{version:'1.20.0',professionalVersion:'1.2.1',backend:'Vercel',database:'Neon',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs where tenant_id=$1 order by created_at desc limit 1',[session.profile.tenant_id])).rows[0]??null});return
+      send(res,200,{version:'1.21.0',professionalVersion:'1.3.0',backend:'Vercel',database:'Neon',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs where tenant_id=$1 order by created_at desc limit 1',[session.profile.tenant_id])).rows[0]??null});return
     }
     throw fail('Página não encontrada.',404)
   } catch(error) {

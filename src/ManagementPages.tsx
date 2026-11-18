@@ -24,20 +24,20 @@ import {
 } from "./operations";
 import { uploadCatalogPhoto } from "./media";
 import {
+  CalendarDays, ChevronLeft, ChevronRight, SlidersHorizontal, List, CalendarRange,
   ChevronDown,
   Gift,
-  HandCoins,
   History,
   MessageCircle,
   Pencil,
   Trash2,
-  TrendingUp,
-  WalletCards,
 } from "lucide-react";
 import { registerDismissibleLayer } from "./dismissibleLayers";
 import { AgendaCreateModal } from './AgendaScheduling';
 import { AgendaDatePicker } from './AgendaDatePicker';
 import { agendaTimes, recurringForDay } from './schedule';
+import { ApprovedCashView } from './ApprovedCashView';
+import { ApprovedHome } from './ApprovedHome';
 import { AgentContactConsent } from './AgentWhatsApp';
 
 export function Page({
@@ -110,7 +110,7 @@ export function Modal({
   }, []);
 
   const content = (
-    <div ref={layerRef} className="app-shell modal-layer"><div
+    <div ref={layerRef} className="app-shell machado-ui modal-layer"><div
       className="modal-backdrop"
       onClick={() => closeRef.current()}
       onKeyDown={(event) => {
@@ -224,64 +224,6 @@ export function EmptyState({
   return <p className="empty">{children}</p>;
 }
 const Empty = EmptyState;
-function CashActivity({
-  movements,
-}: {
-  movements: { created_at: string; amount_cents: number }[];
-}) {
-  const days = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (6 - index));
-    const key = date.toISOString().slice(0, 10);
-    const amount = movements
-      .filter((m) => dayKey(m.created_at) === key)
-      .reduce((sum, m) => sum + m.amount_cents, 0);
-    return {
-      key,
-      amount,
-      label: date.toLocaleDateString("pt-BR", { weekday: "narrow" }),
-    };
-  });
-  const largest = Math.max(...days.map((day) => Math.abs(day.amount)), 1);
-  const total = days.reduce((sum, day) => sum + day.amount, 0);
-  return (
-    <section className="panel operation-panel cash-activity-card">
-      <div className="panel-title">
-        <div>
-          <h3>Movimento da semana</h3>
-        </div>
-        <strong className={total < 0 ? "red" : "green"}>
-          {total < 0 ? "−" : "+"}
-          {money(Math.abs(total))}
-        </strong>
-      </div>
-      <div
-        className="cash-chart"
-        aria-label={`Movimento acumulado de ${money(total)} na semana`}
-      >
-        {days.map((day, index) => (
-          <div
-            className={
-              day.amount < 0
-                ? "negative"
-                : index === days.length - 1
-                  ? "current"
-                  : ""
-            }
-            key={day.key}
-          >
-            <i
-              style={{
-                height: `${Math.max(9, Math.round((Math.abs(day.amount) / largest) * 100))}%`,
-              }}
-            />
-            <span>{day.label}</span>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
 export function AppointmentIdentity({
   appointment: a,
 }: {
@@ -303,53 +245,7 @@ export function AppointmentIdentity({
   );
 }
 
-export function Dashboard() {
-  const { data } = useOperations();
-  const today = dayKey();
-  const summary = summarize(data, today, today);
-  const pending = data.commissions
-    .filter((c) => c.status === "pending")
-    .reduce((s, c) => s + c.commission_cents, 0);
-  return (
-    <Page title="Visão geral">
-      <Metrics
-        entries={[
-          ["Agendamentos hoje", summary.appointments.length],
-          ["Recebido hoje", money(summary.received)],
-          ["Atendimentos concluídos hoje", summary.completed.length],
-          ["Repasses pendentes", money(pending)],
-        ]}
-      />
-      <div className="management-grid">
-        <section className="panel operation-panel">
-          <div className="panel-title">
-            <h3>Agenda de hoje</h3>
-            <Link to="/admin/agenda">Abrir agenda</Link>
-          </div>
-          {summary.appointments.map((a) => (
-            <div className="record-row" key={a.id}>
-              <AppointmentIdentity appointment={a} />
-            </div>
-          ))}
-          {!summary.appointments.length && <Empty />}
-        </section>
-        <section className="panel operation-panel">
-          <h3>Estoque baixo</h3>
-          {data.products
-            .filter((p) => p.active && p.quantity <= p.minimum_quantity)
-            .map((p) => (
-              <p key={p.id}>
-                {p.name} · {p.quantity} un.
-              </p>
-            ))}
-          {!data.products.some(
-            (p) => p.active && p.quantity <= p.minimum_quantity,
-          ) && <Empty>Sem produtos abaixo do mínimo.</Empty>}
-        </section>
-      </div>
-    </Page>
-  );
-}
+export function Dashboard() { return <ApprovedHome />; }
 
 export function AppointmentModal({
   close,
@@ -581,6 +477,7 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
   const [slotChoice, setSlotChoice] = useState("");
   const [blocksOpen, setBlocksOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [view, setView] = useState('list'), [filtersOpen, setFiltersOpen] = useState(false), [search, setSearch] = useState('');
   useEffect(() => { const open = () => setSlotChoice('new'); window.addEventListener('agenda:create',open); return () => window.removeEventListener('agenda:create',open); }, []);
   const [confirmation, setConfirmation] = useState<{
     appointment: Appointment;
@@ -598,7 +495,7 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
   }, [activeProfessionals, professional]);
   const selectedDate = new Date(`${date}T12:00:00-03:00`);
   const weekStart = new Date(selectedDate);
-  weekStart.setDate(selectedDate.getDate() - selectedDate.getDay());
+  weekStart.setDate(selectedDate.getDate() - (selectedDate.getDay()+6)%7);
   const weekDays = Array.from({ length: 7 }, (_, index) => {
     const day = new Date(weekStart);
     day.setDate(weekStart.getDate() + index);
@@ -661,57 +558,15 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
         : "Chegou";
   return (
     <section className="page agenda-page">
-      {professionalOnly && <header className="pro-agenda-heading"><div><h2>Minha Agenda</h2><p>{selectedDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}</p></div><span>{rows.filter(row => !['no_show','cancelled'].includes(row.status)).length} agendamentos</span></header>}
-      {!professionalOnly && <section
-        className="agenda-professionals"
-        aria-label="Selecionar profissional"
-      >
-        {activeProfessionals.map((item) => (
-          <button
-            type="button"
-            className={professional === item.id ? "active" : ""}
-            aria-pressed={professional === item.id}
-            key={item.id}
-            onClick={() => setProfessional(item.id)}
-          >
-            {item.foto_url ? (
-              <img src={item.foto_url} alt="" />
-            ) : (
-              <span style={{ background: item.cor }}>
-                {item.iniciais || item.nome.slice(0, 2).toUpperCase()}
-              </span>
-            )}
-            <small>{item.nome}</small>
-          </button>
-        ))}
-      </section>}
-      <section className="agenda-daybar" aria-label="Navegação por semana">
-        <button aria-label="Semana anterior" onClick={() => shiftDate(-7)}>
-          ‹
-        </button>
-        <button className="agenda-week-picker" aria-label="Semana selecionada: escolher mês e ano" aria-haspopup="dialog" onClick={() => setCalendarOpen(true)}>
-          <span>Semana selecionada</span>
-          <strong>{monthLabel}</strong>
-        </button>
-        <button aria-label="Próxima semana" onClick={() => shiftDate(7)}>
-          ›
-        </button>
-      </section>
-      <section className="agenda-week" aria-label="Dias da semana">
-        {weekDays.map((day) => (
-          <button
-            type="button"
-            className={date === day.key ? "active" : ""}
-            aria-pressed={date === day.key}
-            key={day.key}
-            onClick={() => setDate(day.key)}
-          >
-            <small>{day.label}</small>
-            <strong>{day.number}</strong>
-          </button>
-        ))}
-      </section>
-      <section className="agenda-schedule" aria-label="Horários do dia">
+      <header className="approved-agenda-heading"><h1>{professionalOnly?'Minha Agenda':'Agenda'}</h1><button className="text-action" onClick={()=>setFiltersOpen(true)}><SlidersHorizontal size={17}/>Filtro</button></header>
+      <section className="agenda-daybar" aria-label="Navegação por semana"><button aria-label="Semana anterior" onClick={()=>shiftDate(-7)}><ChevronLeft size={20}/></button><button className="agenda-week-picker" aria-label="Semana selecionada: escolher mês e ano" aria-haspopup="dialog" onClick={()=>setCalendarOpen(true)}><CalendarDays size={18}/><strong>{monthLabel}</strong><ChevronDown size={15}/></button><button aria-label="Próxima semana" onClick={()=>shiftDate(7)}><ChevronRight size={20}/></button></section>
+      <section className="agenda-week" aria-label="Dias da semana">{weekDays.map(day=><button type="button" className={date===day.key?'active':''} aria-pressed={date===day.key} key={day.key} onClick={()=>setDate(day.key)}><small>{day.label}</small><strong>{day.number}</strong></button>)}</section>
+      {!professionalOnly&&<section className="agenda-professionals" aria-label="Selecionar profissional">{activeProfessionals.map(item=><button key={item.id} type="button" className={professional===item.id?'active':''} aria-pressed={professional===item.id} onClick={()=>setProfessional(item.id)}>{item.foto_url?<img src={item.foto_url} alt=""/>:<span>{item.iniciais||item.nome.slice(0,2).toUpperCase()}</span>}<small>{item.nome}</small></button>)}</section>}
+      <div className="agenda-list-toolbar"><span>{rows.filter(a=>!search||[a.customer_name,a.service_name,a.professional_name].some(v=>v.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR')))).length} agendamentos</span><div role="group" aria-label="Visualização da agenda"><button aria-label="Lista" aria-pressed={view==='list'} onClick={()=>setView('list')}><List size={18}/></button><button aria-label="Grade de horários" aria-pressed={view==='grid'} onClick={()=>setView('grid')}><CalendarRange size={18}/></button></div></div>
+      {view==='list'&&<div className="approved-agenda-list">{rows.filter(a=>!search||[a.customer_name,a.service_name,a.professional_name].some(v=>v.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR')))).map(a=><button className="agenda-list-row" key={a.id} onClick={()=>setFocused(a)}><span className="agenda-list-time"><b>{new Date(a.starts_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'})}</b><small>{Math.round((Date.parse(a.ends_at)-Date.parse(a.starts_at))/60000)} min</small></span><span className="agenda-list-person"><strong>{a.customer_name}</strong><small><b>{a.professional_name}</b> · {a.service_name}</small><span className={'status-tag '+a.status}>{labels[a.status]??a.status}{a.is_fit_in?' · Encaixe':''}</span></span><ChevronRight size={17}/></button>)}{!rows.length&&<div className="approved-empty"><CalendarDays size={24}/><strong>Nenhum agendamento neste dia</strong><p>Crie um horário ou consulte outra data.</p><button className="primary" onClick={()=>setSlotChoice('new')}>Novo agendamento</button></div>}{dayBlocks.length>0&&<details className="agenda-block-summary"><summary>{dayBlocks.length} bloqueios neste dia</summary>{dayBlocks.map(block=><button className="outline" key={block.id} onClick={()=>setFocusedBlock(block)}>{block.reason||'Agenda bloqueada'} · {dateTime(block.starts_at)}</button>)}</details>}</div>}
+      {filtersOpen&&<Modal title="Filtro da agenda" close={()=>setFiltersOpen(false)}><label className="field"><span>Data</span><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label>{!professionalOnly&&<label className="field"><span>Profissional</span><select value={professional} onChange={e=>setProfessional(e.target.value)}>{activeProfessionals.map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}</select></label>}<label className="field"><span>Buscar cliente ou serviço</span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Nome do cliente ou serviço"/></label><button className="outline" onClick={()=>{setFiltersOpen(false);setBlocksOpen(true)}}>Gerenciar bloqueios</button><button className="primary" onClick={()=>setFiltersOpen(false)}>Aplicar filtros</button></Modal>}
+      {view==='grid'&&<section className="agenda-schedule" aria-label="Horários do dia">
+
         <div
           className="agenda-time-axis"
           style={{ height: (lastHour - firstHour) * hourHeight }}
@@ -812,7 +667,7 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
             );
           })}
         </div>
-      </section>
+      </section>}
       {calendarOpen && <AgendaDatePicker date={date} choose={setDate} close={() => setCalendarOpen(false)} />}
       {slotChoice && <AgendaCreateModal initialDate={date} initialTime={slotChoice==='new'?'':slotChoice} initialProfessional={professional} close={()=>setSlotChoice('')} manageBlocks={()=>{setSlotChoice('');setBlocksOpen(true)}} />}
       {blocksOpen && <Modal title="Bloqueios da agenda" close={()=>setBlocksOpen(false)}><div className="schedule-block-list">
@@ -854,6 +709,7 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
         <Modal title="Agendamento" close={() => setFocused(null)}>
           <AppointmentIdentity appointment={focused} />
           <div className="row-actions agenda-detail-actions">
+            {!professionalOnly&&data.commands.some(c=>c.appointment_id===focused.id)&&<button className="approved-secondary" onClick={()=>navigate('/admin/comandas?comanda='+data.commands.find(c=>c.appointment_id===focused.id)?.id)}>Ver atendimento e pagamento</button>}
             {!["completed", "cancelled", "no_show"].includes(
               focused.status,
             ) && (
@@ -1098,33 +954,9 @@ export function Customers({
                   <strong>{c.name}</strong>
                   <small>{c.phone}</small>
                 </div>
-                <div className="customer-actions">
-                  <a
-                    className="customer-action whatsapp-action"
-                    aria-label={`WhatsApp de ${c.name}`}
-                    href={whatsapp(c.phone)}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <MessageCircle size={17} />
-                  </a>
-                  <button
-                    className="customer-action"
-                    aria-label={`Histórico de ${c.name}`}
-                    onClick={() => setHistory(c.id)}
-                  >
-                    <History size={17} />
-                  </button>
-                  <button
-                    className="customer-action"
-                    aria-label={`Editar ${c.name}`}
-                    onClick={() => setDraft({ ...c })}
-                  >
-                    <Pencil size={16} />
-                  </button>
-                </div>
+                <button className="customer-action" aria-label={`Editar ${c.name}`} onClick={()=>setDraft({...c})}><Pencil size={17}/></button>
               </div>
-              <div className="customer-summary">
+              <details className="customer-summary-disclosure"><summary>Histórico e informações</summary><div className="customer-summary">
                 <span>
                   <small>Visitas</small>
                   <b>{visits.length}</b>
@@ -1143,7 +975,7 @@ export function Customers({
                       : "—"}
                   </b>
                 </span>
-              </div>
+              </div><div className="customer-detail-actions"><a className="outline" aria-label={`WhatsApp de ${c.name}`} href={whatsapp(c.phone)} target="_blank" rel="noreferrer"><MessageCircle size={17}/>WhatsApp</a><button className="outline" aria-label={`Histórico de ${c.name}`} onClick={()=>setHistory(c.id)}><History size={17}/>Ver atendimentos</button></div></details>
             </article>
           );
         })}
@@ -1950,7 +1782,6 @@ export function CashManagement({
   onRequestedNewHandled?: () => void;
 }) {
   const { data, run, busy, error } = useOperations();
-  const { professionals } = useCatalog();
   const [dialog, setDialog] = useState("");
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
@@ -1959,53 +1790,8 @@ export function CashManagement({
   const [professionalId, setProfessionalId] = useState("");
   const [entryIds, setEntryIds] = useState<string[]>([]);
   const [receive, setReceive] = useState("");
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [payoutsOpen, setPayoutsOpen] = useState(false);
-  const [commissionView, setCommissionView] = useState("pending");
-  const [commissionProfessional, setCommissionProfessional] = useState("");
-  const active = data.sessions.find((s) => !s.closed_at);
-  const [chosenSession, setChosenSession] = useState("");
-  const shown =
-    data.sessions.find((s) => s.id === chosenSession) ??
-    active ??
-    data.sessions[0];
-  const pending = data.commissions.filter(
-    (e) => e.status === "pending" && e.commission_cents > 0,
-  );
-  const movements = data.movements.filter((m) => m.session_id === shown?.id);
-  const receivedInSession = movements
-    .filter(
-      (movement) =>
-        movement.amount_cents > 0 &&
-        ["sale", "package_sale"].includes(movement.type),
-    )
-    .reduce((sum, movement) => sum + movement.amount_cents, 0);
-  const commandIdsInSession = new Set(
-    movements
-      .filter((movement) => movement.command_id)
-      .map((movement) => movement.command_id),
-  );
-  const itemIdsInSession = new Set(
-    data.items
-      .filter((item) => commandIdsInSession.has(item.command_id))
-      .map((item) => item.id),
-  );
-  const commissionsInSession = data.commissions
-    .filter((commission) => itemIdsInSession.has(commission.command_item_id))
-    .reduce((sum, commission) => sum + commission.commission_cents, 0);
-  const operatingExpenses = movements
-    .filter(
-      (movement) =>
-        movement.amount_cents < 0 &&
-        movement.type === "expense" &&
-        !movement.commission_entry_id,
-    )
-    .reduce((sum, movement) => sum + Math.abs(movement.amount_cents), 0);
-  const barbershopEarnings =
-    receivedInSession - commissionsInSession - operatingExpenses;
-  const pendingPayments = data.commands.filter(
-    (c) => c.status === "awaiting_payment",
-  );
+  const active = data.sessions.find(s => !s.closed_at);
+  const pending = data.commissions.filter(e => e.status === 'pending' && e.commission_cents > 0);
   const payment = data.commands.find((c) => c.id === receive);
   const openDialog = (value: string) => {
     setDialog(value);
@@ -2041,311 +1827,9 @@ export function CashManagement({
     )
       setDialog("");
   };
-  const visibleCommissions = data.commissions.filter(
-    (e) =>
-      e.commission_cents > 0 &&
-      e.status === commissionView &&
-      (!commissionProfessional || e.professional_id === commissionProfessional),
-  );
   return (
-    <Page
-      title="Caixa"
-      action={
-        <div className="row-actions">
-          <button className="outline" onClick={() => setFiltersOpen((v) => !v)}>
-            {filtersOpen ? "Fechar histórico" : "Histórico"}
-          </button>
-          <button
-            className="primary"
-            disabled={busy}
-            onClick={() => openDialog(active ? "close" : "open")}
-          >
-            {active ? "Fechar caixa" : "Abrir caixa"}
-          </button>
-        </div>
-      }
-    >
-      {filtersOpen && (
-        <div className="management-filters filter-panel">
-          <label>
-            Caixa
-            <select
-              value={shown?.id ?? ""}
-              onChange={(e) => setChosenSession(e.target.value)}
-            >
-              {!data.sessions.length && (
-                <option value="">Nenhum caixa aberto</option>
-              )}
-              {data.sessions.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {dateTime(s.opened_at)} · {s.closed_at ? "Fechado" : "Aberto"}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      )}
-      <section className="cash-overview-grid">
-        <article className="cash-overview-card cash-register-card">
-          <div className="cash-overview-icon">
-            <WalletCards size={22} />
-          </div>
-          <div>
-            <span>Caixa físico</span>
-            <strong>{money(shown ? cashBalance(data, shown) : 0)}</strong>
-            <small className={active ? "open" : "closed"}>
-              {active ? "Caixa aberto" : "Caixa fechado"}
-            </small>
-          </div>
-        </article>
-        <article className="cash-overview-card earnings-card">
-          <div className="cash-overview-icon">
-            <TrendingUp size={22} />
-          </div>
-          <div>
-            <span>Rendimento da barbearia</span>
-            <strong>{money(barbershopEarnings)}</strong>
-            <small>
-              {money(receivedInSession)} recebido ·{" "}
-              {money(commissionsInSession)} reservado para repasses
-            </small>
-          </div>
-        </article>
-      </section>
-      <CashActivity movements={movements} />
-      <button
-        className={`payout-summary-button ${payoutsOpen ? "open" : ""}`}
-        onClick={() => setPayoutsOpen((value) => !value)}
-        aria-expanded={payoutsOpen}
-      >
-        <span className="payout-summary-icon">
-          <HandCoins size={22} />
-        </span>
-        <span>
-          <strong>Valores a repassar</strong>
-        </span>
-        <b>
-          {money(
-            pending.reduce((sum, entry) => sum + entry.commission_cents, 0),
-          )}
-        </b>
-        <ChevronDown size={19} />
-      </button>
-      {payoutsOpen && (
-        <section className="panel operation-panel payout-panel">
-          <div className="panel-title">
-            <div>
-              <h3>
-                {commissionView === "pending"
-                  ? "Repasses pendentes"
-                  : "Repasses pagos"}
-              </h3>
-            </div>
-          </div>
-          <div className="payout-filters">
-            <button
-              className={commissionView === "pending" ? "active" : ""}
-              onClick={() => setCommissionView("pending")}
-            >
-              Pendentes
-            </button>
-            <button
-              className={commissionView === "paid" ? "active" : ""}
-              onClick={() => setCommissionView("paid")}
-            >
-              Pagos
-            </button>
-            <select
-              value={commissionProfessional}
-              onChange={(event) =>
-                setCommissionProfessional(event.target.value)
-              }
-              aria-label="Filtrar profissional"
-            >
-              <option value="">Todos os profissionais</option>
-              {professionals.map((professional) => (
-                <option value={professional.id} key={professional.id}>
-                  {professional.nome}
-                </option>
-              ))}
-            </select>
-          </div>
-          {commissionView === "pending"
-            ? [
-                ...new Set(
-                  visibleCommissions.map((entry) => entry.professional_id),
-                ),
-              ].map((id) => {
-                const entries = visibleCommissions.filter(
-                  (entry) => entry.professional_id === id,
-                );
-                return (
-                  <div className="record-row payout-row" key={id}>
-                    <div>
-                      <strong>
-                        {professionals.find(
-                          (professional) => professional.id === id,
-                        )?.nome ??
-                          data.appointments.find(
-                            (appointment) => appointment.professional_id === id,
-                          )?.professional_name ??
-                          "Profissional"}
-                      </strong>
-                      <small>
-                        {entries.length}{" "}
-                        {entries.length === 1 ? "item" : "itens"}
-                      </small>
-                      <div className="cash-commission-breakdown">
-                        {entries.map(entry => {
-                          const item = data.items.find(row => row.id === entry.command_item_id);
-                          return <div className="cash-commission-line" key={entry.id}><span><b>{item?.description ?? 'Atendimento'}</b><small>{item?.type === 'product' ? 'Produto' : 'Serviço'} · {item?.commission_value ?? 0}%</small></span><span><small>Profissional</small><strong>{money(entry.commission_cents)}</strong></span><span><small>Barbearia</small><strong>{money(entry.gross_cents - entry.commission_cents)}</strong></span></div>;
-                        })}
-                      </div>
-                    </div>
-                    <b>
-                      {money(
-                        entries.reduce(
-                          (sum, entry) => sum + entry.commission_cents,
-                          0,
-                        ),
-                      )}
-                    </b>
-                    <button
-                      className="primary small"
-                      disabled={!active || busy}
-                      onClick={() => {
-                        setProfessionalId(id);
-                        setEntryIds(entries.map((entry) => entry.id));
-                        openDialog("pay");
-                      }}
-                    >
-                      Pagar repasse
-                    </button>
-                  </div>
-                );
-              })
-            : visibleCommissions.map((entry) => (
-                <div className="record-row payout-row" key={entry.id}>
-                  <span>
-                    {professionals.find(
-                      (professional) =>
-                        professional.id === entry.professional_id,
-                    )?.nome ?? "Profissional"}{" "}
-                    · {entry.paid_at ? dateTime(entry.paid_at) : ""}
-                  </span>
-                  <b>{money(entry.commission_cents)}</b>
-                </div>
-              ))}
-          {!visibleCommissions.length && (
-            <Empty>
-              {commissionView === "pending"
-                ? "Nenhum repasse pendente."
-                : "Nenhum repasse pago neste filtro."}
-            </Empty>
-          )}
-        </section>
-      )}
-      <section className="panel operation-panel ready-receipts">
-        <div className="panel-title">
-          <h3>Prontas para receber</h3>
-          <span>{pendingPayments.length}</span>
-        </div>
-        {pendingPayments.map((command) => {
-          const appointment = data.appointments.find(
-            (a) => a.id === command.appointment_id,
-          );
-          const customer = data.customers.find(
-            (c) => c.id === command.customer_id,
-          );
-          const packageInfo = commandPackage(data, command);
-          const total = commandTotal(data, command);
-          return (
-            <div className="record-row" key={command.id}>
-              <div>
-                {appointment ? (
-                  <AppointmentIdentity appointment={appointment} />
-                ) : (
-                  <div className="appointment-identity">
-                    <strong>{customer?.name ?? "Cliente"}</strong>
-                    <small>Comanda de balcão</small>
-                  </div>
-                )}
-                {packageInfo && (
-                  <span
-                    className={`ready-plan ${packageInfo.redeemed ? "used" : ""}`}
-                  >
-                    <Gift size={13} />
-                    {packageInfo.name}
-                  </span>
-                )}
-                <details className="receipt-commission-details"><summary>Divisão do atendimento</summary><div className="cash-commission-breakdown">
-                  {data.items.filter(item => item.command_id === command.id).map(item => <span key={item.id}>
-                    {item.description} · {professionals.find(pro => pro.id === item.professional_id)?.nome ?? 'Profissional'} · {item.commission_value ?? 0}% · Comissão: {money(item.commission_cents)}
-                  </span>)}
-                  <span>Barbearia: {money(total - data.items.filter(item => item.command_id === command.id).reduce((sum, item) => sum + item.commission_cents, 0))}</span>
-                </div></details>
-              </div>
-              <strong>{money(total)}</strong>
-              <button
-                className="primary small"
-                disabled={
-                  (!active && !(packageInfo?.redeemed && total === 0)) || busy
-                }
-                onClick={() => {
-                  setMethod("pix");
-                  setReceive(command.id);
-                }}
-              >
-                {packageInfo?.redeemed && total === 0 ? "Concluir" : "Receber"}
-              </button>
-            </div>
-          );
-        })}
-        {!pendingPayments.length && <Empty>Sem recebimentos pendentes.</Empty>}
-      </section>
-      <section className="panel operation-panel">
-        <div className="panel-title">
-          <h3>Movimentações</h3>
-          <button
-            className="outline small"
-            disabled={!active || busy}
-            onClick={() => openDialog("move")}
-          >
-            Novo lançamento
-          </button>
-        </div>
-        {shown?.closed_at && (
-          <p>
-            Contado: {money(shown.declared_balance_cents ?? 0)} · Diferença:{" "}
-            {money(
-              (shown.declared_balance_cents ?? 0) - cashBalance(data, shown),
-            )}
-          </p>
-        )}
-        {movements.map((m) => {
-          const cmd = data.commands.find((c) => c.id === m.command_id);
-          const a = data.appointments.find((a) => a.id === cmd?.appointment_id);
-          return (
-            <div className="record-row" key={m.id}>
-              <div>
-                <strong>{m.notes}</strong>
-                <p>
-                  {a
-                    ? `${a.customer_name} · ${a.professional_name} · ${a.service_name}`
-                    : ""}
-                </p>
-                <small>
-                  {dateTime(m.created_at)} · {methods[m.payment_method]}
-                </small>
-              </div>
-              <strong className={m.amount_cents < 0 ? "red" : "green"}>
-                {money(m.amount_cents)}
-              </strong>
-            </div>
-          );
-        })}
-        {!movements.length && <Empty />}
-      </section>
+    <Page title="Caixa" action={<span className={'cash-state '+(active?'open':'closed')}>{active?'Aberto':'Fechado'}</span>}>
+      <ApprovedCashView receive={id=>{setMethod('pix');setReceive(id)}} pay={(id,entries)=>{setProfessionalId(id);setEntryIds(entries);openDialog('pay')}} open={openDialog}/>
       {dialog && (
         <Modal
           title={

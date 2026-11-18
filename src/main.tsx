@@ -15,11 +15,12 @@ import './public-compact.css'
 import './admin-polish.css'
 import './web-app-install.css'
 import './professional/professional.css'
-import './professional/professional-space.css'
-import './professional/professional-wallet.css'
-import './admin-refinement.css'
+import './professional/professional-structure.css'
+
 import { WebAppMetadata } from './AdminWebApp'
 import { isWebApp, webAppBase } from './appExperience'
+
+import './approved-design.css'
 
 const queryClient = new QueryClient()
 

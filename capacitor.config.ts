@@ -6,13 +6,13 @@ const config: CapacitorConfig = {
   appName: professional ? 'Machado Profissional' : 'Machado Gestão',
   webDir: professional ? 'dist-professional' : 'dist',
   plugins: {
-    SystemBars: { style: 'DARK' },
+    SystemBars: { style: 'LIGHT' },
   },
   server: {
     androidScheme: 'https',
   },
   ios: {
-    backgroundColor: '#121212',
+    backgroundColor: '#f7f8fa',
     contentInset: 'never',
     preferredContentMode: 'mobile',
   },

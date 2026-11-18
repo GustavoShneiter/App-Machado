@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
-import { CalendarDays, ChevronDown, Download } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, CalendarDays, ChevronDown, ChevronRight, Download, SlidersHorizontal, Users } from 'lucide-react'
 import { useCatalog } from '../CatalogStore'
 import { useOperations } from '../OperationsStore'
 import { Modal } from '../ManagementPages'
 import { dateTime, dayKey, exportCsv, labels, money } from '../operations'
 import { shortDate, weekRange } from '../professional/periods'
 import { buildManagementReport, validReportRange } from './metrics'
-import { DonutChart, RevenueTrend } from './ReportCharts'
+import { RevenueTrend } from './ReportCharts'
 import { ProfessionalGoalEditor } from './AdminProfessionalGoals'
 import './reports.css'
 
@@ -26,7 +26,7 @@ const amount = (value: number) => (value / 100).toFixed(2)
 
 export function AdminReports() {
   const { data, loading } = useOperations(), { professionals, business } = useCatalog()
-  const [range, setRange] = useState<Range>(() => ({ from: dayKey().slice(0, 7) + '-01', to: dayKey() })), [professional, setProfessional] = useState('')
+  const [range, setRange] = useState<Range>(() => weekRange()), [professional, setProfessional] = useState('')
   const [periodOpen, setPeriodOpen] = useState(false), [goalsFor, setGoalsFor] = useState<string | null>(null), [appointmentsOpen, setAppointmentsOpen] = useState(false), [teamExpanded, setTeamExpanded] = useState(false)
   const report = useMemo(() => buildManagementReport(data, professionals, range.from, range.to, professional), [data, professionals, range.from, range.to, professional])
   const selectedName = professionals.find(row => row.id === professional)?.nome ?? report.people[0]?.name ?? 'Profissional'
@@ -34,7 +34,7 @@ export function AdminReports() {
   const title = professional ? selectedName : 'Geral da unidade'
   const preset = periodOptions().find(row => row.from === range.from && row.to === range.to)
   const initialLoading = loading && !data.commands.length && !data.appointments.length && !data.payments.length
-  const chartParts = professional ? [{ id: 'commission', label: 'Comissão do profissional', value: report.earned }, { id: 'shop', label: 'Parte da unidade', value: report.shop }] : report.parts.map(row => ({ id: row.id, label: row.label, value: row.amount }))
+  const [metric, setMetric] = useState('gross'), [filterOpen, setFilterOpen] = useState(false), [selectedDay, setSelectedDay] = useState('')
   function exportReport() {
     exportCsv(`relatorio-${range.from}-${range.to}.csv`, [
       ['Relatório Machado', unit], ['Visão', title], ['De', range.from], ['Até', range.to], [],
@@ -47,43 +47,28 @@ export function AdminReports() {
       ...report.appointments.map(row => [row.customer_name, row.professional_name, row.service_name, dateTime(row.starts_at), labels[row.status] ?? row.status, amount(row.expected_price_cents)]),
     ])
   }
-  return <section className="page machado-reports" aria-label="Relatórios da unidade">
-    <header className="report-heading"><div><h1>Relatórios</h1><p>{unit} · {title}</p></div><button type="button" className="report-export" aria-label="Exportar relatório CSV" onClick={exportReport} disabled={initialLoading}><Download size={17} /><span>Exportar CSV</span></button></header>
-    <div className="report-filterbar">
-      <label className="report-professional-select"><span>Visualização</span><select aria-label="Profissional do relatório" value={professional} onChange={event => { setProfessional(event.target.value); setAppointmentsOpen(false) }}><option value="">Geral · toda a unidade</option>{professionals.map(row => <option key={row.id} value={row.id}>{row.nome}</option>)}</select></label>
-      <button type="button" className="report-period-trigger" aria-label="Escolher período do relatório" aria-haspopup="dialog" onClick={() => setPeriodOpen(true)}><CalendarDays size={16} /><span>{shortDate(range.from)} a {shortDate(range.to)}</span><ChevronDown size={14} /></button>
-    </div>
-    {initialLoading && <p className="report-empty" role="status">Carregando os resultados da unidade…</p>}
-    <section className="report-summary-strip" aria-label="Resumo financeiro do período" aria-busy={loading}>
-      <div><span>Faturamento</span><strong>{initialLoading ? '—' : money(report.gross)}</strong><small>{preset?.label ?? 'Período selecionado'}</small></div>
-      <div><span>Recebido</span><strong>{initialLoading ? '—' : money(report.received)}</strong><small>Pagamentos no período</small></div>
-      <div><span>A repassar</span><strong>{initialLoading ? '—' : money(report.pending)}</strong><small>Geradas: {money(report.earned)}</small></div>
-      <div><span>{professional ? 'Parte da unidade' : 'Resultado da unidade'}</span><strong>{initialLoading ? '—' : money(report.result)}</strong><small>{professional ? 'Antes das despesas gerais' : 'Após comissões e despesas'}</small></div>
-    </section>
-    <div className="report-charts-grid">
-      <section className="report-chart-section" aria-label={professional ? 'Distribuição entre comissão e unidade' : 'Faturamento por profissional'}><div className="report-section-title"><div><h2>{professional ? 'Divisão do faturamento' : 'Faturamento por profissional'}</h2></div></div><DonutChart segments={chartParts} label={professional ? 'Distribuição entre comissão e parte da unidade' : 'Participação no faturamento por profissional'} totalLabel="Faturamento" onSelect={!professional ? id => { if (professionals.some(row => row.id === id)) setProfessional(id) } : undefined} /><div className="report-detail-summary report-chart-activity"><div><small>Serviços</small><strong>{report.services}</strong></div><div><small>Clientes</small><strong>{report.customers}</strong></div><div><small>Agendamentos concluídos</small><strong>{report.completed}</strong></div></div></section>
-      <section className="report-chart-section" aria-label="Evolução do faturamento"><div className="report-section-title"><div><h2>Evolução diária</h2></div></div><RevenueTrend points={report.timeline} /></section>
-    </div>
-    <section className="report-team-section" aria-label="Resultados dos profissionais">
-      <div className="report-section-title"><div><h2>{professional ? 'Resultados do profissional' : 'Sua equipe'}</h2></div><span>{report.people.length} {report.people.length === 1 ? 'profissional' : 'profissionais'}</span></div>
-      <div className="report-person-heading" aria-hidden="true"><span>Profissional</span><span>Faturamento</span><span>Recebido</span><span>Comissão</span><span>Metas</span></div>
-      {(teamExpanded ? report.people : report.people.slice(0, 5)).map(row => <article className="report-person-row" key={row.id} aria-label={'Resultados de ' + row.name}>
-        <div className="report-person-identity">{row.photo ? <img src={row.photo} alt="" /> : <span aria-hidden="true">{row.name.trim().split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase()}</span>}<div><strong>{row.name}</strong><small>{row.services} {row.services === 1 ? 'serviço' : 'serviços'} · {row.customers} {row.customers === 1 ? 'cliente' : 'clientes'}</small></div></div>
-        <div className="report-person-number report-person-gross"><strong>{money(row.gross)}</strong></div>
-        <div className="report-person-number report-person-received"><strong>{money(row.received)}</strong><small>recebido</small></div>
-        <div className="report-person-number report-person-secondary"><strong>{money(row.earned)}</strong><span className="report-mobile-label"> de comissão</span><small>{money(row.pending)} a repassar</small></div>
-        <button type="button" className="report-person-goals" aria-label={'Definir metas de ' + row.name} aria-haspopup="dialog" onClick={() => setGoalsFor(row.id)}>Metas</button>
-      </article>)}
-      {!report.people.length && <p className="report-empty">Cadastre profissionais para acompanhar os resultados.</p>}
-      {report.people.length > 5 && <button type="button" className="report-detail-toggle" aria-expanded={teamExpanded} onClick={() => setTeamExpanded(value => !value)}><span>{teamExpanded ? 'Mostrar os 5 primeiros profissionais' : `Ver mais ${report.people.length - 5} profissionais`}</span><ChevronDown size={16} style={{ transform: teamExpanded ? 'rotate(180deg)' : undefined }} /></button>}
-      <details className="report-context-note"><summary>Como os valores são calculados</summary><p>O faturamento considera comandas prontas ou pagas no dia do atendimento, ou da conclusão das comandas de balcão. Recebimentos seguem a data do pagamento; por isso os valores podem ser diferentes.</p><p>{professional ? 'Despesas e vendas de pacotes sem profissional não são atribuídas a este barbeiro.' : <>As vendas de pacotes entram uma vez. O uso das sessões não repete o valor vendido. Despesas da unidade neste período: <strong>{money(report.expenses)}</strong>.</>}</p></details>
-    </section>
-    <section className="report-activity-section" aria-label="Atividade no período">
-      <button type="button" className="report-detail-toggle" aria-expanded={appointmentsOpen} onClick={() => setAppointmentsOpen(value => !value)}><span>{appointmentsOpen ? 'Ocultar agendamentos' : 'Ver agendamentos do período'} · {report.appointments.length}</span><ChevronDown size={16} style={{ transform: appointmentsOpen ? 'rotate(180deg)' : undefined }} /></button>
-      {appointmentsOpen && <div className="report-appointment-list">{report.appointments.length ? [...report.appointments].sort((a, b) => b.starts_at.localeCompare(a.starts_at)).map(row => <article key={row.id} className="report-appointment-row"><div><strong>{row.customer_name}</strong><small>{row.service_name} · {row.professional_name}</small></div><div><time>{dateTime(row.starts_at)}</time><small>{labels[row.status] ?? row.status}</small></div></article>) : <p className="report-empty">Nenhum agendamento neste período.</p>}</div>}
-    </section>
-    {periodOpen && <ReportPeriodModal range={range} close={() => setPeriodOpen(false)} choose={value => { setRange(value); setPeriodOpen(false); setAppointmentsOpen(false) }} />}
-    {goalsFor && <ProfessionalGoalEditor professionalId={goalsFor} close={() => setGoalsFor(null)} saved={() => setGoalsFor(null)} />}
+  const dayPoint = report.timeline.find(p=>p.date===selectedDay)
+  return <section className="page machado-reports approved-reports" aria-label="Relatórios da unidade">
+    <header className="report-heading"><h1>{metric==='result'?'Resultado':'Relatórios'}</h1><button type="button" className="text-action" aria-label="Exportar relatório CSV" onClick={exportReport} disabled={initialLoading}><Download size={18}/>CSV</button></header>
+    <div className="approved-report-filterbar"><button className="text-action" aria-label="Escolher período do relatório" onClick={()=>setPeriodOpen(true)}><CalendarDays size={18}/>{shortDate(range.from)} a {shortDate(range.to)}<ChevronDown size={15}/></button><button className="approved-filter-button" onClick={()=>setFilterOpen(true)}><SlidersHorizontal size={16}/>{professional?selectedName:'Todos'}</button></div>
+    <nav className="report-metric-tabs" aria-label="Métrica do relatório">{[['gross','Faturamento'],['received','Recebido'],['result','Resultado']].map(([id,label])=><button key={id} aria-pressed={metric===id} onClick={()=>setMetric(id)}>{label}</button>)}</nav>
+    {initialLoading&&<p className="approved-empty" role="status">Carregando os resultados…</p>}
+    <div className="approved-report-layout">
+    <div>
+    {metric!=='result'?<><section className="finance-main-amount report-active-amount"><h2 className="sr-only">{metric==='gross'?'Faturamento':'Recebido'} no período</h2><strong>{initialLoading?'—':money(metric==='gross'?report.gross:report.received)}</strong><p>{preset?.label??'Período selecionado'} · {professional?selectedName:'Toda a unidade'}</p></section>
+    {metric==='gross'&&<section className="approved-daily-chart"><header><span>Faturamento por dia</span>{dayPoint&&<strong>{shortDate(dayPoint.date)} · {money(dayPoint.amount)}</strong>}</header>{report.timeline.length<=14?<><div className="daily-bars" aria-label="Faturamento diário">{report.timeline.map(point=><button key={point.date} aria-label={shortDate(point.date)+': '+money(point.amount)} aria-pressed={selectedDay===point.date} onClick={()=>setSelectedDay(point.date)}><span className="bar-column"><i style={{height:Math.abs(point.amount)/Math.max(...report.timeline.map(p=>Math.abs(p.amount)),1)*100+'%'}}/></span><small>{report.timeline.length<=7?new Date(point.date+'T12:00:00Z').toLocaleDateString('pt-BR',{weekday:'short',timeZone:'UTC'}).replace('.',''):shortDate(point.date)}</small></button>)}</div>{!report.gross&&<p className="form-note">Nenhum faturamento neste período.</p>}</>:<RevenueTrend points={report.timeline}/>}</section>}
+    <button className="approved-result-preview" onClick={()=>setMetric('result')}><span><strong>{professional?'Parte da unidade':'Resultado da barbearia'}</strong><small>{professional?'Antes das despesas gerais':'Após comissões e despesas'}</small></span><b>{money(report.result)}</b><ChevronRight size={17}/></button></>:<section className="approved-result"><h2>Como o resultado é formado</h2><p>{professional?selectedName:'Toda a barbearia'} · {shortDate(range.from)} a {shortDate(range.to)}</p><div className="result-lines"><div><span className="tonal-icon mint"><ArrowDownToLine size={20}/></span><span><strong>Faturamento</strong><small>Atendimentos realizados e vendas</small></span><b>{money(report.gross)}</b></div><div><span className="tonal-icon lilac"><Users size={20}/></span><span><strong>Comissões geradas</strong><small>Parte dos profissionais</small></span><b>− {money(report.earned)}</b></div>{!professional&&<div><span className="tonal-icon rose"><ArrowUpFromLine size={20}/></span><span><strong>Despesas</strong><small>Registradas no período</small></span><b>− {money(report.expenses)}</b></div>}</div><div className="approved-balance"><h2>{professional?'Parte da unidade':'Resultado da barbearia'}</h2><strong>{money(report.result)}</strong><p>{professional?'Antes das despesas gerais':'Após comissões e despesas'}</p></div></section>}
+    <details className="report-context-note"><summary>Como interpretar os valores</summary><p>Faturamento considera comandas prontas ou pagas na data do atendimento. Recebido segue a data de pagamento. Comissões geradas são descontadas uma vez; o repasse não é uma nova despesa. Pix e cartões não representam dinheiro na gaveta.</p><p>{professional?'Despesas gerais e pacotes sem profissional não são atribuídos a este barbeiro.':'Vendas de pacotes entram uma vez; uso de sessões não repete o valor vendido.'}</p></details>
+    </div><div>
+    <section className="report-team-section" aria-label="Resultados dos profissionais"><header className="approved-section-header"><h2>{professional?'Profissional':'Por profissional'}</h2><small>{report.services} serviços</small></header>
+    {(teamExpanded?report.people:report.people.slice(0,5)).map(row=><article className="approved-report-person" key={row.id}><button className="report-person-open" aria-label={'Ver resultados de '+row.name} onClick={()=>{setProfessional(row.id);setFilterOpen(false)}}>{row.photo?<img src={row.photo} alt=""/>:<span className="letter-avatar mint">{row.name.slice(0,2).toUpperCase()}</span>}<span><strong>{row.name}</strong><small>{row.services} serviços · {row.customers} clientes</small></span><b>{money(metric==='received'?row.received:metric==='result'?row.gross-row.earned:row.gross)}</b><ChevronRight size={16}/></button><details><summary>Comissões e metas</summary><div className="report-person-extra"><span>Geradas <b>{money(row.earned)}</b></span><span>A repassar <b>{money(row.pending)}</b></span><button className="outline small" aria-label={'Definir metas de '+row.name} onClick={()=>setGoalsFor(row.id)}>Definir metas</button></div></details></article>)}
+    {!report.people.length&&<p className="approved-empty">Nenhum profissional neste filtro.</p>}{report.people.length>5&&<button className="text-action" onClick={()=>setTeamExpanded(!teamExpanded)}>{teamExpanded?'Mostrar menos':'Ver toda a equipe'}</button>}
+    <div className="report-small-facts"><span>Serviços<b>{report.services}</b></span><span>Clientes<b>{report.customers}</b></span><span>Concluídos<b>{report.completed}</b></span></div></section>
+    <section className="report-activity-section"><button className="report-detail-toggle" aria-expanded={appointmentsOpen} onClick={()=>setAppointmentsOpen(!appointmentsOpen)}><span>Agendamentos do período · {report.appointments.length}</span><ChevronDown size={16}/></button>{appointmentsOpen&&<div className="report-appointment-list">{report.appointments.map(row=><article key={row.id} className="report-appointment-row"><div><strong>{row.customer_name}</strong><small>{row.professional_name} · {row.service_name}</small></div><div><time>{dateTime(row.starts_at)}</time><small>{labels[row.status]??row.status}</small></div></article>)}{!report.appointments.length&&<p className="approved-empty">Nenhum agendamento.</p>}</div>}</section>
+    </div></div>
+    {filterOpen&&<Modal title="Filtro dos relatórios" close={()=>setFilterOpen(false)}><label className="field"><span>Profissional</span><select aria-label="Profissional do relatório" value={professional} onChange={e=>setProfessional(e.target.value)}><option value="">Todos · toda a unidade</option>{professionals.map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}</select></label><button className="outline" onClick={()=>setPeriodOpen(true)}><CalendarDays size={18}/>Alterar período</button><button className="primary" onClick={()=>setFilterOpen(false)}>Aplicar filtros</button></Modal>}
+    {periodOpen&&<ReportPeriodModal range={range} close={()=>setPeriodOpen(false)} choose={value=>{setRange(value);setPeriodOpen(false);setSelectedDay('')}}/>}
+    {goalsFor&&<ProfessionalGoalEditor professionalId={goalsFor} close={()=>setGoalsFor(null)} saved={()=>setGoalsFor(null)}/>}
   </section>
 }
 

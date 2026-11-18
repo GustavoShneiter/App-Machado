@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { ArrowUpRight, Check, Scissors, Settings2 } from 'lucide-react'
+import { ArrowUpRight, Scissors, Settings2 } from 'lucide-react'
 import { Modal } from '../ManagementPages'
 import { money } from '../operations'
 import type { ProfessionalCashData } from './types'
@@ -24,16 +24,9 @@ function goals(data: ProfessionalCashData) {
 const format = (value: number, monetary: boolean) => monetary ? money(value) : String(value)
 
 export function ProfessionalGoals({ current, edit, details }: { current: ProfessionalCashData; edit: () => void; details: () => void }) {
-  const items = goals(current), main = items[0], allDone = items.length > 0 && items.every(item => item.actual >= item.goal)
+  const items = goals(current), main = items[0]
   if (current.preferences.show_goals === false) return null
-  return <section className={'pro-goal-journey pro-wallet-goals' + (allDone ? ' achieved' : '')} aria-label="Minhas metas da semana">
-    <div className="pro-journey-heading"><div><h2>Metas da semana</h2><p>{shortDate(current.from)} a {shortDate(current.to)}</p></div></div>
-    {main ? <>
-      <div className="pro-primary-goal"><div><span>{main.title}</span><strong>{format(main.actual, main.monetary)} <small>/ {format(main.goal, main.monetary)}</small></strong></div><GoalBar value={progress(main.goal, main.actual)} label={'Meta de ' + main.title.toLowerCase()} detail={`${format(main.actual, main.monetary)} de ${format(main.goal, main.monetary)}`} />{allDone && <p className="pro-goal-complete"><Check size={14} />Metas alcançadas</p>}</div>
-      {items.length > 1 && <div className="pro-secondary-goals">{items.slice(1).map(item => <div key={item.id}><span>{item.title}</span><strong>{item.actual} <small>/ {item.goal}</small></strong><GoalBar value={progress(item.goal, item.actual)} label={'Meta de ' + item.title.toLowerCase()} detail={`${item.actual} de ${item.goal}`} /></div>)}</div>}
-      <div className="pro-wallet-goal-foot"><button className="pro-goal-details" onClick={details}>Ver meu progresso<ArrowUpRight size={16} /></button></div>
-    </> : <div className="pro-wallet-goal-empty"><p>Sem metas definidas</p><button className="pro-wallet-text-action" onClick={edit}>Opções de visualização<ArrowUpRight size={16} /></button></div>}
-  </section>
+  return <section className="pro-goal-compact" aria-label="Minhas metas da semana"><header><h2>Metas da semana</h2><span>{shortDate(current.from)} a {shortDate(current.to)}</span></header>{main ? <><div className="pro-goal-compact-value"><span>{main.title}</span><strong>{format(main.actual,main.monetary)} <small>/ {format(main.goal,main.monetary)}</small></strong></div><GoalBar value={progress(main.goal,main.actual)} label={'Meta de '+main.title.toLowerCase()} detail={`${format(main.actual,main.monetary)} de ${format(main.goal,main.monetary)}`}/><button onClick={details}>{items.length} {items.length===1?'meta':'metas'} · Ver progresso<ArrowUpRight size={16}/></button></> : <button onClick={edit}>Sem metas definidas · Opções de visualização<ArrowUpRight size={16}/></button>}</section>
 }
 
 export function GoalDetails({ current, previous, close, edit }: { current: ProfessionalCashData; previous?: ProfessionalCashData; close: () => void; edit: () => void }) {

@@ -1,7 +1,7 @@
 {
   "name": "barbearia-machado",
   "private": true,
-  "version": "1.20.0",
+  "version": "1.21.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -47,7 +47,9 @@
     "test:unit-api": "node scripts/test-unit-api.mjs",
     "db:units": "node --env-file=.env.local scripts/migrate-unit-accounts.mjs",
     "test:professional-visual": "node scripts/test-professional-visual.mjs",
-    "test:scroll": "node scripts/test-refresh-scroll.mjs"
+    "test:scroll": "node scripts/test-refresh-scroll.mjs",
+    "test:approved-design": "node scripts/test-approved-design.mjs",
+    "db:attendee": "node --env-file=.env.local scripts/migrate-appointment-attendee.mjs"
   },
   "dependencies": {
     "@capacitor/app": "8.1.1",

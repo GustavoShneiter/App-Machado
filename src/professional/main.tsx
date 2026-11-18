@@ -13,8 +13,9 @@ import '../admin-polish.css'
 import '../readiness.css'
 import '../web-app-install.css'
 import './professional.css'
-import './professional-space.css'
-import './professional-wallet.css'
+import './professional-structure.css'
+
+import '../approved-design.css'
 
 const queryClient = new QueryClient()
 createRoot(document.getElementById('root')!).render(

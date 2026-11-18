@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { CalendarDays, Download, KeyRound, Menu, Plus, Smartphone, WalletCards } from 'lucide-react'
+import { Home, ChartNoAxesCombined, CalendarDays, Download, KeyRound, Menu, Plus, Smartphone, WalletCards } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
 import { App as CapacitorApp } from '@capacitor/app'
 import { apiRequest, backend } from '../dataClient'
 import { CatalogProvider, useCatalog } from '../CatalogStore'
 import { RefreshGesture } from '../RefreshGesture'
 import { OperationsProvider, useOperations } from '../OperationsStore'
+import { ApprovedHome } from '../ApprovedHome'
 import { Agenda } from '../ManagementPages'
 import { dismissTopLayer } from '../dismissibleLayers'
 import { professionalApkUrl } from '../runtime'
@@ -49,8 +50,8 @@ function ProfessionalGate() {
       .finally(() => { if (alive) setChecking(false) })
     return () => { alive = false }
   }, [attempt])
-  if (checking) return <main className="auth-shell professional-login"><p role="status">Abrindo Machado Profissional…</p></main>
-  if (!access) return <main className="auth-shell professional-login"><div className="pro-login-wrap">
+  if (checking) return <main className="auth-shell machado-ui professional-login"><p role="status">Abrindo Machado Profissional…</p></main>
+  if (!access) return <main className="auth-shell machado-ui professional-login"><div className="pro-login-wrap">
     <form className="auth-card" onSubmit={async event => {
       event.preventDefault(); if (busy) return; setError(''); setBusy(true)
       try {
@@ -83,8 +84,10 @@ function ProfessionalLayout({ access, signedOut, photoUpdated }: { access: Profe
   const refreshAll = async () => { await Promise.all([refresh(), refreshCatalog?.()]) }
   const location = useLocation(), navigate = useNavigate()
   const cash = location.pathname.endsWith('/caixa')
+  const report = location.pathname.endsWith('/relatorios')
   const menu = location.pathname.endsWith('/menu')
-  const section = cash ? 'cash' : menu ? 'menu' : 'agenda'
+  const home = location.pathname.endsWith('/inicio')
+  const section = cash ? 'cash' : menu ? 'menu' : report ? 'report' : home ? 'home' : 'agenda'
   const [accountOpen, setAccountOpen] = useState(false)
   const locationRef = useRef(location); locationRef.current = location
   useEffect(() => { clearError() }, [location.pathname, clearError])
@@ -99,18 +102,18 @@ function ProfessionalLayout({ access, signedOut, photoUpdated }: { access: Profe
     }).then(handle => { if (disposed) void handle.remove(); else remove = () => handle.remove() })
     return () => { disposed = true; if (remove) void remove() }
   }, [navigate])
-  return <div className="app-shell professional-app">
+  return <div className="app-shell machado-ui professional-app">
     <main className="main" ref={refreshTarget}>
       <RefreshGesture target={refreshTarget} refresh={refreshAll} disabled={busy || loading} />
       <header className="topbar"><div className="pro-header-identity"><span className="pro-header-avatar">{profile.photo_url ? <img src={profile.photo_url} alt="" /> : profile.name.trim().split(/\s+/).map(part => part[0]).slice(0, 2).join('')}</span><div><span className="eyebrow">Machado Profissional</span><strong>{profile.name}</strong></div></div><div className="top-actions"><button className="icon-btn" aria-label="Minha conta" title="Minha conta" onClick={() => setAccountOpen(true)}><KeyRound size={18} /></button></div></header>
       {error && <div className="pro-load-error" role="alert">{error}<button className="outline small" onClick={() => void refresh()}>Tentar novamente</button></div>}
-      {loading ? <p className="pro-loading" role="status">Carregando seus dados…</p> : <div className="section-transition" key={section}><Routes><Route path="agenda" element={<Agenda professionalOnly />} /><Route path="caixa" element={<ProfessionalCash professionalId={profile.id} />} /><Route path="menu" element={<ProfessionalMenu profile={profile} photoUpdated={photoUpdated} account={() => setAccountOpen(true)} />} /><Route path="*" element={<Navigate to="/profissional/agenda" replace />} /></Routes></div>}
+      {loading ? <p className="pro-loading" role="status">Carregando seus dados…</p> : <div className="section-transition" key={section}><Routes><Route path="inicio" element={<ApprovedHome professional professionalId={profile.id}/>}/><Route path="agenda" element={<Agenda professionalOnly />} /><Route path="caixa" element={<ProfessionalCash professionalId={profile.id} />} /><Route path="relatorios" element={<ProfessionalCash key="report" professionalId={profile.id} reportOnly/>}/><Route path="menu" element={<ProfessionalMenu profile={profile} photoUpdated={photoUpdated} account={() => setAccountOpen(true)} />} /><Route path="*" element={<Navigate to="/profissional/inicio" replace />} /></Routes></div>}
     </main>
-    <nav className="mobile-nav mobile-nav-animated pro-nav" aria-label="Navegação do profissional" style={{ '--nav-index': cash ? 1 : menu ? 2 : 0, '--nav-visible': 1 } as CSSProperties}><span className="mobile-nav-highlight" aria-hidden="true" /><NavLink to="/profissional/agenda"><CalendarDays size={22} /><span>Minha Agenda</span></NavLink><NavLink to="/profissional/caixa"><WalletCards size={22} /><span>Meu Caixa</span></NavLink><NavLink to="/profissional/menu"><Menu size={22} /><span>Menu</span></NavLink></nav>
-    {!cash && !menu && <button className="mobile-create agenda-create-fab" aria-label="Novo agendamento, encaixe ou bloqueio" onClick={() => window.dispatchEvent(new Event('agenda:create'))}><Plus size={24} /></button>}
+    <nav className="mobile-nav mobile-nav-animated pro-nav" aria-label="Navegação do profissional" style={{ '--nav-index': cash ? 1 : menu ? 4 : home ? 2 : report ? 3 : 0, '--nav-visible': 1 } as CSSProperties}><span className="mobile-nav-highlight" aria-hidden="true" /><NavLink to="/profissional/agenda"><CalendarDays size={22}/><span>Agenda</span></NavLink><NavLink to="/profissional/caixa"><WalletCards size={22}/><span>Caixa</span></NavLink><NavLink to="/profissional/inicio"><Home size={22}/><span>Início</span></NavLink><NavLink to="/profissional/relatorios"><ChartNoAxesCombined size={22}/><span>Relatórios</span></NavLink><NavLink to="/profissional/menu"><Menu size={22}/><span>Menu</span></NavLink></nav>
+    {!cash && !menu && !home && !report && <button className="mobile-create agenda-create-fab" aria-label="Novo agendamento, encaixe ou bloqueio" onClick={() => window.dispatchEvent(new Event('agenda:create'))}><Plus size={24} /></button>}
     {accountOpen && <ProfessionalAccountModal profile={profile} close={() => setAccountOpen(false)} signedOut={signedOut} />}
   </div>
 }
 function ProfessionalInstall() {
-  return <main className="app-install-shell"><section className="app-install-card"><img src="/professional-icon-192.png" alt="" width="64" height="64" /><span className="eyebrow">Aplicativo da equipe</span><h1>Machado Profissional</h1><p>Todos usam o mesmo aplicativo. Entre com o e-mail e a senha definidos pela administração para abrir sua própria agenda e suas comissões.</p><a className="primary" href={professionalApkUrl}><Download size={17} />Baixar para Android</a><h2 className="pro-install-subtitle">No iPhone</h2><ol><li>Abra este site no <strong>Safari</strong>.</li><li>Toque em <strong>Compartilhar → Adicionar à Tela de Início</strong>.</li><li>Se aparecer, ative <strong>Abrir como App da Web</strong> e confirme em Adicionar.</li><li>Abra pelo ícone e entre com sua conta.</li></ol><Link className="outline" to="/profissional">Abrir sistema no navegador</Link><p className="app-install-note">É necessário ter internet. Para recuperar o acesso, fale com a administração.</p></section></main>
+  return <main className="app-install-shell machado-ui"><section className="app-install-card"><img src="/professional-icon-192.png" alt="" width="64" height="64" /><span className="eyebrow">Aplicativo da equipe</span><h1>Machado Profissional</h1><p>Todos usam o mesmo aplicativo. Entre com o e-mail e a senha definidos pela administração para abrir sua própria agenda e suas comissões.</p><a className="primary" href={professionalApkUrl}><Download size={17} />Baixar para Android</a><h2 className="pro-install-subtitle">No iPhone</h2><ol><li>Abra este site no <strong>Safari</strong>.</li><li>Toque em <strong>Compartilhar → Adicionar à Tela de Início</strong>.</li><li>Se aparecer, ative <strong>Abrir como App da Web</strong> e confirme em Adicionar.</li><li>Abra pelo ícone e entre com sua conta.</li></ol><Link className="outline" to="/profissional">Abrir sistema no navegador</Link><p className="app-install-note">É necessário ter internet. Para recuperar o acesso, fale com a administração.</p></section></main>
 }

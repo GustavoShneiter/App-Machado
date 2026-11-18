@@ -94,9 +94,9 @@ export function AdminAccess({ children }: { children: ReactNode }) {
   }
 
   if (allowed) return <>{children}</>
-  if (checking) return <main className="auth-shell"><p role="status">{native || isWebApp() ? 'Abrindo Machado Gestão…' : 'Verificando acesso…'}</p></main>
-  if (registration) return <main className="auth-shell access-shell"><section className="auth-card access-card access-recovery" aria-labelledby="registration-title">
-    <span className="brand-mark">BM</span>
+  if (checking) return <main className="auth-shell machado-ui"><p role="status">{native || isWebApp() ? 'Abrindo Machado Gestão…' : 'Verificando acesso…'}</p></main>
+  if (registration) return <main className="auth-shell machado-ui access-shell"><section className="auth-card access-card access-recovery" aria-labelledby="registration-title">
+    <img className="access-logo" src="/logo-machado.png" alt="Machado"/>
     <h1 id="registration-title">Sua unidade está pronta</h1>
     <p><strong>{registration.business.name}</strong> foi cadastrada. Agora guarde os códigos de recuperação da sua conta.</p>
     <div className="access-recovery-codes" aria-label="Códigos de recuperação">{registration.recoveryCodes.map((code, index) => <div key={code}><span>Código {index + 1}</span><code>{code}</code></div>)}</div>
@@ -107,10 +107,10 @@ export function AdminAccess({ children }: { children: ReactNode }) {
   </section></main>
 
   const creating = mode === 'register'
-  return <main className="auth-shell access-shell"><div className="web-login access-layout">
+  return <main className="auth-shell machado-ui access-shell"><div className="web-login access-layout">
     <form className="auth-card access-card" onSubmit={creating ? register : signIn} noValidate>
       {creating && <button type="button" className="access-back" onClick={() => switchMode('login')} disabled={submitting}><ArrowLeft size={16} />Voltar ao login</button>}
-      <span className="brand-mark">BM</span>
+      <img className="access-logo" src="/logo-machado.png" alt="Machado"/>
       <h1>{creating ? 'Cadastrar unidade' : native || isWebApp() ? 'Machado Gestão' : 'Entrar no painel'}</h1>
       <p>{creating ? 'Crie a conta responsável por uma nova unidade da Machado. Os dados de cada unidade ficam separados.' : 'Entre com o e-mail e a senha da sua conta administrativa.'}</p>
       {creating && <>

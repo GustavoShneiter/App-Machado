@@ -37,7 +37,7 @@ function CommissionList({ entries, loading, choose }: { entries: ProfessionalEnt
   </div>
 }
 
-export function ProfessionalCash({ professionalId }: { professionalId: string }) {
+export function ProfessionalCash({ professionalId, reportOnly = false }: { professionalId: string; reportOnly?: boolean }) {
   const { refreshed, refreshVersion } = useOperations()
   const [period, setPeriod] = useState('current'), [custom, setCustom] = useState(weekRange())
   const [selected, setSelected] = useState<ProfessionalCashData | null>(null), [weeks, setWeeks] = useState<ProfessionalCashData[]>([])
@@ -70,10 +70,10 @@ export function ProfessionalCash({ professionalId }: { professionalId: string })
     {[{ id: 'all', label: 'Todas' }, { id: 'pending', label: 'A receber' }, { id: 'paid', label: 'Recebidas' }].map(filter => <button key={filter.id} aria-pressed={entryFilter === filter.id} onClick={() => setEntryFilter(filter.id)}>{filter.label}</button>)}
   </div>
   return <section className="page pro-wallet">
-    <header className="pro-wallet-heading"><h1>Meu Caixa</h1><button className="pro-customize" aria-label="Personalizar meu Caixa" onClick={() => setPopup('settings')} disabled={!prefs}><Settings2 size={19} /></button></header>
+    <header className="pro-wallet-heading"><h1>{reportOnly?'Meu relatório':'Meu Caixa'}</h1><button className="pro-customize" aria-label="Personalizar meu Caixa" onClick={() => setPopup('settings')} disabled={!prefs}><Settings2 size={19} /></button></header>
     {error && <div className="form-error" role="alert">{error}<button className="outline small" onClick={() => setReload(value => value + 1)}>Tentar novamente</button></div>}
     {loading && !selected && !error && <div className="pro-cash-skeleton" role="status"><span>Preparando suas comissões…</span></div>}
-    {selected && current && prefs && <>
+    {selected && current && prefs && (reportOnly ? <ProfessionalReportDialog inline selected={selected} weeks={weeks} loading={loading} close={()=>{}} period={()=>setPopup('period')}/> : <>
       <div className={'pro-wallet-top' + (prefs.show_goals !== false ? ' with-goals' : '')}>
         <section className="pro-wallet-balance" aria-label="Comissão total a receber">
           <div className="pro-wallet-balance-label"><h2>Comissões a receber</h2><button aria-label="Entender meu saldo" onClick={() => setPopup('balance')}><CircleHelp size={17} /></button></div>
@@ -114,7 +114,7 @@ export function ProfessionalCash({ professionalId }: { professionalId: string })
           {visibleEntries.length > 3 && <button className="pro-wallet-show-all" onClick={() => setPopup('ledger')}>Ver todas <span>{visibleEntries.length}</span><ChevronRight size={16} /></button>}
         </section>
       </div>
-    </>}
+    </>)}
     {popup === 'settings' && prefs && <PreferencesModal professionalId={professionalId} preferences={prefs} close={() => setPopup(null)} saved={saved} />}
     {popup === 'progress' && current && <GoalDetails current={current} previous={weeks[1]} close={() => setPopup(null)} edit={() => setPopup('settings')} />}
     {popup === 'balance' && <BalanceDialog close={() => setPopup(null)} />}

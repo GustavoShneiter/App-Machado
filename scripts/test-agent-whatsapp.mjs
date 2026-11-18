@@ -5,6 +5,7 @@ import pg from 'pg'
 import { pool } from '../server/db.mjs'
 import { administrativeAgent } from '../server/agent-settings.mjs'
 import { agentAction,externalAgent } from '../server/agent.mjs'
+import { professionalSnapshot } from '../server/professionals.mjs'
 import { defaultConfig,validateConfig,renderMessage,actions } from '../shared/agent-config.mjs'
 
 const suffix=randomBytes(6).toString('hex'),database='machado_qa_agent_'+suffix,role='machado_agent_qa_'+suffix
@@ -131,6 +132,20 @@ try {
   await assert.rejects(call('catalog',{tenant_id:units[1].id}),e=>e.status===400)
   await call('heartbeat',{component:'bridge',instance_name:'teste',connection_state:'open',assistant_state:'active',notifications_state:'paused',last_success_at:new Date().toISOString()})
   await scoped(0,async c=>assert.equal((await administrativeAgent(c,'status','GET',{},{})).runtime.stale,false))
+  // A dependent can book using the existing contact's phone without renaming it.
+  await scoped(0,async c=>{
+   const next=(await c.query("select ((current_date+7+s.slot_time) at time zone 'America/Sao_Paulo') as starts_at from public_available_slots($1,current_date+7,$2) s limit 1",[service,pro])).rows[0]
+   const draft=await agentAction(c,'prepare_booking',{phone:'45999990000',customer_name:'Filho do Cliente',service_id:service,professional_id:pro,starts_at:next.starts_at.toISOString(),message_id:'dependent-origin'},integration)
+   const booked=await agentAction(c,'confirm_booking',{draft_id:draft.id,phone:'45999990000',message_id:'dependent-confirm',message_text:'sim'},integration)
+   const contact=(await c.query('select name from customers where id=$1',[customer])).rows[0]
+   assert.equal(contact.name,'Cliente Teste')
+   assert.equal((await c.query("select count(*)::int as n from customers where phone='45999990000'")).rows[0].n,1)
+   assert.equal((await c.query('select attendee_name from appointments where id=$1',[booked.appointment_id])).rows[0].attendee_name,'Filho do Cliente')
+   assert.equal((await professionalSnapshot(c,pro)).appointments.find(a=>a.id===booked.appointment_id).customer_name,'Filho do Cliente')
+   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[user])
+   const office=(await c.query('select office_snapshot() as value')).rows[0].value
+   assert.equal(office.appointments.find(a=>a.id===booked.appointment_id).customer_name,'Filho do Cliente')
+  })
   await scoped(0,c=>c.query('update agent_integrations set active=false where id=$1',[integration.id]))
   await assert.rejects(call('capabilities'),e=>e.status===401)
   console.log('PASS: full schema migrations, tenant isolation, settings conflicts, queue snapshots, callback-before-ack, repeat ack, revision/cancellation, consent and template validation. No production fixtures.')

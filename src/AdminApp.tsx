@@ -15,6 +15,7 @@ import {
   Building2,
   CalendarDays,
   Gift,
+  Home,
   LayoutDashboard,
   Menu,
   Package,
@@ -54,7 +55,7 @@ import { isAppExperience } from './appExperience';
 import { AgentWhatsApp } from './AgentWhatsApp';
 
 const navItems = [
-  { to: "/admin", label: "Início", icon: LayoutDashboard },
+  { to: "/admin", label: "Início", icon: Home },
   { to: "/admin/agenda", label: "Agenda", icon: CalendarDays },
   { to: "/admin/clientes", label: "Clientes", icon: Users },
   { to: "/admin/caixa", label: "Caixa", icon: WalletCards },
@@ -68,9 +69,9 @@ const navItems = [
 ];
 
 const mobileSections = [
-  { to: '/admin/caixa', label: 'Caixa', icon: WalletCards },
-  { to: '/admin/comandas', label: 'Comandas', icon: ClipboardList },
   { to: '/admin/agenda', label: 'Agenda', icon: CalendarDays },
+  { to: '/admin/caixa', label: 'Caixa', icon: WalletCards },
+  { to: '/admin', label: 'Início', icon: Home },
   { to: '/admin/clientes', label: 'Clientes', icon: Users },
   { to: '/admin/configuracoes', label: 'Menu', icon: Menu },
 ];
@@ -82,7 +83,7 @@ export function AdminLayout() {
   const [newCustomer, setNewCustomer] = useState(false);
   const [newCashEntry, setNewCashEntry] = useState(false);
   const location = useLocation();
-  const sectionIndex = mobileSections.findIndex(item => location.pathname === item.to || location.pathname.startsWith(item.to + '/'));
+  const sectionIndex = mobileSections.findIndex(item => location.pathname === item.to || (item.to !== '/admin' && location.pathname.startsWith(item.to + '/')));
   const activeSection = sectionIndex >= 0 ? sectionIndex : location.pathname === '/admin' ? -1 : 4;
   const { loading, error, busy, refreshed, refresh, clearError } =
     useOperations();
@@ -118,10 +119,10 @@ export function AdminLayout() {
     clearError();
   }, [location.pathname, clearError]);
   return (
-    <div className="app-shell admin-app">
+    <div className="app-shell machado-ui admin-app">
       <aside className={`sidebar ${sidebar ? "open" : ""}`}>
         <div className="brand">
-          <span className="brand-mark">BM</span>
+          <img className="approved-brand" src="/logo-machado.png" alt="" />
           <span>
             <strong>Barbearia</strong>
             <small>Machado</small>
@@ -165,7 +166,7 @@ export function AdminLayout() {
             <Menu />
           </button>
           <div>
-            <p className="eyebrow">{business?.name || 'Barbearia Machado'}</p>
+            <p className="shell-business">{business?.name || 'Barbearia Machado'}</p>
             <small>
               {refreshed ? `Atualizado às ${refreshed}` : "Carregando dados…"}
             </small>
@@ -234,9 +235,9 @@ export function AdminLayout() {
       </main>
       <nav className="mobile-nav mobile-nav-animated" aria-label="Navegação principal" style={{ '--nav-index': Math.max(activeSection, 0), '--nav-visible': activeSection < 0 ? 0 : 1 } as CSSProperties}>
         <span className="mobile-nav-highlight" aria-hidden="true" />
-        {mobileSections.map((item, index) => <NavLink key={item.to} to={item.to} className={activeSection === index ? 'active' : ''}><item.icon size={22} /><span>{item.label}</span></NavLink>)}
+        {mobileSections.map((item, index) => <NavLink end={item.to === '/admin'} key={item.to} to={item.to} className={activeSection === index ? 'active' : ''}><item.icon size={22} /><span>{item.label}</span></NavLink>)}
       </nav>
-      {showCreate && (
+      {isAgenda && location.pathname !== "/admin" && (
         <button
           className={`mobile-create${isAgenda ? ' agenda-create-fab' : ''}`}
           aria-label={createLabel}
@@ -300,6 +301,7 @@ function SettingsPage() {
       title="Menu"
     >
       <section className="menu-shortcuts" aria-label="Cadastros e gestão">
+        <Link to="/admin/comandas"><ClipboardList/><span><strong>Comandas</strong></span><ArrowRight/></Link>
         <Link to="/admin/produtos">
           <Package />
           <span>

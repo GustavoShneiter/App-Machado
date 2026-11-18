@@ -32,11 +32,11 @@ Uso frequente pelo celular durante o atendimento; administração também no PC.
 
 ## Brand Commitments
 
-Manter nome Machado, identidade escura e verde musgo forte, marcas e fotos existentes. Linguagem direta em português brasileiro. Evitar informações encaixotadas ou decorativas no Caixa profissional.
+Manter nome Machado, marcas e fotos existentes. A direção aprovada em 17/11/2026 e autorizada para implementação em 18/11/2026 usa Manrope local, fundo claro, superfícies brancas e verde floresta, conforme o DESIGN.md. Gestão e Profissional compartilham essa linguagem em Android, web/PC e iPhone pelo Safari/PWA, com Início no centro da navegação inferior e sem menus de navegação no topo. Linguagem direta em português brasileiro; listas, abas de contexto e grupos tonais conforme a função, sem encaixotar cada número do Caixa profissional.
 
 ## Evidence on Hand
 
-Código operacional existente, fonte Space Grotesk local, marca em public/, dados reais no banco. A referência fornecida em 06/11/2026 é um aplicativo financeiro com resumo, rosca com legenda/valores e lista de transações; usar sua organização, preservando as cores Machado. Não inventar desempenho, valores ou crescimento.
+Código operacional existente, Manrope local entregue em instâncias estáticas 400/650/750 derivadas da variável aprovada 200–800 (origem e licença preservadas), marca em public/ e dados reais no banco. Referências visuais congeladas: propostas exploracao-03-2026-11-17 (base do aplicativo) e financeiro-04-2026-11-17 (Caixa e Relatórios), com registro em ../propostas/DESIGN-APROVADO.md; a autorização posterior de 18/11 e a posição central de Início prevalecem sobre os avisos históricos dessas cópias. O DESIGN.md descreve a implementação atual; .private/screenshots/redesign-2026-11-18 contém evidência local com fixtures, sem escrita de produção e sem certificar dispositivos reais ou publicação. A referência financeira de 06/11 é contexto anterior, não substitui as telas aprovadas. Não inventar desempenho, valores ou crescimento.
 
 ## Product Principles
 

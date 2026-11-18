@@ -245,7 +245,7 @@ export function ProfessionalsV2() {
         </button>
       }
     >
-      <section className="panel operation-panel">
+      <section className="panel operation-panel approved-team">
         {professionals.map((professional) => (
           <div className="record-row profile-row" key={professional.id}>
             <div className="catalog-identity">

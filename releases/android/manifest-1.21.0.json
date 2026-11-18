@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-18",
+  "admin": "1.21.0",
+  "professional": "1.3.0",
+  "artifacts": [
+    {
+      "edition": "Gestao",
+      "version": "1.21.0",
+      "versionCode": 33,
+      "applicationId": "com.barbeariamachado.gestao",
+      "file": "releases/android/Machado-Gestao-v1.21.0.apk",
+      "bytes": 5513452,
+      "sha256": "7618e89782b418e9c8bf207573a7a344e0e286afa79f6787c9b32b0c211ac58e",
+      "signed": true
+    },
+    {
+      "edition": "Profissional",
+      "version": "1.3.0",
+      "versionCode": 8,
+      "applicationId": "com.barbeariamachado.profissional",
+      "file": "releases/android/Machado-Profissional-v1.3.0.apk",
+      "bytes": 5447204,
+      "sha256": "60e24c60bfb64476cd583e09882a32cae6cf11e14ca1560e2034c4b3e351e688",
+      "signed": true
+    }
+  ]
+}

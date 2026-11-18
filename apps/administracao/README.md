@@ -2,7 +2,7 @@
 
 - [Web admin para PC](https://barbearia-machado-rose.vercel.app/admin).
 - [Versão web / iPhone com a interface do Android](https://barbearia-machado-rose.vercel.app/app).
-- [Android 1.19.10](https://github.com/GustavoShneiter/App-Machado/releases/download/gestao-v1.19.10/Machado-Gestao-v1.19.10.apk).
+- [Android 1.21.0](https://raw.githubusercontent.com/GustavoShneiter/App-Machado/main/releases/android/Machado-Gestao-v1.21.0.apk).
 - [Guia da atualização](../../docs/ENTREGA-1.19.10.md).
 
 Mantém Caixa, Comandas, Agenda, Clientes e Menu. Conta administrativa com e-mail e senha em todas as edições. Criar conta cadastra uma nova unidade independente; não acrescenta um administrador à unidade atual. Guarde os códigos de recuperação do cadastro.
