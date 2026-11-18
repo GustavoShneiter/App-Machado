@@ -17,7 +17,7 @@
 | Versão para iPhone pelo Safari | [Abrir no iPhone](https://app-machado.45-140-203-243.sslip.io/app) |
 | Instruções de instalação no iPhone | [Adicionar à Tela de Início](https://app-machado.45-140-203-243.sslip.io/app/instalar) |
 
-A edição administrativa web e a edição para iPhone usam o mesmo endereço. No iPhone, o Safari permite adicionar o ícone à Tela de Início. O Android administrativo 1.21.5 também usa login individual. [Baixar Machado Gestão](https://github.com/GustavoShneiter/App-Machado/raw/refs/heads/main/releases/android/Machado-Gestao-v1.21.5.apk).
+A edição administrativa web e a edição para iPhone usam o mesmo endereço. No iPhone, o Safari permite adicionar o ícone à Tela de Início. O Android administrativo 1.21.6 também usa login individual. [Baixar Machado Gestão](https://github.com/GustavoShneiter/App-Machado/raw/refs/heads/main/releases/android/Machado-Gestao-v1.21.6.apk).
 
 ## Profissionais
 
@@ -26,7 +26,7 @@ A edição administrativa web e a edição para iPhone usam o mesmo endereço. N
 | Web / iPhone | [Machado Profissional](https://app-machado.45-140-203-243.sslip.io/profissional) |
 | Instalação no iPhone | [Adicionar à Tela de Início](https://app-machado.45-140-203-243.sslip.io/profissional/instalar) |
 
-**Android profissional:** [baixar Machado Profissional 1.3.5](https://github.com/GustavoShneiter/App-Machado/raw/refs/heads/main/releases/android/Machado-Profissional-v1.3.5.apk). É o mesmo APK para a equipe; cada profissional entra com a própria conta. A conta administrativa permanece no aplicativo Machado Gestão.
+**Android profissional:** [baixar Machado Profissional 1.3.6](https://github.com/GustavoShneiter/App-Machado/raw/refs/heads/main/releases/android/Machado-Profissional-v1.3.6.apk). É o mesmo APK para a equipe; cada profissional entra com a própria conta. A conta administrativa permanece no aplicativo Machado Gestão.
 
 O login determina a agenda e as comissões exibidas. Não há site nem APK diferente para cada barbeiro. Endereços pessoais antigos redirecionam ao portal comum e respeitam a conta conectada.
 
@@ -54,4 +54,4 @@ As edições têm navegação, sessões e pacotes distintos e compartilham o mes
 
 ## Servidor e backups
 
-Servidor Contabo, banco da aplicação separado do agente e cópias cifradas. [Guia da migração](MIGRACAO-CONTABO-2026-11-18.md). O endereço antigo da Vercel permanece apenas como caminho de transição para os links e APKs anteriores.
+Servidor Contabo, banco da aplicação separado do agente e cópias cifradas. [Guia da migração](MIGRACAO-CONTABO-2026-11-18.md).

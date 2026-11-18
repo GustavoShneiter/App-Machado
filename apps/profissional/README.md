@@ -1,8 +1,8 @@
-# Machado Profissional 1.2.1
+# Machado Profissional 1.3.6
 
-- [Web / iPhone](https://barbearia-machado-rose.vercel.app/profissional).
-- [Android 1.3.1](https://raw.githubusercontent.com/GustavoShneiter/App-Machado/main/releases/android/Machado-Profissional-v1.3.1.apk). Novos APKs assinados, verificados localmente no Defender sem ameaças detectadas. As versões anteriores Gestão 1.21.0 e Profissional 1.3.0 continuam suspensas..
-- [Instalar no iPhone](https://barbearia-machado-rose.vercel.app/profissional/instalar).
+- [Web / iPhone](https://app-machado.45-140-203-243.sslip.io/profissional).
+- [Android 1.3.6](https://raw.githubusercontent.com/GustavoShneiter/App-Machado/main/releases/android/Machado-Profissional-v1.3.6.apk). Novos APKs assinados, verificados localmente no Defender sem ameaças detectadas. As versões anteriores Gestão 1.21.0 e Profissional 1.3.0 continuam suspensas..
+- [Instalar no iPhone](https://app-machado.45-140-203-243.sslip.io/profissional/instalar).
 - [Central de acessos](../../docs/CENTRAL-DE-ACESSOS.md).
 
 Um único aplicativo e endereço para toda a equipe. Cada profissional entra com o e-mail e a senha definidos pela administração. O login determina a unidade, a própria agenda e as próprias comissões. Nenhum faturamento geral ou resultado alheio é retornado ao barbeiro.

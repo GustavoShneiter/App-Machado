@@ -1,6 +1,6 @@
 # Machado Gestão
 
-Gestão, agendamento e acompanhamento da equipe da Barbearia Machado. React/Vite, aplicativos Capacitor, API Node na Contabo, PostgreSQL 18, Better Auth e armazenamento persistente. Administração 1.21.5; Profissional 1.3.5.
+Gestão, agendamento e acompanhamento da equipe da Barbearia Machado. React/Vite, aplicativos Capacitor, API Node na Contabo, PostgreSQL 18, Better Auth e armazenamento persistente. Administração 1.21.6; Profissional 1.3.6.
 
 - [Site e agendamento](https://app-machado.45-140-203-243.sslip.io/).
 - [Administração no PC](https://app-machado.45-140-203-243.sslip.io/admin).

@@ -1,5 +1,4 @@
 import pg from 'pg'
-import { attachDatabasePool } from '@vercel/functions'
 import {readFileSync} from 'node:fs'
 
 const connection = process.env.DATABASE_URL
@@ -7,7 +6,6 @@ if (!connection) throw new Error('DATABASE_URL não configurada no servidor.')
 const url = new URL(connection)
 url.searchParams.delete('sslmode')
 export const pool = new pg.Pool({ connectionString: url.toString(), ssl: { rejectUnauthorized: true,...(process.env.DATABASE_SSL_CA_FILE?{ca:readFileSync(process.env.DATABASE_SSL_CA_FILE,'utf8')}: {}) }, max: 5, idleTimeoutMillis: 10000, connectionTimeoutMillis: 15000, statement_timeout: 20000 })
-if (process.env.VERCEL) attachDatabasePool(pool)
 
 const fail = (message, status) => Object.assign(new Error(message), { status })
 const isUuid = value => typeof value === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(value)

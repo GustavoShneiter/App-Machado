@@ -2,8 +2,8 @@ import assert from 'node:assert/strict'
 import {createHash} from 'node:crypto'
 import {writeFile} from 'node:fs/promises'
 import {pool} from '../server/db.mjs'
-import {savePhoto,localStorage} from '../server/file-storage.mjs'
-assert(localStorage);assert.equal(new URL(process.env.DATABASE_URL).pathname,'/machado')
+import {savePhoto} from '../server/file-storage.mjs'
+assert.equal(new URL(process.env.DATABASE_URL).pathname,'/machado')
 const report=[]
 try{
  for(const table of ['professionals','products']){

@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-18",
+  "admin": "1.21.6",
+  "professional": "1.3.6",
+  "status": "available",
+  "backend": "contabo",
+  "canonicalUrl": "https://app-machado.45-140-203-243.sslip.io",
+  "artifacts": [
+    {
+      "edition": "Gestao",
+      "version": "1.21.6",
+      "versionCode": 39,
+      "applicationId": "com.barbeariamachado.gestao",
+      "file": "releases/android/Machado-Gestao-v1.21.6.apk",
+      "bytes": 7279984,
+      "sha256": "a0b001422d69945a6606ae34d4dceb22e1f51a8af596b5677f4004de5483c61d",
+      "signed": true,
+      "defender": "no_threats_detected"
+    },
+    {
+      "edition": "Profissional",
+      "version": "1.3.6",
+      "versionCode": 14,
+      "applicationId": "com.barbeariamachado.profissional",
+      "file": "releases/android/Machado-Profissional-v1.3.6.apk",
+      "bytes": 7196540,
+      "sha256": "3ef404419eba9cf5e18209ea6e3e7630a2c11e7318399beefefa424df49d8bdc",
+      "signed": true,
+      "defender": "no_threats_detected"
+    }
+  ]
+}

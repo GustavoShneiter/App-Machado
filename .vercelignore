@@ -1,6 +1,0 @@
-**
-!vercel.json
-!.vercelignore
-!public/
-public/**
-!public/robots.txt

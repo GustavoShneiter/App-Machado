@@ -2,6 +2,8 @@
 
 Gestão 1.21.5 (Android 38) e Profissional 1.3.5 (Android 13).
 
+**Atualização após o corte.** O projeto da Vercel e o recurso Neon foram excluídos. As referências ao encaminhamento e ao banco congelado abaixo descrevem apenas a etapa de migração. Para recuperar dados, use os backups da Contabo.
+
 ## Arquitetura
 
 O React/Vite, a API Node, Better Auth e as regras PostgreSQL foram mantidos. A aplicação é servida pelo Node 24 em um contêiner próprio; Caddy fornece HTTPS. Fotos e arquivos privados passam a usar o volume persistente da aplicação.

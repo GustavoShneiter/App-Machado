@@ -3,7 +3,8 @@ import { readFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { pool } from '../server/db.mjs'
 import { businessTables,identityTables,archiveBackup } from '../server/backups.mjs'
-import { get } from '@vercel/blob'
+import { join } from 'node:path'
+import { dataDirectory } from '../server/file-storage.mjs'
 
 const file=process.argv.find(arg=>arg.endsWith('.json')) || '.private/verified-backup.json'
 const data=JSON.parse(await readFile(file,'utf8'))
@@ -38,9 +39,8 @@ try{
   if(process.argv.includes('--archive')){
     const archived=await archiveBackup()
     const row=(await pool.query('select pathname,sha256 from backup_runs order by created_at desc limit 1')).rows[0]
-    const result=await get(row.pathname,{access:'private',token:process.env.BACKUP_READ_WRITE_TOKEN})
-    assert.equal(result.statusCode,200)
-    const body=await new Response(result.stream).text()
+    assert.match(row.pathname,/^filesystem:[0-9a-f]{64}\.json$/)
+    const body=await readFile(join(dataDirectory,'backups',row.pathname.slice('filesystem:'.length)),'utf8')
     assert.equal(createHash('sha256').update(body).digest('hex'),row.sha256)
     assert.equal(JSON.parse(body).format,'machado-backup')
     console.log('PASS backup privado: gravação, leitura e SHA-256 conferidos;',archived.tables,'tabelas.')

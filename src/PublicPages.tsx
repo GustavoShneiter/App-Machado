@@ -58,12 +58,12 @@ export function Privacy() {
     <main className="public-shell">
       <article className="privacy">
         <h1>Privacidade</h1>
-        <p>Atualizada em 20 de outubro de 2026.</p>
+        <p>Atualizada em 18 de novembro de 2026.</p>
         <p>A {business?.name || 'Barbearia Machado'}{business?.city ? `, em ${business.city}${business.state ? ', '+business.state : ''},` : ''} é responsável pelos dados dos clientes utilizados neste sistema.</p>
         <h2>Dados e uso</h2>
         <p>Nome e telefone são solicitados para registrar o agendamento, identificar o cliente e permitir contato sobre o atendimento. O painel também mantém histórico de serviços, compras e pagamentos para a operação e os registros da barbearia.</p>
         <h2>Acesso e armazenamento</h2>
-        <p>O painel é restrito a contas autorizadas. O sistema utiliza hospedagem Vercel, banco PostgreSQL fornecido pela Neon e armazenamento de fotos e cópias de segurança na Vercel. A conexão utiliza HTTPS.</p>
+        <p>O painel é restrito a contas autorizadas. Os dados e as fotos ficam no servidor da Contabo. O sistema gera backups cifrados. A conexão utiliza HTTPS.</p>
         <h2>Histórico e cópias de segurança</h2>
         <p>Os dados são mantidos enquanto necessários ao atendimento, à gestão do histórico e às obrigações aplicáveis. Cópias de segurança são protegidas e utilizadas para recuperar o sistema em caso de falha. Solicitações de exclusão são avaliadas pelo responsável pela barbearia, considerando registros que precisam ser preservados.</p>
         <h2>Contato e solicitações</h2>

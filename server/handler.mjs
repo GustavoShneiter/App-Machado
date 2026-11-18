@@ -31,7 +31,7 @@ const rpcArguments = {
 const fail = (message,status=400) => Object.assign(new Error(message),{status})
 function sameSecret(a,b) { if (!a || !b) return false; const x=Buffer.from(a),y=Buffer.from(b); return x.length===y.length && timingSafeEqual(x,y) }
 async function rateLimit(req,category,max,seconds=60) {
-  const ip = String(req.headers['x-vercel-forwarded-for'] || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim()
+  const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim()
   const key = createHash('sha256').update(`${process.env.BETTER_AUTH_SECRET}:${category}:${ip}`).digest('hex')
   const bucket = new Date(Math.floor(Date.now()/(seconds*1000))*seconds*1000)
   const result = await pool.query('insert into request_limits(key,bucket,requests) values($1,$2,1) on conflict(key) do update set requests=case when request_limits.bucket=excluded.bucket then request_limits.requests+1 else 1 end,bucket=excluded.bucket returning requests',[key,bucket])
@@ -72,7 +72,7 @@ export default async function handler(req,res) {
   if(req.method==='OPTIONS') { res.statusCode=origin && !origins.includes(origin)?403:204; res.end(); return }
   try {
     if(origin && !origins.includes(origin)) throw fail('Origem não permitida.',403)
-    const base=process.env.AUTH_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://127.0.0.1:3000')
+    const base=process.env.AUTH_BASE_URL || 'http://127.0.0.1:3000'
     const url=new URL(req.url,base)
     const routedPath=url.searchParams.get('route')
     if(routedPath){url.pathname=`/api/${routedPath}`;url.searchParams.delete('route')}
@@ -85,7 +85,7 @@ export default async function handler(req,res) {
       const cookies=response.headers.getSetCookie(); if(cookies.length)res.setHeader('Set-Cookie',cookies)
       res.statusCode=response.status; res.end(Buffer.from(await response.arrayBuffer())); return
     }
-    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.21.5',professionalVersion:'1.3.5',backend:process.env.HOSTING_PLATFORM||'vercel',database:process.env.HOSTING_PLATFORM==='contabo'?'postgresql':'neon',mode:process.env.APP_MODE||'production'}); return }
+    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.21.6',professionalVersion:'1.3.6',backend:process.env.HOSTING_PLATFORM||'local',database:'postgresql',mode:process.env.APP_MODE||'production'}); return }
     if(path==='/api/agent') return await externalAgent(req,res,{readBody,send,pool,transaction})
     if(path.startsWith('/api/agent/')) {
       const route=path.slice('/api/agent/'.length)
@@ -248,7 +248,7 @@ export default async function handler(req,res) {
     }
     if(path==='/api/system-status' && req.method==='GET') {
       const session=await officeSession(req)
-      send(res,200,{version:'1.21.5',professionalVersion:'1.3.5',backend:process.env.HOSTING_PLATFORM==='contabo'?'Contabo':'Vercel',database:process.env.HOSTING_PLATFORM==='contabo'?'PostgreSQL':'Neon',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs where tenant_id=$1 order by created_at desc limit 1',[session.profile.tenant_id])).rows[0]??null});return
+      send(res,200,{version:'1.21.6',professionalVersion:'1.3.6',backend:process.env.HOSTING_PLATFORM==='contabo'?'Contabo':'Local',database:'PostgreSQL',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs where tenant_id=$1 order by created_at desc limit 1',[session.profile.tenant_id])).rows[0]??null});return
     }
     throw fail('Página não encontrada.',404)
   } catch(error) {

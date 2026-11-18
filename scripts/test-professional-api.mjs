@@ -113,7 +113,7 @@ try {
   assert.equal((await call(pro1,'/professional/access')).data.profile.photo_url,photo.data.photo_url)
   assert.notEqual((await call(pro2,'/professional/access')).data.profile.photo_url,photo.data.photo_url)
   assert.equal((await call(pro1,'/professional/photo',{professional_id:first.id,remove:true})).data.photo_url,null)
-  const {del}=await import('@vercel/blob');await del(photo.data.photo_url,{token:process.env.BLOB_READ_WRITE_TOKEN})
+  const {removePhoto}=await import('../server/file-storage.mjs');await removePhoto(photo.data.photo_url)
   await call(pro1,`/professional/cash?professional_id=${first.id}&from=2026-02-30&to=2026-03-10`,undefined,400)
   console.log('PASS API: comissões isoladas, metas salvas/ocultadas/removidas, compatibilidade anterior, foto própria enviada/removida e acesso alheio negado.')
   // A conta administrativa e a profissional usam cookies distintos no mesmo navegador.
