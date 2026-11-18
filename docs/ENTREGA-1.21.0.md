@@ -1,5 +1,7 @@
 # Gestão 1.21.0 / Profissional 1.3.0
 
+**DISTRIBUIÇÃO ANDROID SUSPENSA em 18/11/2026:** o Microsoft Defender apontou Trojan:Script/Ulthar.A!ml nos scripts empacotados dos dois APKs. Downloads retirados até conclusão da investigação. Não instalar, permitir ou criar exclusões no antivírus. As verificações de assinatura/build abaixo não atestam ausência de malware.
+
 Design autorizado em 18/11/2026 a partir das referências aprovadas em 17/11. Início permanece no centro da navegação inferior das duas edições.
 
 - Gestão: Agenda / Caixa / Início / Clientes / Menu.

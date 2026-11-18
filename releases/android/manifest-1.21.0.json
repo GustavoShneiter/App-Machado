@@ -23,5 +23,7 @@
       "sha256": "39cd5c1f25b470f34f416ec0b7d1d8ff3dddb410c8280d4f381d862c1c3a0e04",
       "signed": true
     }
-  ]
+  ],
+  "status": "suspended",
+  "reason": "Microsoft Defender detection under investigation; do not install or allow these files."
 }

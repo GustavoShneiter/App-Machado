@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core'
 
+export const androidDownloadsAvailable = false
 export const professionalVersion = '1.3.0'
 export const professionalApkUrl = `https://raw.githubusercontent.com/GustavoShneiter/App-Machado/main/releases/android/Machado-Profissional-v${professionalVersion}.apk`
 export const appVersion = import.meta.env.VITE_APP_EDITION === 'professional' ? professionalVersion : '1.21.0'

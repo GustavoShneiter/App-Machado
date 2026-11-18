@@ -1,7 +1,7 @@
 # Machado Profissional 1.2.1
 
 - [Web / iPhone](https://barbearia-machado-rose.vercel.app/profissional).
-- [Android 1.3.0](https://raw.githubusercontent.com/GustavoShneiter/App-Machado/main/releases/android/Machado-Profissional-v1.3.0.apk).
+- Android: download suspenso para análise de segurança; não instalar as versões Gestão 1.21.0 e Profissional 1.3.0..
 - [Instalar no iPhone](https://barbearia-machado-rose.vercel.app/profissional/instalar).
 - [Central de acessos](../../docs/CENTRAL-DE-ACESSOS.md).
 

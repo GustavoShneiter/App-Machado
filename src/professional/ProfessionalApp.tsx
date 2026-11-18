@@ -10,7 +10,7 @@ import { OperationsProvider, useOperations } from '../OperationsStore'
 import { ApprovedHome } from '../ApprovedHome'
 import { Agenda } from '../ManagementPages'
 import { dismissTopLayer } from '../dismissibleLayers'
-import { professionalApkUrl } from '../runtime'
+import { androidDownloadsAvailable, professionalApkUrl } from '../runtime'
 import { ProfessionalCash } from './ProfessionalCash'
 import { ProfessionalAccountModal } from './ProfessionalAccount'
 import { ProfessionalMenu } from './ProfessionalMenu'
@@ -71,7 +71,7 @@ function ProfessionalGate() {
       <button className="primary" disabled={busy}>{busy ? 'Entrando…' : 'Entrar'}</button>
 
     </form>
-    {!Capacitor.isNativePlatform() && <div className="pro-install-links"><a href={professionalApkUrl}><Download size={17} /><span>Baixar para Android</span></a><Link to="/profissional/instalar"><Smartphone size={17} /><span>Instalar no iPhone</span></Link></div>}
+    {!Capacitor.isNativePlatform() && <div className="pro-install-links">{androidDownloadsAvailable && <a href={professionalApkUrl}><Download size={17} /><span>Baixar para Android</span></a>}<Link to="/profissional/instalar"><Smartphone size={17} /><span>Instalar no iPhone</span></Link></div>}
     <p className="pro-login-footer">Esqueceu seu acesso? Peça à administração para definir uma nova senha.</p>
   </div></main>
   return <CatalogProvider professionalId={access.profile.id} key={access.profile.id}><OperationsProvider professionalId={access.profile.id}><ProfessionalLayout access={access} signedOut={() => setAttempt(value => value + 1)} photoUpdated={url => setAccess(previous => previous?.profile.id === access.profile.id ? { ...previous, profile: { ...previous.profile, photo_url: url } } : previous)} /></OperationsProvider></CatalogProvider>
@@ -115,5 +115,5 @@ function ProfessionalLayout({ access, signedOut, photoUpdated }: { access: Profe
   </div>
 }
 function ProfessionalInstall() {
-  return <main className="app-install-shell machado-ui"><section className="app-install-card"><img src="/professional-icon-192.png" alt="" width="64" height="64" /><span className="eyebrow">Aplicativo da equipe</span><h1>Machado Profissional</h1><p>Todos usam o mesmo aplicativo. Entre com o e-mail e a senha definidos pela administração para abrir sua própria agenda e suas comissões.</p><a className="primary" href={professionalApkUrl}><Download size={17} />Baixar para Android</a><h2 className="pro-install-subtitle">No iPhone</h2><ol><li>Abra este site no <strong>Safari</strong>.</li><li>Toque em <strong>Compartilhar → Adicionar à Tela de Início</strong>.</li><li>Se aparecer, ative <strong>Abrir como App da Web</strong> e confirme em Adicionar.</li><li>Abra pelo ícone e entre com sua conta.</li></ol><Link className="outline" to="/profissional">Abrir sistema no navegador</Link><p className="app-install-note">É necessário ter internet. Para recuperar o acesso, fale com a administração.</p></section></main>
+  return <main className="app-install-shell machado-ui"><section className="app-install-card"><img src="/professional-icon-192.png" alt="" width="64" height="64" /><span className="eyebrow">Aplicativo da equipe</span><h1>Machado Profissional</h1><p>Todos usam o mesmo aplicativo. Entre com o e-mail e a senha definidos pela administração para abrir sua própria agenda e suas comissões.</p>{androidDownloadsAvailable ? <a className="primary" href={professionalApkUrl}><Download size={17} />Baixar para Android</a> : <p className="form-error" role="status">Download Android temporariamente suspenso para análise de segurança. Não instale as versões 1.21.0 e 1.3.0 nem ignore alertas do antivírus.</p>}<h2 className="pro-install-subtitle">No iPhone</h2><ol><li>Abra este site no <strong>Safari</strong>.</li><li>Toque em <strong>Compartilhar → Adicionar à Tela de Início</strong>.</li><li>Se aparecer, ative <strong>Abrir como App da Web</strong> e confirme em Adicionar.</li><li>Abra pelo ícone e entre com sua conta.</li></ol><Link className="outline" to="/profissional">Abrir sistema no navegador</Link><p className="app-install-note">É necessário ter internet. Para recuperar o acesso, fale com a administração.</p></section></main>
 }
