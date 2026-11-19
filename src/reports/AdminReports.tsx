@@ -9,6 +9,7 @@ import { buildManagementReport, validReportRange } from './metrics'
 import { RevenueTrend } from './ReportCharts'
 import { ProfessionalGoalEditor } from './AdminProfessionalGoals'
 import './reports.css'
+import {SpreadsheetPanel} from './SpreadsheetPanel'
 
 type Range = { from: string; to: string }
 function periodOptions(today = dayKey()) {
@@ -53,6 +54,7 @@ export function AdminReports() {
     <div className="approved-report-filterbar"><button className="text-action" aria-label="Escolher período do relatório" onClick={()=>setPeriodOpen(true)}><CalendarDays size={18}/>{shortDate(range.from)} a {shortDate(range.to)}<ChevronDown size={15}/></button><button className="approved-filter-button" onClick={()=>setFilterOpen(true)}><SlidersHorizontal size={16}/>{professional?selectedName:'Todos'}</button></div>
     <nav className="report-metric-tabs" aria-label="Métrica do relatório">{[['gross','Faturamento'],['received','Recebido'],['result','Resultado']].map(([id,label])=><button key={id} aria-pressed={metric===id} onClick={()=>setMetric(id)}>{label}</button>)}</nav>
     {initialLoading&&<p className="approved-empty" role="status">Carregando os resultados…</p>}
+    <SpreadsheetPanel/>
     <div className="approved-report-layout">
     <div>
     {metric!=='result'?<><section className="finance-main-amount report-active-amount"><h2 className="sr-only">{metric==='gross'?'Faturamento':'Recebido'} no período</h2><strong>{initialLoading?'—':money(metric==='gross'?report.gross:report.received)}</strong><p>{preset?.label??'Período selecionado'} · {professional?selectedName:'Toda a unidade'}</p></section>

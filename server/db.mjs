@@ -35,7 +35,7 @@ export async function resolveBusinessUnit(client, userId, businessSlug) {
 export async function transaction(userId, work, options = {}) {
   const client = await pool.connect()
   try {
-    await client.query(options.readOnly ? 'begin isolation level repeatable read read only' : 'begin')
+    await client.query(options.readOnly ? 'begin isolation level repeatable read read only' : options.repeatableRead ? 'begin isolation level repeatable read' : 'begin')
     await client.query("select set_config('request.jwt.claim.sub',$1,true)", [userId ?? ''])
     if (options.internal === true) {
       // Reserved for server-owned provisioning and global backup jobs. Request

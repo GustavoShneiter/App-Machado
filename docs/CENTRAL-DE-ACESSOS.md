@@ -17,7 +17,7 @@
 | Versão para iPhone pelo Safari | [Abrir no iPhone](https://app-machado.45-140-203-243.sslip.io/app) |
 | Instruções de instalação no iPhone | [Adicionar à Tela de Início](https://app-machado.45-140-203-243.sslip.io/app/instalar) |
 
-A edição administrativa web e a edição para iPhone usam o mesmo endereço. No iPhone, o Safari permite adicionar o ícone à Tela de Início. O Android administrativo 1.21.6 também usa login individual. [Baixar Machado Gestão](https://github.com/GustavoShneiter/App-Machado/raw/refs/heads/main/releases/android/Machado-Gestao-v1.21.6.apk).
+A edição administrativa web e a edição para iPhone usam o mesmo endereço. No iPhone, o Safari permite adicionar o ícone à Tela de Início. O Android administrativo 1.21.7 também usa login individual. [Baixar Machado Gestão](https://github.com/GustavoShneiter/App-Machado/raw/refs/heads/main/releases/android/Machado-Gestao-v1.21.7.apk).
 
 ## Profissionais
 
@@ -26,7 +26,7 @@ A edição administrativa web e a edição para iPhone usam o mesmo endereço. N
 | Web / iPhone | [Machado Profissional](https://app-machado.45-140-203-243.sslip.io/profissional) |
 | Instalação no iPhone | [Adicionar à Tela de Início](https://app-machado.45-140-203-243.sslip.io/profissional/instalar) |
 
-**Android profissional:** [baixar Machado Profissional 1.3.7](https://github.com/GustavoShneiter/App-Machado/raw/refs/heads/main/releases/android/Machado-Profissional-v1.3.7.apk). É o mesmo APK para a equipe; cada profissional entra com a própria conta. A conta administrativa permanece no aplicativo Machado Gestão.
+**Android profissional:** [baixar Machado Profissional 1.3.8](https://github.com/GustavoShneiter/App-Machado/raw/refs/heads/main/releases/android/Machado-Profissional-v1.3.8.apk). É o mesmo APK para a equipe; cada profissional entra com a própria conta. A conta administrativa permanece no aplicativo Machado Gestão.
 
 O login determina a agenda e as comissões exibidas. Não há site nem APK diferente para cada barbeiro. Endereços pessoais antigos redirecionam ao portal comum e respeitam a conta conectada.
 

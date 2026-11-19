@@ -4,6 +4,7 @@ import {readFile,readdir} from 'node:fs/promises'
 import pg from 'pg'
 import {pool} from '../server/db.mjs'
 import {professionalAction,professionalSnapshot} from '../server/professionals.mjs'
+import {spreadsheetAdmin,sheetSnapshot,sheetCatalog,subtractBaseline} from '../server/spreadsheets.mjs'
 
 // Disposable database/role: no test customers, commands or payments in production.
 const suffix=randomBytes(6).toString('hex'),database='machado_qa_payments_'+suffix,role='machado_qa_pay_'+suffix
@@ -34,6 +35,19 @@ try{
   item=(await c.query('select id from command_items where command_id=$1',[command])).rows[0].id
  })
  const action=(actor,pid,name,payload,unit)=>scoped(actor,c=>professionalAction(c,pid,name,payload),unit)
+ await scoped(owner,async c=>{
+  const catalog=await sheetCatalog(c)
+  assert(catalog.some(row=>row.key==='service:'+service))
+  const snapshot=await sheetSnapshot(c,2098,'2098-03-11')
+  assert.equal(snapshot.find(row=>row.key==='service:'+service).amount,4000)
+  assert.deepEqual(subtractBaseline(snapshot,snapshot),[])
+  const connection=await spreadsheetAdmin(c,'connect','POST',{spreadsheet_url:'https://docs.google.com/spreadsheets/d/123456789012345678901234/edit',year:2098,starts_on:'2098-03-11'},{id:owner,role:'owner'},'https://example.invalid')
+  assert(connection.script.includes('instalarMachado'))
+  const visible=await spreadsheetAdmin(c,'settings','GET',{}, {id:owner,role:'owner'})
+  assert(!JSON.stringify(visible).includes('token_hash'))
+ })
+ await scoped(user,async c=>assert.rejects(spreadsheetAdmin(c,'settings','GET',{}, {id:user,role:'professional'})))
+ await scoped(owner,async c=>assert.equal((await c.query('select * from spreadsheet_connections')).rowCount,0),units[1].id)
  let product,extraCommand,extraVisit
  await scoped(owner,async c=>{
   product=(await c.query("insert into products(name,sale_price_cents,cost_cents,quantity,commission_percent) values('Pomada',2000,500,4,20) returning id")).rows[0].id
