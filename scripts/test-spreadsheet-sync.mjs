@@ -28,6 +28,7 @@ class Sheet {
   return {
    getValues(){return Array.from({length:height},(_,r)=>Array.from({length:width},(_,c)=>evaluate(raw(row+r,col+c))))},
    getFormulas(){return Array.from({length:height},(_,r)=>Array.from({length:width},(_,c)=>typeof raw(row+r,col+c)==='string'&&raw(row+r,col+c).startsWith('=')?raw(row+r,col+c):''))},
+   getDisplayValues(){return this.getValues().map(row=>row.map(String))},
    getValue(){return this.getValues()[0][0]},getFormula(){return this.getFormulas()[0][0]},
    setValues(values){for(let r=0;r<height;r++)for(let c=0;c<width;c++)sheet.cells.set((row+r)+','+(col+c),values[r][c]);return this},
    setValue(value){return this.setValues([[value]])},setFormula(value){return this.setValue(value)},
@@ -50,19 +51,21 @@ sheet.getRange('E22').setValue(7);sheet.getRange('G22').setValue(3)
 sheet.getRange('X16').setValue('COMISSÕES');sheet.getRange('X21').setValue('TOTAL')
 sheet.getRange('Z21').setValue(100);sheet.getRange('Z4').setValue(1500)
 sheet.getRange('AC45').setValue(false)
-const book={getId:()=> 'test-book',getSheets:()=>sheets,getSheetByName:name=>sheets.find(s=>s.name===name),insertSheet:name=>{const next=new Sheet(name);sheets.push(next);return next}}
+let locale='en_US'
+const book={getSpreadsheetLocale:()=>locale,getId:()=> 'test-book',getSheets:()=>sheets,getSheetByName:name=>sheets.find(s=>s.name===name),insertSheet:name=>{const next=new Sheet(name);sheets.push(next);return next}}
 function evaluate(value){
  if(typeof value!=='string'||!value.startsWith('='))return value
- const match=value.match(/^=(-?[\d.]+)\+SUMIF\('[^']+'!\$A\$2:\$A\$20000,"([^"]+)",'[^']+'!\$B\$2:\$B\$20000\)$/)
+ const match=value.match(/^=(-?[\d.]+|\(-?[\d]+\/[\d]+\))\+SUMIF\('[^']+'!\$A\$2:\$A\$20000[,;]"([^"]+)"[,;]'[^']+'!\$B\$2:\$B\$20000\)$/)
  if(!match)throw new Error('Unexpected mock formula '+value)
  const data=book.getSheetByName('_Machado Dados')
  const delta=[...data.cells.keys()].filter(key=>key.endsWith(',1')&&data.cells.get(key)===match[2]).reduce((sum,key)=>sum+Number(data.cells.get(key.replace(',1',',2'))),0)
- return Number(match[1])+delta
+ const fraction=match[1].replace(/[()]/g,'').split('/')
+ return Number(fraction[0])/Number(fraction[1]??1)+delta
 }
 let feed={enabled:true,spreadsheet_id:'test-book',year:2026,starts_on:'2026-11-19',mappings:{},resume_cells:[],
- catalog:[{key:'service:cut',name:'Corte de cabelo',price:4000},{key:'package:silver',name:'Plano Prata',price:6800}],rows:[]}
+ catalog:[{key:'service:cut',name:'Corte de cabelo',price:4000},{key:'package:silver',name:'Plano Prata',price:6800},{key:'service:barba',name:'Barbo terapia',price:3500}],rows:[]}
 let ack
-const sandbox=vm.createContext({SpreadsheetApp:{getActiveSpreadsheet:()=>book,openById:()=>book},
+const sandbox=vm.createContext({SpreadsheetApp:{getActiveSpreadsheet:()=>book,openById:()=>book,flush(){}},
  LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock(){}})},
  UrlFetchApp:{fetch:(url,options)=>{
   if(url.endsWith('/ack'))ack=JSON.parse(options.payload)
@@ -116,4 +119,10 @@ assert.equal(sheet.getRange('G22').getValue(),4,'Pause keeps the current spreads
 feed.enabled=true;sync()
 assert.equal(sheet.getRange('G22').getValue(),3,'Removing source contributions is reflected exactly once')
 assert.equal(sheet.getRange('Z4').getValue(),1500)
+locale='pt_BR'
+sync()
+assert(sheet.getRange('E22').getFormula().includes(';'),'Brazilian formulas use semicolon separators')
+assert.equal(sheet.getRange('E22').getValue(),97,'Locale repair preserves the linked value after source removal')
+assert.equal(ack.manual_cells.length,0)
+assert.equal(book.getSheetByName('_Machado Dados').getMaxRows(),20000,'Formula ranges must fit the auxiliary grid')
 console.log('PASS spreadsheet connector: history, manual priority, resume, retries, actual prices, discounts, tips, products, repasses, new services/plans, pause and deletions.')

@@ -10,7 +10,7 @@ Menu → Relatórios → Planilha de caixa permite abrir, editar, baixar Excel, 
 
 A conexão foi preparada para 2026, com início em 19/11/2026. Uma fotografia dos dados do app no momento da conexão define o ponto de partida. A integração acrescenta as diferenças posteriores, preservando os valores já existentes na planilha.
 
-O conector deve ser instalado no Apps Script vinculado à planilha, pela conta proprietária. Execute instalarMachado e autorize os acessos solicitados. O acionador de aproximadamente um minuto consulta o servidor da Contabo com credencial exclusiva da unidade. A execução depende das permissões e dos limites do Google.
+O conector é instalado no Apps Script da conta proprietária, com acesso explícito ao identificador da planilha. Ele pode ser usado como projeto independente quando o editor de Extensões apresentar problemas com várias contas conectadas. Execute instalarMachado e autorize os acessos solicitados pelo Google. O acionador de aproximadamente um minuto consulta o servidor da Contabo com credencial exclusiva da unidade. A execução depende das permissões e dos limites do Google.
 
 O código privado do conector contém uma credencial. Guarde-o em local privado. O app oferece gerar um novo conector, revogando o anterior.
 
@@ -43,3 +43,11 @@ O teste scripts/test-spreadsheet-sync.mjs executa o código real do conector em 
 O teste de banco scripts/test-professional-payments.mjs também confere o esquema de integração, o ponto de partida e o isolamento por unidade em banco descartável.
 
 A ativação real deve ser confirmada por uma execução bem-sucedida no Google e pelo horário de última sincronização apresentado no app.
+
+## Ativação de produção
+
+Em 19/11/2026, a conta proprietária autorizou o projeto Machado — Integração do Caixa. A instalação e a primeira execução agendada concluíram com sucesso. O servidor confirmou 475 campos vinculados, sem erros nem campos manuais inesperados.
+
+As fórmulas geradas respeitam o separador brasileiro. Os resumos históricos de novembro e dezembro foram comparados aos valores originais e permaneceram iguais. Um teste real na célula futura e zerada DEZEMBRO!E34 confirmou a preservação de alteração manual e a retomada automática pelo servidor. Ao final, a fórmula e o valor zero foram restaurados, sem campos manuais nem solicitações de retomada pendentes. A última confirmação desse teste ocorreu às 11:45 de Brasília.
+
+[Gerenciar o acionador Google](https://script.google.com/home/projects/1PEVG9fqtCYXozMtRnatJTxhJCF0dY8rQyPe2tSxTCDSyL85-rPsv5Qs5/triggers).
