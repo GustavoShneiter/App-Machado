@@ -16,10 +16,12 @@ function prepararAnoMachado(sourceId,destinationId,year) {
     const sheet=original.copyTo(target);
     sheet.setName('_Preparando '+month);
     const days=new Date(year,month,0).getDate();
-    sheet.getRange('C1').setValue(name+' '+year);
+    const titleMerge=sheet.getRange('D1').getMergedRanges()[0];
+    if(!sheet.getRange('C1').isPartOfMerge())sheet.getRange('C1').clearContent();
+    (titleMerge?titleMerge.getCell(1,1):sheet.getRange('D1')).setValue(name+' '+year);
     sheet.getRange('C4:U34').clearContent();
     sheet.getRange('C4:D'+(days+3)).setValues(Array.from({length:days},(_,day)=>[
-      Utilities.formatDate(new Date(Date.UTC(year,month-1,day+1,12)),'America/Sao_Paulo','EEE'),day+1]));
+      ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date(Date.UTC(year,month-1,day+1,12)).getUTCDay()],day+1]));
     sheet.getRange('E4:U'+(days+3)).setValues(Array.from({length:days},()=>Array(17).fill(0)));
     sheet.getRange('V4:V34').clearContent();
     const separator=['pt','es','de','fr','it'].indexOf(target.getSpreadsheetLocale().split(/[_-]/)[0])>=0?';':',';

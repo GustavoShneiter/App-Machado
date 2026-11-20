@@ -63,3 +63,5 @@ As fórmulas geradas respeitam o separador brasileiro. Os resumos históricos de
 - Campos manuais, inclusive no cadastro de preços, permanecem protegidos. Ao retomar um campo de cadastro, o valor vigente do aplicativo volta a ser a referência.
 - A planilha de 2027 usa cópias das abas originais de 2026, preservando formatação e organização. Os lançamentos e nomes de repasses são limpos, os calendários passam para 2027 e os blocos de despesas fixas, variáveis, manutenção e investimentos são removidos somente na cópia nova.
 - O preparo anual só executa para um ano futuro, recusa lançamentos não zerados no destino e guarda marcadores para não repetir a cópia. As planilhas de origem não são alteradas.
+
+Em 20/11, ambas as conexões foram confirmadas sem erros e sem campos manuais inesperados. O acionador compara a versão dos dados antes de reescrever a planilha; consultas sem mudanças apenas confirmam a conexão. Uma revisão completa periódica e toda mudança de origem reavaliam a proteção manual. Os testes cobrem também as datas convertidas automaticamente pelo Google.
