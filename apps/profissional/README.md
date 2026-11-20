@@ -1,7 +1,7 @@
-# Machado Profissional 1.3.9
+# Machado Profissional 1.3.10
 
 - [Web / iPhone](https://app-machado.45-140-203-243.sslip.io/profissional).
-- [Android 1.3.9](https://raw.githubusercontent.com/GustavoShneiter/App-Machado/main/releases/android/Machado-Profissional-v1.3.9.apk). Novos APKs assinados, verificados localmente no Defender sem ameaças detectadas. As versões anteriores Gestão 1.21.0 e Profissional 1.3.0 continuam suspensas..
+- [Android 1.3.10](https://raw.githubusercontent.com/GustavoShneiter/App-Machado/main/releases/android/Machado-Profissional-v1.3.10.apk). Novos APKs assinados, verificados localmente no Defender sem ameaças detectadas. As versões anteriores Gestão 1.21.0 e Profissional 1.3.0 continuam suspensas..
 - [Instalar no iPhone](https://app-machado.45-140-203-243.sslip.io/profissional/instalar).
 - [Central de acessos](../../docs/CENTRAL-DE-ACESSOS.md).
 

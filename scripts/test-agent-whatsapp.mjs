@@ -5,6 +5,7 @@ import pg from 'pg'
 import { pool } from '../server/db.mjs'
 import { administrativeAgent } from '../server/agent-settings.mjs'
 import { agentAction,externalAgent } from '../server/agent.mjs'
+import { enqueueCampaigns } from '../server/agent-queue.mjs'
 import { professionalSnapshot } from '../server/professionals.mjs'
 import { customerContext } from '../server/agent-customer.mjs'
 import { defaultConfig,validateConfig,renderMessage,actions } from '../shared/agent-config.mjs'
@@ -12,11 +13,12 @@ import { defaultConfig,validateConfig,renderMessage,actions } from '../shared/ag
 const suffix=randomBytes(6).toString('hex'),database='machado_qa_agent_'+suffix,role='machado_agent_qa_'+suffix
 const token=randomBytes(48).toString('base64url')
 const target=new URL(process.env.DATABASE_URL);target.pathname='/'+database;target.searchParams.delete('sslmode')
-let temp,created=false
+let temp,created=false,tearingDown=false
 process.env.AGENT_ENABLED='true'
 try {
  await pool.query(`create database "${database}"`);created=true
- temp=new pg.Pool({connectionString:target.toString(),ssl:{rejectUnauthorized:true},max:3,statement_timeout:90000})
+ temp=new pg.Pool({connectionString:target.toString(),ssl:{rejectUnauthorized:true,...(process.env.DATABASE_SSL_CA_FILE?{ca:await readFile(process.env.DATABASE_SSL_CA_FILE,'utf8')}:{})},max:3,statement_timeout:90000})
+ temp.on('error',error=>{if(!tearingDown||error.code!=='57P01')throw error})
  const client=await temp.connect()
  try {
   for(const file of (await readdir('database')).filter(f=>/^\d{3}_.*\.sql$/.test(f)).sort()) {
@@ -85,6 +87,11 @@ try {
    await agentAction(c,'ack_notification',{id:remind.id,claim_token:remind.claim_token,status:'uncertain',provider_message_id:null},integration)
    assert.equal(await agentAction(c,'claim_notification',{},integration),null)
   })
+  assert.equal(validateConfig({...defaultConfig(),reactivation_days:20}).reactivation_days,20)
+  assert.equal(validateConfig({...defaultConfig(),reactivation_days:1}).reactivation_days,1)
+  assert.equal(validateConfig({...defaultConfig(),reactivation_days:0}).reactivation_days,0)
+  assert.throws(()=>validateConfig({...defaultConfig(),reactivation_days:-1}))
+  assert.throws(()=>validateConfig({...defaultConfig(),reactivation_days:1.5}))
   assert.throws(()=>validateConfig({...defaultConfig(),confirmation_delay_minutes:61}))
   assert.throws(()=>validateConfig({...defaultConfig(),reminder_offsets_minutes:[60,60]}))
   assert.throws(()=>renderMessage('birthday','Olá {servico}',{cliente:'Teste'}))
@@ -169,11 +176,33 @@ try {
    const office=(await c.query('select office_snapshot() as value')).rows[0].value
    assert.equal(office.appointments.find(a=>a.id===booked.appointment_id).customer_name,'Filho do Cliente')
   })
+  // Save the caller-chosen 20 days through the actual settings API, then exercise eligibility.
+  await scoped(0,async c=>{
+   const before=await administrativeAgent(c,'settings','GET',{}, {id:user,role:'owner'});
+   const {revision,updated_at,...input}=before;void updated_at;
+   const saved=await administrativeAgent(c,'settings','POST',{...input,reactivation_enabled:true,reactivation_days:20,birthday_enabled:false,campaign_start_hour:0,campaign_end_hour:24,expected_revision:revision},{id:user,role:'owner'});
+   assert.equal(saved.reactivation_days,20);
+   const eligible=[];
+   for(const [index,days,consent] of [[1,21,true],[2,19,true],[3,21,false]]){
+    const phone='4599999001'+index;
+    const person=(await c.query("insert into customers(name,phone) values('Retorno QA',$1) returning id",[phone])).rows[0].id;
+    const last=(await c.query("insert into appointments(customer_id,professional_id,service_id,starts_at,ends_at,expected_price_cents,status) values($1,$2,$3,((now() at time zone 'America/Sao_Paulo')::date-$4::int+make_interval(hours=>$5::int)) at time zone 'America/Sao_Paulo',((now() at time zone 'America/Sao_Paulo')::date-$4::int+make_interval(hours=>$5::int,mins=>40)) at time zone 'America/Sao_Paulo',4000,'completed') returning id",[person,pro,service,days,10+index])).rows[0];
+    void last;
+    await c.query('insert into agent_contacts(phone,marketing_opt_in,opted_out) values($1,$2,false)',[phone,consent]);
+    eligible.push(person);
+   }
+   await enqueueCampaigns(c,saved);
+   const invitations=(await c.query("select customer_id from agent_outbox where kind='reactivation' and customer_id=any($1::uuid[])",[eligible])).rows;
+   assert.deepEqual(invitations.map(r=>r.customer_id),[eligible[0]],'20-day eligibility: 21 days authorized only; 19 days and no-consent excluded');
+   await enqueueCampaigns(c,saved);
+   assert.equal((await c.query("select count(*)::int n from agent_outbox where kind='reactivation' and customer_id=$1",[eligible[0]])).rows[0].n,1,'No duplicate return invitation');
+  });
   await scoped(0,c=>c.query('update agent_integrations set active=false where id=$1',[integration.id]))
   await assert.rejects(call('capabilities'),e=>e.status===401)
   console.log('PASS: full schema migrations, tenant isolation, settings conflicts, queue snapshots, callback-before-ack, repeat ack, revision/cancellation, consent and template validation. No production fixtures.')
  } finally {client.release()}
 } finally {
+ tearingDown=true
  await temp?.end()
  if(created)await pool.query(`drop database "${database}" with(force)`)
  await pool.query(`drop role if exists "${role}"`)

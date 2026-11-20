@@ -17,7 +17,7 @@ export async function createBackup(userId) {
       tables[table] = (await client.query(`select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) as rows from public."${table}" t${scope}`)).rows[0].rows
     }
     tables.business_units=(await client.query('select * from business_units order by created_at')).rows
-    return { format: 'machado-backup', version: 2, schemaVersion: 18, createdAt: new Date().toISOString(), tables }
+    return { format: 'machado-backup', version: 2, schemaVersion: 19, createdAt: new Date().toISOString(), tables }
   }, { readOnly: true,internal:!userId })
 }
 

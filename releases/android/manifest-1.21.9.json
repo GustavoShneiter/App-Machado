@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-20",
+  "admin": "1.21.9",
+  "professional": "1.3.10",
+  "backend": "contabo",
+  "status": "available",
+  "artifacts": [
+    {
+      "edition": "Gestao",
+      "version": "1.21.9",
+      "versionCode": 42,
+      "applicationId": "com.barbeariamachado.gestao",
+      "file": "releases/android/Machado-Gestao-v1.21.9.apk",
+      "bytes": 5964652,
+      "sha256": "b90a83ecc0e7106726fef17e4b090acaaf36dd469393a5066155959d8f36927c",
+      "defender": "scan unavailable on build host",
+      "signingCertificateSha256": "2d1fb76948ff838499c639defeaaebc4ee3834792f7bec11581066640ebf3094"
+    },
+    {
+      "edition": "Profissional",
+      "version": "1.3.10",
+      "versionCode": 18,
+      "applicationId": "com.barbeariamachado.profissional",
+      "file": "releases/android/Machado-Profissional-v1.3.10.apk",
+      "bytes": 5876628,
+      "sha256": "943fca55f41a4f739b9e3fc8f3e9b2dd28f6a7996efde92a1ff944cec4eedcd5",
+      "defender": "scan unavailable on build host",
+      "signingCertificateSha256": "2d1fb76948ff838499c639defeaaebc4ee3834792f7bec11581066640ebf3094"
+    }
+  ],
+  "changes": [
+    "Shared-client services appear in the assigned professional agenda at the original start time, including intentional overlaps",
+    "Independent commands and commissions, grouped calendar lanes and restoration of existing open shared services",
+    "Agent settings use the approved light design, actionable automation overview and live connection status",
+    "Return-invitation delay accepts 20 days and any whole nonnegative day count within the supported range; consent and deduplication retained"
+  ]
+}

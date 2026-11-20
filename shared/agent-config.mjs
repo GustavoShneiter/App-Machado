@@ -21,7 +21,7 @@ export function validateConfig(input,previous=defaultConfig()) {
  const allowed=Object.keys(previous); if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(k=>!allowed.includes(k)))throw fail('Configuração inválida.');
  const c={...previous,...input};
  for(const k of ['assistant_enabled','confirmations_enabled','reminders_enabled','birthday_enabled','reactivation_enabled'])if(typeof c[k]!=='boolean')throw fail('Opção inválida.');
- for(const [k,min,max] of [['confirmation_delay_minutes',0,60],['campaign_start_hour',0,23],['campaign_end_hour',1,24],['birthday_send_hour',0,23],['reactivation_days',30,180]])if(!Number.isInteger(c[k])||c[k]<min||c[k]>max)throw fail('Confira o valor de '+k+'.');
+ for(const [k,min,max] of [['confirmation_delay_minutes',0,60],['campaign_start_hour',0,23],['campaign_end_hour',1,24],['birthday_send_hour',0,23],['reactivation_days',0,36500]])if(!Number.isInteger(c[k])||c[k]<min||c[k]>max)throw fail('Confira o valor de '+k+'.');
  if(c.campaign_start_hour>=c.campaign_end_hour||c.birthday_send_hour<c.campaign_start_hour||c.birthday_send_hour>=c.campaign_end_hour)throw fail('Aniversário deve estar dentro da janela de campanhas.');
  const offsets=c.reminder_offsets_minutes;
  if(!Array.isArray(offsets)||offsets.length>2||new Set(offsets).size!==offsets.length||offsets.some(n=>!Number.isInteger(n)||n<60||n>10080))throw fail('Use até dois lembretes diferentes, entre 1 hora e 7 dias.');

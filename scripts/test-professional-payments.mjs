@@ -133,7 +133,7 @@ try{
  await action(user,pro,'close_package_command',{id:coveredCommand})
  await scoped(owner,async c=>{
   assert.equal((await c.query('select count(*)::int n from payments')).rows[0].n,1)
-  const customer=(await c.query('select customer_id from appointments where id=$1',[appointment])).rows[0].customer_id
+  const customer=(await c.query("insert into customers(name,phone) values('Visita Compartilhada','45999990009') returning id")).rows[0].id
   const a=(await c.query("insert into appointments(customer_id,professional_id,service_id,starts_at,ends_at,expected_price_cents) values($1,$2,$3,'2098-03-13T10:00:00-03:00','2098-03-13T10:30:00-03:00',3000) returning id",[customer,pro,secondService])).rows[0].id
   await c.query("update appointments set status='completed' where id=$1",[a])
   mixedCommand=(await c.query('select id from commands where appointment_id=$1',[a])).rows[0].id
@@ -142,6 +142,14 @@ try{
   await assert.rejects(professionalAction(c,pro,'edit_command_service',{command_id:mixedCommand,item_id:ownItem,service_id:service,amount:5000}),/repasse/)
   await c.query('select add_service_to_command($1,$2,$3)',[mixedCommand,service,otherPro])
  })
+ await scoped(owner,async c=>{
+  const before=(await c.query('select count(*)::int n from commands where group_id=$1',[mixedCommand])).rows[0].n;
+  await c.query('select add_service_to_command($1,$2,$3)',[mixedCommand,service,otherPro]);
+  const grouped=(await c.query('select * from commands where group_id=$1 and professional_id=$2',[mixedCommand,otherPro])).rows[0];
+  const visit=(await c.query('select * from appointments where id=$1',[grouped.appointment_id])).rows[0];
+  assert.equal((new Date(visit.ends_at)-new Date(visit.starts_at))/60000,80,'Additional services expand the same barber appointment');
+  assert.equal((await c.query('select count(*)::int n from commands where group_id=$1',[mixedCommand])).rows[0].n,before,'One command per barber');
+ });
  const primaryView=await scoped(user,c=>professionalSnapshot(c,pro));
  const secondView=await scoped(otherUser,c=>professionalSnapshot(c,otherPro));
  assert(primaryView.commands.some(c=>c.id===mixedCommand),'Original professional keeps their command');
@@ -150,8 +158,13 @@ try{
  assert(secondView.items.filter(i=>i.command_id===sibling.id).every(i=>i.professional_id===otherPro));
  assert.equal(sibling.customer_id,primaryView.commands.find(c=>c.id===mixedCommand).customer_id);
  await assert.rejects(action(user,pro,'receive',{id:sibling.id,method:'cash',expected_total:4000}),e=>e.status===403);
- await action(otherUser,otherPro,'mark_command_ready',{command_id:sibling.id});
- await action(otherUser,otherPro,'receive',{id:sibling.id,method:'cash',expected_total:4000});
+ assert(sibling.appointment_id,'The additional command has a real appointment');
+ const addedAppointment=secondView.appointments.find(a=>a.id===sibling.appointment_id);
+ assert(addedAppointment?.is_additional_service);
+ assert.equal(new Date(addedAppointment.starts_at).toISOString(),new Date('2098-03-13T10:00:00-03:00').toISOString());
+ assert.equal(addedAppointment.service_name,'Corte + Corte');
+ await action(otherUser,otherPro,'set_status',{id:sibling.appointment_id,status:'completed'});
+ await action(otherUser,otherPro,'receive',{id:sibling.id,method:'cash',expected_total:8000});
  await scoped(owner,async c=>{
   assert.equal((await c.query('select status from commands where id=$1',[mixedCommand])).rows[0].status,'awaiting_payment','Receiving one barber does not close the other');
   assert.equal((await c.query('select count(*)::int n from payments where command_id=$1',[sibling.id])).rows[0].n,1);
@@ -159,6 +172,17 @@ try{
  // A professional can assign a new service to another barber without editing that barber's command.
  const routed=await action(user,pro,'add_command_service',{command_id:mixedCommand,service_id:service,assigned_professional_id:otherPro});
  assert(routed.separate_command);
+ const routedView=await scoped(otherUser,c=>professionalSnapshot(c,otherPro));
+ const routedCommand=routedView.commands.find(c=>c.id===routed.command_id);
+ const routedAppointment=routedView.appointments.find(a=>a.id===routedCommand.appointment_id);
+ assert.equal(new Date(routedAppointment.starts_at).getTime(),new Date(addedAppointment.starts_at).getTime(),'Additional services may share an occupied start time');
+ await scoped(owner,async c=>{
+  await c.query('savepoint conflict_check');
+  await assert.rejects(c.query("insert into appointments(customer_id,professional_id,service_id,starts_at,ends_at,expected_price_cents) select customer_id,professional_id,service_id,starts_at,ends_at,expected_price_cents from appointments where id=$1",[routedAppointment.id]),/adicional|exclusion|conflit|overlap/i);
+  await c.query('rollback to savepoint conflict_check');
+  const management=(await c.query('select office_snapshot() snap')).rows[0].snap;
+  assert(management.appointments.some(a=>a.id===routedAppointment.id));
+ });
  assert.notEqual(routed.command_id,mixedCommand);
  await assert.rejects(action(user,pro,'edit_command_service',{command_id:routed.command_id,item_id:routed.id,service_id:service,amount:1000}),e=>e.status===403);
  // New snapshots include open commands; the completed-only history remains unchanged.

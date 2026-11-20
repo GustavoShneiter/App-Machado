@@ -539,6 +539,17 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
     const end=Math.min(gridStart+17*3600000,new Date(entry.ends_at).getTime());
     return {top:Math.max(0,(start-gridStart)/3600000*hourHeight),height:Math.max(24,(end-start)/3600000*hourHeight)};
   };
+  // Pack overlapping bookings into visible lanes rather than painting one over another.
+  const lanes=new Map<string,{column:number;columns:number}>();
+  let cluster:Appointment[]=[],clusterEnd=0;
+  const finishCluster=()=>{
+    const ends:number[]=[];
+    for(const entry of cluster){const start=new Date(entry.starts_at).getTime();let column=ends.findIndex(end=>end<=start);if(column<0)column=ends.length;ends[column]=new Date(entry.ends_at).getTime();lanes.set(entry.id,{column,columns:0});}
+    for(const entry of cluster)lanes.get(entry.id)!.columns=ends.length;
+    cluster=[];
+  };
+  for(const entry of rows){const start=new Date(entry.starts_at).getTime();if(cluster.length&&start>=clusterEnd)finishCluster();cluster.push(entry);clusterEnd=Math.max(cluster.length===1?0:clusterEnd,new Date(entry.ends_at).getTime());}
+  finishCluster();
   const slotDate=(time:string)=>new Date(date+'T'+time+':00-03:00');
   const occupied=(time:string)=>{
     const start=slotDate(time).getTime(),end=start+Math.min(40,(23*60-(Number(time.slice(0,2))*60+Number(time.slice(3)))))*60000;
@@ -633,15 +644,16 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
           })}
           {rows.map((appointment) => {
             const layout = position(appointment);
+            const lane=lanes.get(appointment.id)!;
             const command = data.commands.find(
               (item) => item.appointment_id === appointment.id,
             );
             return (
               <button
                 type="button"
-                className={`agenda-event ${appointment.status}${professionalOnly && layout.height < 40 ? ' compact' : ''}`}
+                className={`agenda-event ${appointment.status}${professionalOnly && layout.height < 40 && lane.columns===1 ? ' compact' : ''}`}
                 aria-label={professionalOnly ? `${appointment.customer_name}, ${appointment.service_name}, ${dateTime(appointment.starts_at)}` : undefined}
-                style={{ top: layout.top, height: layout.height }}
+                style={{ top: layout.top, height: layout.height, left: 'calc('+lane.column*100/lane.columns+'% + 5px)',right:'auto',width:'calc('+100/lane.columns+'% - 10px)',...(lane.columns>1?{padding:'3px 6px'}:{}) }}
                 key={appointment.id}
                 onClick={() =>
                   command && !professionalOnly
@@ -661,7 +673,7 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
                   })}
                 </small>
                 <strong>
-                  {appointment.is_fit_in ? "Encaixe · " : ""}{appointment.service_name} · {appointment.customer_name}
+                  {!appointment.is_additional_service && appointment.is_fit_in ? "Encaixe · " : ""}{appointment.service_name} · {appointment.customer_name}
                 </strong>
               </button>
             );
@@ -1559,7 +1571,7 @@ export function Orders({
                         ...(professionalOnly?{assigned_professional_id:assignedId}:{professional_id:assignedId}),
                       })
                     ) {
-                      setServiceNotice(assignedId!==command.professional_id && command.professional_id ? "Serviço enviado para uma comanda separada de "+commandTeam.find(p=>p.id===assignedId)?.name+"." : "Serviço adicionado à comanda.");
+                      setServiceNotice(assignedId!==command.professional_id && command.professional_id ? "Serviço incluído na agenda e na comanda de "+commandTeam.find(p=>p.id===assignedId)?.name+"." : "Serviço adicionado à comanda.");
                       setServiceId("");
                       setProfessionalId("");
                       setCommandAction("");
@@ -1568,7 +1580,7 @@ export function Orders({
                 >
                   <h3>Adicionar serviço</h3>
                   <label className="field"><span>Profissional que fará o serviço</span><select required value={assignedId} onChange={event=>{setProfessionalId(event.target.value);setServiceId("")}}><option value="">Escolha um profissional</option>{commandTeam.map(pro=><option key={pro.id} value={pro.id}>{pro.name}</option>)}</select></label>
-                  {assignedId && command.professional_id && assignedId!==command.professional_id && <p className="form-hint">Será criada uma comanda separada para esse profissional, com os mesmos dados do cliente. Ele finalizará e receberá seus próprios serviços.</p>}
+                  {assignedId && command.professional_id && assignedId!==command.professional_id && <p className="form-hint">O serviço aparecerá na agenda e na comanda desse profissional, no mesmo horário de início do atendimento original, mesmo que ele já tenha outro atendimento.</p>}
                   <label className="field">
                     <span>Serviço</span>
                     <select

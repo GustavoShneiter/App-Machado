@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises'
 import {createHash} from 'node:crypto'
 import {pool} from '../server/db.mjs'
 
-for(const file of ['017_professional_command_groups.sql','018_spreadsheet_years.sql']){
+for(const file of ['017_professional_command_groups.sql','018_spreadsheet_years.sql','019_shared_command_agenda.sql']){
 const sql=await readFile('database/'+file,'utf8')
 const checksum=createHash('sha256').update(sql.replace(/\r\n?/g,'\n')).digest('hex')
 const client=await pool.connect()
@@ -18,7 +18,7 @@ try{
   await client.query('insert into machado_schema_migrations(file_name,checksum_sha256) values($1,$2)',[file,checksum])
  }
  await client.query('commit')
- console.log('Spreadsheet integration migration applied and verified.')
+ console.log('Operational migration applied and verified.')
 }catch(error){await client.query('rollback');throw error}
 finally{client.release()}
 }

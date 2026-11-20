@@ -1,4 +1,4 @@
-export type Appointment = { id: string; customer_id: string; professional_id: string; service_id: string; starts_at: string; ends_at: string; expected_price_cents: number; status: string; source: string; is_fit_in?: boolean; customer_name: string; customer_phone: string; professional_name: string; service_name: string }
+export type Appointment = { id: string; customer_id: string; professional_id: string; service_id: string; starts_at: string; ends_at: string; expected_price_cents: number; status: string; source: string; is_fit_in?: boolean; is_additional_service?: boolean; customer_name: string; customer_phone: string; professional_name: string; service_name: string }
 export type ScheduleBlock = { id: string; professional_id: string; starts_at: string; ends_at: string; reason: string; created_at: string; rule_id?: string }
 export type RecurringBlock = { id: string; professional_id: string; starts_on: string; until_on: string | null; weekdays: number[]; start_time: string; end_time: string; reason: string }
 export type Customer = { id: string; name: string; phone: string; email?: string | null; birth_date?: string | null; notes: string | null }
