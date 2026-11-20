@@ -1121,8 +1121,13 @@ export function Orders({
   const [surcharge, setSurcharge] = useState("0");
   const [editingService, setEditingService] = useState("");
   const [servicePrice, setServicePrice] = useState("0");
+  const [serviceNotice,setServiceNotice]=useState("");
+  const commandTeam=professionalOnly?(data.commandProfessionals??professionals.map(p=>({id:p.id,name:p.nome}))):professionals.filter(p=>p.ativo).map(p=>({id:p.id,name:p.nome}));
+  const assignedId=professionalId||(professionalOnly?professionals[0]?.id:"");
+  const addServices=professionalOnly?(data.commandServices??[]).filter(s=>s.professional_id===assignedId).map(s=>({id:s.id,nome:s.name,preco:s.price_cents/100,ativo:true})):services;
   const openDetails = (current: (typeof data.commands)[number]) => {
     setDetails(current.id);
+    setServiceNotice("");
     setCommandAction("");
     setProductId("");
     setQuantity("1");
@@ -1235,12 +1240,10 @@ export function Orders({
                   </div>
                 </div>
                 <strong>
-                  {a?.customer_name ?? customer?.name ?? "Cliente"}
+                  {c.attendee_name ?? a?.customer_name ?? customer?.name ?? "Cliente"}
                 </strong>
                 <p>
-                  {a
-                    ? `${a.service_name} · ${a.professional_name}`
-                    : "Atendimento de balcão"}
+                  {[data.items.filter(item=>item.command_id===c.id).map(item=>item.description).join(", ")||a?.service_name,commandTeam.find(p=>p.id===c.professional_id)?.name??a?.professional_name].filter(Boolean).join(" · ")||"Atendimento de balcão"}
                 </p>
               </button>
               <div className="command-card-footer">
@@ -1382,6 +1385,7 @@ export function Orders({
           const total = commandTotal(data, command);
           return (
             <Modal title="Comanda" close={() => setDetails("")}>
+              {serviceNotice && <p className="sheet-notice" role="status">{serviceNotice}</p>}
               <div className="command-detail-head">
                 <div>
                   <span className="badge">
@@ -1392,8 +1396,7 @@ export function Orders({
                   <p>
                     {appointment
                       ? `${appointment.customer_name} · ${appointment.professional_name}`
-                      : data.customers.find((c) => c.id === command.customer_id)
-                          ?.name}
+                      : [command.attendee_name??data.customers.find(c=>c.id===command.customer_id)?.name,commandTeam.find(p=>p.id===command.professional_id)?.name].filter(Boolean).join(" · ")}
                   </p>
                 </div>
                 <strong>{money(total)}</strong>
@@ -1535,7 +1538,7 @@ export function Orders({
                 {command.discount_cents > 0 && <div><span>Desconto</span><strong>− {money(command.discount_cents)}</strong></div>}
                 {command.surcharge_cents > 0 && <div><span>Gorjeta</span><strong>+ {money(command.surcharge_cents)}</strong></div>}
               </div>}
-              {professionalOnly && command.status === 'open' && <p className="form-hint">Finalize o atendimento para editar o serviço originalmente agendado ou registrar o pagamento.</p>}
+              {professionalOnly && command.status === 'open' && appointment && <p className="form-hint">Finalize o atendimento para editar o serviço originalmente agendado ou registrar o pagamento.</p>}
               {professionalOnly && command.status === 'closed' && <p className="form-hint">Pagamento registrado. Este atendimento também está pago na gestão. O repasse da comissão é registrado separadamente pela gestão.</p>}
               {professionalOnly && canEdit && commandAction === 'edit-service' && <form className="command-product-form" onSubmit={async event=>{event.preventDefault();if(await run('edit_command_service',{command_id:command.id,item_id:editingService,service_id:serviceId,amount:Math.round(Number(servicePrice)*100)}))setCommandAction('')}}>
                 <h3>Editar serviço realizado</h3>
@@ -1553,9 +1556,10 @@ export function Orders({
                       await run("add_command_service", {
                         command_id: command.id,
                         service_id: serviceId,
-                        professional_id: professionalOnly ? professionals[0]?.id : professionalId,
+                        ...(professionalOnly?{assigned_professional_id:assignedId}:{professional_id:assignedId}),
                       })
                     ) {
+                      setServiceNotice(assignedId!==command.professional_id && command.professional_id ? "Serviço enviado para uma comanda separada de "+commandTeam.find(p=>p.id===assignedId)?.name+"." : "Serviço adicionado à comanda.");
                       setServiceId("");
                       setProfessionalId("");
                       setCommandAction("");
@@ -1563,6 +1567,8 @@ export function Orders({
                   }}
                 >
                   <h3>Adicionar serviço</h3>
+                  <label className="field"><span>Profissional que fará o serviço</span><select required value={assignedId} onChange={event=>{setProfessionalId(event.target.value);setServiceId("")}}><option value="">Escolha um profissional</option>{commandTeam.map(pro=><option key={pro.id} value={pro.id}>{pro.name}</option>)}</select></label>
+                  {assignedId && command.professional_id && assignedId!==command.professional_id && <p className="form-hint">Será criada uma comanda separada para esse profissional, com os mesmos dados do cliente. Ele finalizará e receberá seus próprios serviços.</p>}
                   <label className="field">
                     <span>Serviço</span>
                     <select
@@ -1571,7 +1577,7 @@ export function Orders({
                       onChange={(e) => setServiceId(e.target.value)}
                     >
                       <option value="">Escolha um serviço</option>
-                      {services
+                      {addServices
                         .filter((service) => service.ativo)
                         .map((service) => (
                           <option key={service.id} value={service.id}>
@@ -1581,26 +1587,10 @@ export function Orders({
                         ))}
                     </select>
                   </label>
-                  {!professionalOnly && <label className="field">
-                    <span>Profissional</span>
-                    <select
-                      required
-                      value={professionalId}
-                      onChange={(e) => setProfessionalId(e.target.value)}
-                    >
-                      <option value="">Escolha um profissional</option>
-                      {professionals
-                        .filter((pro) => pro.ativo)
-                        .map((pro) => (
-                          <option key={pro.id} value={pro.id}>
-                            {pro.nome}
-                          </option>
-                        ))}
-                    </select>
-                  </label>}
+
                   <button
                     className="outline"
-                    disabled={busy || !serviceId || (!professionalOnly && !professionalId)}
+                    disabled={busy || !serviceId || !assignedId}
                   >
                     Adicionar serviço
                   </button>

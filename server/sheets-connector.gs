@@ -6,8 +6,6 @@ const CONTROL_SHEET = '_Machado Controle';
 const MONTHS = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
 
 function instalarMachado() {
-  const book = SpreadsheetApp.openById(MACHADO.spreadsheetId);
-  if (!book || book.getId() !== MACHADO.spreadsheetId) throw new Error('Confira a planilha configurada.');
   sincronizarMachado();
   const installed = ScriptApp.getProjectTriggers().some(trigger => trigger.getHandlerFunction() === 'sincronizarMachado');
   if (!installed) ScriptApp.newTrigger('sincronizarMachado').timeBased().everyMinutes(1).create();
@@ -19,11 +17,11 @@ function onOpen() {
     .addToUi();
 }
 
-function requestMachado(path, data) {
+function requestMachado(path, data, connection=MACHADO) {
   const options = {method: data ? 'post' : 'get', muteHttpExceptions: true,
-    headers: {Authorization: 'Bearer ' + MACHADO.token}};
+    headers: {Authorization: 'Bearer ' + connection.token}};
   if (data) { options.contentType = 'application/json'; options.payload = JSON.stringify(data); }
-  const response = UrlFetchApp.fetch(MACHADO.base + '/api/sheets/' + path, options);
+  const response = UrlFetchApp.fetch(connection.base + '/api/sheets/' + path, options);
   if (response.getResponseCode() !== 200) throw new Error('A conexão Machado precisa ser revisada no app. Código ' + response.getResponseCode());
   return JSON.parse(response.getContentText()).data;
 }
@@ -74,16 +72,64 @@ function salvarControles(sheet, controls) {
   sheet.getRange(2, 1, controls.length, 5).setValues(controls.map(row => row.slice(0,4).concat([JSON.stringify(row[4])])));
 }
 
+function sincronizarCatalogo(book,feed,manualCells,resumed,resume) {
+  let sheet=book.getSheetByName('Serviços e preços');
+  if(!sheet){
+    sheet=book.insertSheet('Serviços e preços');
+    sheet.getRange('A1:E1').setValues([['CADASTRO ATUAL DO APP','Preço atual (R$)','Duração (min)','Situação','Alterado em']]);
+    sheet.getRange('A1:E1').setBackground('#155442').setFontColor('#ffffff');
+    sheet.setColumnWidth(1,260);sheet.setColumnWidth(5,180);
+  }
+  const meta=novaAba(book,'_Machado Catalogo',['Chave','Linha','Valores esperados']);
+  const entries=meta.getLastRow()>1?meta.getRange(2,1,meta.getLastRow()-1,3).getValues():[];
+  const originalMeta=JSON.stringify(entries);
+  const byKey=new Map(entries.map(row=>[row[0],row]));
+  for(const item of feed.catalog.filter(item=>!item.key.startsWith('commission:'))){
+    let entry=byKey.get(item.key);
+    if(!entry){entry=[item.key,Math.max(1,sheet.getLastRow())+1,JSON.stringify([null,null,null,null,null])];entries.push(entry);byKey.set(item.key,entry);}
+    const row=Number(entry[1]),old=JSON.parse(entry[2]);
+    const expected=[item.name,item.price/100,item.duration_minutes??'',item.active===false?'Inativo':'Ativo',String(item.changed_at??'').slice(0,19).replace('T',' ')];
+    const cells=sheet.getRange(row,1,1,5).getValues()[0];
+    const formulas=sheet.getRange(row,1,1,5).getFormulas()[0];
+    for(let c=0;c<5;c++){
+      const identity={sheet_id:sheet.getSheetId(),sheet:sheet.getName(),a1:coluna(c+1)+row};
+      const selected=resume.has(identity.sheet_id+'|'+identity.a1);
+      const automaticDate=c===4&&cells[c] instanceof Date&&typeof old[c]==='string'
+        &&Utilities.formatDate(cells[c],book.getSpreadsheetTimeZone(),'yyyy-MM-dd HH:mm:ss')===old[c];
+      const untouched=!formulas[c]&&(old[c]===null?cells[c]==='':cells[c]===old[c]||automaticDate);
+      if(!untouched&&!selected){manualCells.push(identity);continue;}
+      const value=typeof expected[c]==='string'&&expected[c].startsWith('=')?"'"+expected[c]:expected[c];
+      if(c===4&&(old[c]===null||automaticDate))sheet.getRange(row,c+1).setNumberFormat('@');
+      if(cells[c]!==value||formulas[c])sheet.getRange(row,c+1).setValue(value);
+      old[c]=expected[c];
+      if(selected)resumed.push({sheet_id:identity.sheet_id,a1:identity.a1});
+    }
+    entry[2]=JSON.stringify(old);
+  }
+  if(entries.length&&JSON.stringify(entries)!==originalMeta){meta.getRange(2,1,entries.length,3).setValues(entries);sheet.getRange(2,2,Math.max(1,sheet.getLastRow()-1),1).setNumberFormat('R$ #,##0.00');}
+}
+
 function sincronizarMachado() {
+  const errors=[];
+  for(const connection of MACHADO.connections||[MACHADO]){
+    try{sincronizarPlanilha(connection);}catch(error){errors.push(String(error.message));}
+  }
+  if(errors.length)throw new Error(errors.join(' | '));
+}
+function sincronizarPlanilha(connection) {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(1000)) return;
   let book;
   try {
-    const feed = requestMachado('feed');
-    if (feed.spreadsheet_id !== MACHADO.spreadsheetId) throw new Error('A conexão aponta para outra planilha.');
+    const feed = requestMachado('feed',undefined,connection);
+    if (feed.spreadsheet_id !== connection.spreadsheetId) throw new Error('A conexão aponta para outra planilha.');
     if (!feed.enabled) return;
-    book = SpreadsheetApp.openById(MACHADO.spreadsheetId);
-    if (!book || book.getId() !== MACHADO.spreadsheetId) throw new Error('Confira a planilha configurada.');
+    const properties=PropertiesService.getScriptProperties(),cacheKey='sync-'+connection.spreadsheetId;
+    if(feed.fingerprint&&properties.getProperty(cacheKey)===feed.fingerprint&&Date.now()-Number(properties.getProperty(cacheKey+'-inspected'))<30*60*1000){
+      requestMachado('heartbeat',{},connection);return;
+    }
+    book = SpreadsheetApp.openById(connection.spreadsheetId);
+    if (!book || book.getId() !== connection.spreadsheetId) throw new Error('Confira a planilha configurada.');
     const decimalCommaLanguages = ['pt','es','de','fr','it','nl','ru','pl','uk','tr','da','fi','sv','no','cs','sk','hu','ro','el','bg','hr','sr','sl','lt','lv','et','id','vi'];
     const separator = decimalCommaLanguages.indexOf(book.getSpreadsheetLocale().split(/[_-]/)[0]) >= 0 ? ';' : ',';
     const dataSheet = novaAba(book, DATA_SHEET, ['Chave','Valor']);
@@ -91,16 +137,25 @@ function sincronizarMachado() {
     const controlSheet = novaAba(book, CONTROL_SHEET, ['Página','Célula','Chave','Base original','Fórmula esperada']);
     const storedControls = controlSheet.getLastRow() > 1 ? controlSheet.getRange(2, 1, controlSheet.getLastRow() - 1, 5).getValues() : [];
     const controls = storedControls.map(row => row.slice(0,4).concat([JSON.parse(row[4])]));
+    let controlsDirty=false;
     const controlsByCell = new Map(controls.map(row => [row[0] + '|' + row[1], row]));
     const totals = new Map(), headersSeen = new Set(), manualCells = [], resumed = [];
+    const currentMonth = feed.current_month || feed.starts_on.slice(0,7);
+    // Keep closed months' published contributions byte-for-byte. Catalog and
+    // command corrections only affect the current month and future periods.
+    if (dataSheet.getLastRow()>1) for (const row of dataSheet.getRange(2,1,dataSheet.getLastRow()-1,2).getValues()) {
+      if (String(row[0]).slice(0,7)<currentMonth) totals.set(row[0],numero(row[1]));
+    }
     const add = (key, value) => totals.set(key, (totals.get(key) || 0) + value);
     const catalog = new Map(feed.catalog.map(item => [item.key, item]));
     const resume = new Set(feed.resume_cells.map(cell => cell.sheet_id + '|' + cell.a1));
+    sincronizarCatalogo(book,feed,manualCells,resumed,resume);
     const monthSheets = book.getSheets().filter(sheet => MONTHS.indexOf(normalizar(sheet.getName()) === 'MARCO' ? 'MARÇO' : sheet.getName().toUpperCase()) >= 0);
     for (const sheet of monthSheets) {
       const month = MONTHS.indexOf(sheet.getName().toUpperCase()) + 1;
       const monthKey = feed.year + '-' + String(month).padStart(2, '0');
       if (monthKey < feed.starts_on.slice(0, 7)) continue;
+      if (monthKey < currentMonth) continue;
       const values = sheet.getDataRange().getValues();
       const formulas = sheet.getDataRange().getFormulas();
       const headers = values[2].map(String);
@@ -184,7 +239,7 @@ function sincronizarMachado() {
         pendingColumns.get(target.col).push({row: target.row, formula: expected});
       }
       // Persist intent first. An interrupted setup leaves cells protected as manual.
-      salvarControles(controlSheet, controls);
+      if(pendingColumns.size)salvarControles(controlSheet, controls);
       for (const [col, targets] of pendingColumns) {
         targets.sort((a,b) => a.row - b.row);
         const contiguous = targets.every((target,index) => target.row === targets[0].row + index);
@@ -203,6 +258,7 @@ function sincronizarMachado() {
     for (const control of controls) {
       const sheet = sheetsById.get(Number(control[0]));
       if (!sheet) continue;
+      if (String(control[2]).slice(0,7)<currentMonth) continue;
       if (!formulaMatrices.has(sheet.getSheetId())) formulaMatrices.set(sheet.getSheetId(), sheet.getDataRange().getFormulas());
       const coordinates = control[1].match(/^([A-Z]+)(\d+)$/);
       const columnIndex = coordinates[1].split('').reduce((value,letter) => value * 26 + letter.charCodeAt(0) - 64, 0) - 1;
@@ -212,7 +268,7 @@ function sincronizarMachado() {
         if (localizedFormula !== control[4]) {
           const repairCell = sheet.getRange(control[1]);
           if (repairCell.getFormula() === control[4]) {
-            repairCell.setFormula(localizedFormula); control[4] = localizedFormula;
+            repairCell.setFormula(localizedFormula); control[4] = localizedFormula;controlsDirty=true;
           }
         }
         continue;
@@ -225,20 +281,22 @@ function sincronizarMachado() {
         }
         const base = cell.getValue() - (totals.get(control[2]) || 0);
         control[3] = JSON.stringify(base); control[4] = vinculoFormula(base, control[2], separator);
+        controlsDirty=true;
         cell.setFormula(control[4]); resumed.push({sheet_id: identity.sheet_id, a1: identity.a1});
       } else manualCells.push(identity);
     }
-    salvarControles(controlSheet, controls);
+    if(controlsDirty)salvarControles(controlSheet, controls);
     SpreadsheetApp.flush();
     for (const sheet of monthSheets) {
       const display = sheet.getDataRange().getDisplayValues();
       if (display.some(row => row.some(value => /^#(ERROR!|ERRO!|REF!|VALUE!|VALOR!|DIV\/0!|NAME\?|NOME\?)/.test(value))))
         throw new Error('Há uma fórmula com erro em ' + sheet.getName() + '. Revise a planilha antes de usar os totais.');
     }
-    requestMachado('ack', {spreadsheet_id: MACHADO.spreadsheetId, manual_cells: manualCells.slice(0,500),
-      bindings: controls.length, headers: [...headersSeen], resumed});
+    requestMachado('ack', {spreadsheet_id: connection.spreadsheetId, manual_cells: manualCells.slice(0,500),
+      bindings: controls.length, headers: [...headersSeen], resumed},connection);
+    if(feed.fingerprint){properties.setProperty(cacheKey,feed.fingerprint);properties.setProperty(cacheKey+'-inspected',String(Date.now()));}
   } catch (error) {
-    try { requestMachado('ack', {spreadsheet_id: MACHADO.spreadsheetId, manual_cells: [], bindings: 0, error: String(error.message).slice(0,500)}); } catch (_) {}
+    try { requestMachado('ack', {spreadsheet_id: connection.spreadsheetId, manual_cells: [], bindings: 0, error: String(error.message).slice(0,500)},connection); } catch (_) {}
     throw error;
   } finally { lock.releaseLock(); }
 }

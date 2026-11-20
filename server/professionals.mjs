@@ -99,15 +99,15 @@ export async function professionalCash(client,id,from,to) {
   const start=from+'T00:00:00-03:00',end=to+'T23:59:59.999999-03:00'
   // Only the professional's commission leaves this endpoint. No gross, shop share, payments or cash sessions.
   const entries=(await client.query(`select e.id,e.commission_cents,e.status,e.created_at,e.paid_at,i.description,i.type,i.quantity,cus.name customer_name,
-    coalesce(a.starts_at,c.closed_at,c.created_at) occurred_at
+    coalesce(c.occurred_at,a.starts_at,c.created_at) occurred_at
     from commission_entries e join command_items i on i.id=e.command_item_id join commands c on c.id=i.command_id
     left join appointments a on a.id=c.appointment_id left join customers cus on cus.id=c.customer_id
     where e.professional_id=$1 and i.professional_id=$1 and e.status in ('pending','paid') and c.status in ('awaiting_payment','closed')
-    and coalesce(a.starts_at,c.closed_at,c.created_at)>=$2::timestamptz and coalesce(a.starts_at,c.closed_at,c.created_at)<=$3::timestamptz
+    and coalesce(c.occurred_at,a.starts_at,c.created_at)>=$2::timestamptz and coalesce(c.occurred_at,a.starts_at,c.created_at)<=$3::timestamptz
     order by occurred_at desc,e.id`,[id,start,end])).rows
   const summary=(await client.query(`select coalesce(sum(i.quantity) filter(where i.type='service'),0)::int services,count(distinct c.customer_id)::int customers
     from command_items i join commands c on c.id=i.command_id left join appointments a on a.id=c.appointment_id
-    where i.professional_id=$1 and c.status in ('awaiting_payment','closed') and coalesce(a.starts_at,c.closed_at,c.created_at)>=$2::timestamptz and coalesce(a.starts_at,c.closed_at,c.created_at)<=$3::timestamptz`,[id,start,end])).rows[0]
+    where i.professional_id=$1 and c.status in ('awaiting_payment','closed') and coalesce(c.occurred_at,a.starts_at,c.created_at)>=$2::timestamptz and coalesce(c.occurred_at,a.starts_at,c.created_at)<=$3::timestamptz`,[id,start,end])).rows[0]
   const pending=(await client.query("select coalesce(sum(e.commission_cents),0)::bigint amount from commission_entries e join command_items i on i.id=e.command_item_id join commands c on c.id=i.command_id where e.professional_id=$1 and i.professional_id=$1 and e.status='pending' and c.status in ('awaiting_payment','closed')",[id])).rows[0]
   const preferences=await readProfessionalPreferences(client,id)
   const value=status=>entries.filter(entry=>entry.status===status).reduce((sum,entry)=>sum+entry.commission_cents,0)

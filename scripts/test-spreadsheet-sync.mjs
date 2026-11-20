@@ -21,7 +21,7 @@ class Sheet {
  getLastRow(){return Math.max(1,...[...this.cells.keys()].map(key=>Number(key.split(',')[0])))}
  getLastColumn(){return Math.max(1,...[...this.cells.keys()].map(key=>Number(key.split(',')[1])))}
  getRange(row,col,height=1,width=1){
-  if(typeof row==='string'){const match=row.match(/^([A-Z]+)(\d+)$/);col=[...match[1]].reduce((n,c)=>n*26+c.charCodeAt(0)-64,0);row=Number(match[2])}
+  if(typeof row==='string'){const match=row.match(/^([A-Z]+)(\d+)(?::([A-Z]+)(\d+))?$/);if(match[3]){width=[...match[3]].reduce((n,c)=>n*26+c.charCodeAt(0)-64,0)-[...match[1]].reduce((n,c)=>n*26+c.charCodeAt(0)-64,0)+1;height=Number(match[4])-Number(match[2])+1}col=[...match[1]].reduce((n,c)=>n*26+c.charCodeAt(0)-64,0);row=Number(match[2])}
   // eslint-disable-next-line @typescript-eslint/no-this-alias -- Range objects retain their parent sheet.
   const sheet=this
   const raw=(r,c)=>sheet.cells.get(r+','+c)??''
@@ -34,7 +34,7 @@ class Sheet {
    setValue(value){return this.setValues([[value]])},setFormula(value){return this.setValue(value)},
    setFormulas(values){return this.setValues(values)},
    clearContent(){return this.setValues(Array.from({length:height},()=>Array(width).fill('')))},
-   setBackground(){return this},setFontColor(){return this},
+   setBackground(){return this},setFontColor(){return this},setNumberFormat(){return this},
   }
  }
  getDataRange(){return this.getRange(1,1,this.getLastRow(),this.getLastColumn())}
@@ -52,7 +52,7 @@ sheet.getRange('X16').setValue('COMISSÕES');sheet.getRange('X21').setValue('TOT
 sheet.getRange('Z21').setValue(100);sheet.getRange('Z4').setValue(1500)
 sheet.getRange('AC45').setValue(false)
 let locale='en_US'
-const book={getSpreadsheetLocale:()=>locale,getId:()=> 'test-book',getSheets:()=>sheets,getSheetByName:name=>sheets.find(s=>s.name===name),insertSheet:name=>{const next=new Sheet(name);sheets.push(next);return next}}
+const book={getSpreadsheetTimeZone:()=>'UTC',getSpreadsheetLocale:()=>locale,getId:()=> 'test-book',getSheets:()=>sheets,getSheetByName:name=>sheets.find(s=>s.name===name),insertSheet:name=>{const next=new Sheet(name);sheets.push(next);return next}}
 function evaluate(value){
  if(typeof value!=='string'||!value.startsWith('='))return value
  const match=value.match(/^=(-?[\d.]+|\(-?[\d]+\/[\d]+\))\+SUMIF\('[^']+'!\$A\$2:\$A\$20000[,;]"([^"]+)"[,;]'[^']+'!\$B\$2:\$B\$20000\)$/)
@@ -65,9 +65,11 @@ function evaluate(value){
 let feed={enabled:true,spreadsheet_id:'test-book',year:2026,starts_on:'2026-11-19',mappings:{},resume_cells:[],
  catalog:[{key:'service:cut',name:'Corte de cabelo',price:4000},{key:'package:silver',name:'Plano Prata',price:6800},{key:'service:barba',name:'Barbo terapia',price:3500}],rows:[]}
 let ack
-const sandbox=vm.createContext({SpreadsheetApp:{getActiveSpreadsheet:()=>book,openById:()=>book,flush(){}},
+const properties=new Map(),requests=[]
+const sandbox=vm.createContext({PropertiesService:{getScriptProperties:()=>({getProperty:key=>properties.get(key),setProperty:(key,value)=>properties.set(key,value)})},Date,Utilities:{formatDate(value){return value.toISOString().slice(0,19).replace('T',' ')}},SpreadsheetApp:{getActiveSpreadsheet:()=>book,openById:()=>book,flush(){}},
  LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock(){}})},
  UrlFetchApp:{fetch:(url,options)=>{
+  requests.push(url)
   if(url.endsWith('/ack'))ack=JSON.parse(options.payload)
   return {getResponseCode:()=>200,getContentText:()=>JSON.stringify({data:url.endsWith('/feed')?feed:{recorded:true}})}
  }},console})
@@ -125,4 +127,30 @@ assert(sheet.getRange('E22').getFormula().includes(';'),'Brazilian formulas use 
 assert.equal(sheet.getRange('E22').getValue(),97,'Locale repair preserves the linked value after source removal')
 assert.equal(ack.manual_cells.length,0)
 assert.equal(book.getSheetByName('_Machado Dados').getMaxRows(),20000,'Formula ranges must fit the auxiliary grid')
+const priceSheet=book.getSheetByName('Serviços e preços');
+const priceRow=[...book.getSheetByName('_Machado Catalogo').cells.entries()].find(([key,value])=>key.endsWith(',1')&&value==='service:cut')[0].split(',')[0];
+const displayedRow=book.getSheetByName('_Machado Catalogo').getRange(Number(priceRow),2).getValue();
+feed.catalog.find(item=>item.key==='service:cut').price=5500;
+sync();
+assert.equal(priceSheet.getRange(displayedRow,2).getValue(),55,'Catalog changes appear without closing a command or cash drawer');
+priceSheet.getRange(displayedRow,2).setValue(49);
+feed.catalog.find(item=>item.key==='service:cut').price=6000;
+sync();
+assert.equal(priceSheet.getRange(displayedRow,2).getValue(),49,'Manual catalog fields remain protected');
+feed.catalog.find(item=>item.key==='service:cut').changed_at='2026-11-20T13:00:00Z';
+sync();
+priceSheet.getRange(displayedRow,5).setValue(new Date('2026-11-20T13:00:00Z'));
+sync();
+assert.equal(priceSheet.getRange(displayedRow,5).getValue(),'2026-11-20 13:00:00','Dates auto-parsed by Google remain automatic');
+assert(!ack.manual_cells.some(c=>c.sheet_id===priceSheet.id&&c.a1==='E'+displayedRow));
+const frozenFormula=sheet.getRange('E22').getFormula(),frozenValue=sheet.getRange('E22').getValue();
+feed.current_month='2026-12';
+feed.rows=[{date:'2026-11-19',key:'service:cut',quantity:300,amount:1800000}];
+sync();
+assert.equal(sheet.getRange('E22').getFormula(),frozenFormula,'Past months retain formulas');
+assert.equal(sheet.getRange('E22').getValue(),frozenValue,'Past months retain published values despite later corrections');
+feed.fingerprint='stable-test';sync();
+const requestCount=requests.length;
+sync();
+assert.deepEqual(requests.slice(requestCount).map(url=>url.split('/').at(-1)),['feed','heartbeat'],'Unchanged data does not rewrite the annual workbook');
 console.log('PASS spreadsheet connector: history, manual priority, resume, retries, actual prices, discounts, tips, products, repasses, new services/plans, pause and deletions.')

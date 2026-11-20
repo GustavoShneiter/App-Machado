@@ -95,7 +95,8 @@ try{
  const before=await scoped(user,c=>professionalSnapshot(c,pro))
  assert.equal(before.commands.length,1);assert.equal(before.items.length,2)
  assert.equal(before.items.find(i=>i.id!==item).unit_price_cents,4000,'Catalog price cannot be forged on add')
- for(const key of ['customers','sessions','movements','commissions'])assert.deepEqual(before[key],[])
+ assert.equal(before.customers.length,1,'Only customers belonging to own commands');
+ for(const key of ['sessions','movements','commissions'])assert.deepEqual(before[key],[])
  assert(!JSON.stringify(before.items).includes('commission_'),'No internal commission rules in command payload')
  const alien=await scoped(otherUser,c=>professionalSnapshot(c,otherPro));assert.deepEqual(alien.commands,[]);assert.deepEqual(alien.payments,[])
  await assert.rejects(action(user,pro,'receive',{id:command,method:'pix',expected_total:1}),e=>e.status===409)
@@ -141,8 +142,33 @@ try{
   await assert.rejects(professionalAction(c,pro,'edit_command_service',{command_id:mixedCommand,item_id:ownItem,service_id:service,amount:5000}),/repasse/)
   await c.query('select add_service_to_command($1,$2,$3)',[mixedCommand,service,otherPro])
  })
- await assert.rejects(action(user,pro,'receive',{id:mixedCommand,method:'cash',expected_total:7000}),e=>e.status===403)
- assert(!(await scoped(user,c=>professionalSnapshot(c,pro))).commands.some(c=>c.id===mixedCommand),'Shared commands remain with management')
+ const primaryView=await scoped(user,c=>professionalSnapshot(c,pro));
+ const secondView=await scoped(otherUser,c=>professionalSnapshot(c,otherPro));
+ assert(primaryView.commands.some(c=>c.id===mixedCommand),'Original professional keeps their command');
+ const sibling=secondView.commands.find(c=>c.group_id===mixedCommand);
+ assert(sibling,'A separate command appears to the second professional');
+ assert(secondView.items.filter(i=>i.command_id===sibling.id).every(i=>i.professional_id===otherPro));
+ assert.equal(sibling.customer_id,primaryView.commands.find(c=>c.id===mixedCommand).customer_id);
+ await assert.rejects(action(user,pro,'receive',{id:sibling.id,method:'cash',expected_total:4000}),e=>e.status===403);
+ await action(otherUser,otherPro,'mark_command_ready',{command_id:sibling.id});
+ await action(otherUser,otherPro,'receive',{id:sibling.id,method:'cash',expected_total:4000});
+ await scoped(owner,async c=>{
+  assert.equal((await c.query('select status from commands where id=$1',[mixedCommand])).rows[0].status,'awaiting_payment','Receiving one barber does not close the other');
+  assert.equal((await c.query('select count(*)::int n from payments where command_id=$1',[sibling.id])).rows[0].n,1);
+ });
+ // A professional can assign a new service to another barber without editing that barber's command.
+ const routed=await action(user,pro,'add_command_service',{command_id:mixedCommand,service_id:service,assigned_professional_id:otherPro});
+ assert(routed.separate_command);
+ assert.notEqual(routed.command_id,mixedCommand);
+ await assert.rejects(action(user,pro,'edit_command_service',{command_id:routed.command_id,item_id:routed.id,service_id:service,amount:1000}),e=>e.status===403);
+ // New snapshots include open commands; the completed-only history remains unchanged.
+ await scoped(owner,async c=>{
+  const live=await sheetSnapshot(c,2098,'2098-03-11',{live:true});
+  const completed=await sheetSnapshot(c,2098,'2098-03-11');
+  assert(live.filter(r=>r.key==='service:'+service).reduce((n,r)=>n+r.amount,0)>completed.filter(r=>r.key==='service:'+service).reduce((n,r)=>n+r.amount,0));
+  await spreadsheetAdmin(c,'connect','POST',{spreadsheet_url:'https://docs.google.com/spreadsheets/d/567890123456789012345678/edit',year:2099,starts_on:'2099-01-01'},{id:owner,role:'owner'},'https://example.invalid');
+  assert.equal((await c.query('select count(*)::int n from spreadsheet_connections')).rows[0].n,2);
+ });
  console.log('PASS: own service edit/add, server commissions/catalog pricing, own snapshot, tenant isolation, no drawer leak, closed drawer guard, concurrent receipt exactly once, management synchronization and separate unpaid commission.')
 }finally{
  if(temp)await temp.end()

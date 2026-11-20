@@ -51,3 +51,15 @@ Em 19/11/2026, a conta proprietária autorizou o projeto Machado — Integraçã
 As fórmulas geradas respeitam o separador brasileiro. Os resumos históricos de novembro e dezembro foram comparados aos valores originais e permaneceram iguais. Um teste real na célula futura e zerada DEZEMBRO!E34 confirmou a preservação de alteração manual e a retomada automática pelo servidor. Ao final, a fórmula e o valor zero foram restaurados, sem campos manuais nem solicitações de retomada pendentes. A última confirmação desse teste ocorreu às 11:45 de Brasília.
 
 [Gerenciar o acionador Google](https://script.google.com/home/projects/1PEVG9fqtCYXozMtRnatJTxhJCF0dY8rQyPe2tSxTCDSyL85-rPsv5Qs5/triggers).
+
+
+## Atualização de 20/11/2026
+
+- Cada ano tem uma conexão independente. O seletor em Relatórios permite abrir 2026 ou 2027 sem revogar a credencial anterior.
+- A sincronização inclui comandas abertas, itens adicionados/removidos e ajustes de desconto/gorjeta, sem depender do recebimento ou fechamento do caixa. Esses totais representam lançamentos, não somente dinheiro recebido.
+- O intervalo do acionador Google continua sendo aproximadamente um minuto; não é uma transmissão instantânea.
+- O cadastro de serviços e planos aparece em **Serviços e preços**. Mudanças de nome, preço, duração e situação são atualizadas sem reprecificar atendimentos já registrados. As tabelas de referência mensais preservam o histórico; diferenças dos preços cobrados continuam conciliadas por AJUSTES DO APP.
+- Na virada do mês, as contribuições já publicadas ficam preservadas. Correções em registros de meses anteriores não recalculam as abas encerradas. O mês atual e os futuros continuam automáticos.
+- Campos manuais, inclusive no cadastro de preços, permanecem protegidos. Ao retomar um campo de cadastro, o valor vigente do aplicativo volta a ser a referência.
+- A planilha de 2027 usa cópias das abas originais de 2026, preservando formatação e organização. Os lançamentos e nomes de repasses são limpos, os calendários passam para 2027 e os blocos de despesas fixas, variáveis, manutenção e investimentos são removidos somente na cópia nova.
+- O preparo anual só executa para um ano futuro, recusa lançamentos não zerados no destino e guarda marcadores para não repetir a cópia. As planilhas de origem não são alteradas.

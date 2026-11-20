@@ -9,7 +9,7 @@ import './spreadsheet.css'
 type ManualCell={sheet_id:number;sheet:string;a1:string}
 type Connection={spreadsheet_id:string;url:string;year:number;starts_on:string;enabled:boolean;revision:number;
  mappings:Record<string,string>;last_sync_at:string|null;status:null|{manual_cells:ManualCell[];headers:string[];error:string|null;bindings:number}}
-type Settings={connection:Connection|null;catalog:{key:string;name:string;price:number}[];owner:boolean}
+type Settings={connections?:Connection[];connection:Connection|null;catalog:{key:string;name:string;price:number}[];owner:boolean}
 
 export function SpreadsheetPanel(){
  const [open,setOpen]=useState(false)
@@ -22,19 +22,20 @@ function SpreadsheetDialog({close}:{close:()=>void}){
  const [settings,setSettings]=useState<Settings|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false)
  const [configuring,setConfiguring]=useState(false),[script,setScript]=useState(''),[notice,setNotice]=useState('')
  const [url,setUrl]=useState(''),[year,setYear]=useState(String(new Date().getFullYear())),[starts,setStarts]=useState(dayKey())
+ const [selectedYear,setSelectedYear]=useState('')
  const [enabled,setEnabled]=useState(true),[mappings,setMappings]=useState<Record<string,string>>({})
  async function load(){
-  const result=await apiRequest<{data:Settings}>('/sheets/settings')
+  const result=await apiRequest<{data:Settings}>('/sheets/settings'+(selectedYear?'?year='+selectedYear:''))
   setSettings(result.data);setEnabled(result.data.connection?.enabled??true);setMappings(result.data.connection?.mappings??{})
  }
- useEffect(()=>{let active=true;apiRequest<{data:Settings}>('/sheets/settings').then(result=>{
+ useEffect(()=>{let active=true;apiRequest<{data:Settings}>('/sheets/settings'+(selectedYear?'?year='+selectedYear:'')).then(result=>{
   if(active){setSettings(result.data);setEnabled(result.data.connection?.enabled??true);setMappings(result.data.connection?.mappings??{})}
- }).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[])
+ }).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[selectedYear])
  async function run(route:string,body:Record<string,unknown>){
   if(busy)return
   setBusy(true);setError('');setNotice('')
   try{
-   const result=await apiRequest<{data:{script?:string}}>('/sheets/'+route,{method:'POST',body:JSON.stringify(body)})
+   const result=await apiRequest<{data:{script?:string}}>('/sheets/'+route,{method:'POST',body:JSON.stringify({...body,year:Number(route==='connect'?body.year:selectedYear||settings?.connection?.year||year)})})
    if(result.data.script)setScript(result.data.script)
    await load();setNotice(route==='resume'?'O campo voltará ao automático na próxima sincronização.':'Configuração salva.')
   }catch(e){setError((e as Error).message)}finally{setBusy(false)}
@@ -42,6 +43,7 @@ function SpreadsheetDialog({close}:{close:()=>void}){
  const connection=settings?.connection
  return <Modal title="Planilha de caixa" close={close}><div className="sheet-panel">
   {!settings&&!error&&<p role="status">Carregando a conexão…</p>}
+  {settings&&!!settings.connections?.length&&<label className="field"><span>Ano da planilha</span><select aria-label="Ano da planilha conectada" value={selectedYear||String(settings.connection?.year??'')} disabled={busy} onChange={e=>{setSelectedYear(e.target.value);setConfiguring(false);setScript('');setNotice('')}}>{settings.connections.map(c=><option key={c.year} value={c.year}>{c.year}</option>)}</select></label>}
   {connection&&<>
    <p className="sheet-connection-state"><span className={connection.enabled?'sheet-connected':'sheet-paused'}/>{!connection.enabled?'Sincronização pausada':connection.last_sync_at?'Sincronização automática':'Aguardando autorização no Google'}</p>
    <p className="sheet-description">{connection.last_sync_at?'Última sincronização em '+dateTime(connection.last_sync_at):'Instale e autorize o conector nesta planilha para iniciar a atualização automática.'}</p>
@@ -50,8 +52,8 @@ function SpreadsheetDialog({close}:{close:()=>void}){
     <a className="primary" href={connection.url} target="_blank" rel="noopener noreferrer"><ExternalLink size={18}/>Abrir e editar planilha</a>
     <a className="outline" href={'https://docs.google.com/spreadsheets/d/'+connection.spreadsheet_id+'/export?format=xlsx'} target="_blank" rel="noopener noreferrer"><Download size={18}/>Baixar Excel</a>
    </div>
-   <p className="sheet-description">Use sua conta Google com acesso à planilha. Os novos dados do app entram a partir de {connection.starts_on.slice(0,10).split('-').reverse().join('/')}.</p>
-   <section className="sheet-manual-explanation"><h3>Prioridade às alterações manuais</h3><p>Ao substituir uma fórmula vinculada por um valor na planilha, esse campo passa a ser manual. Você pode reativá-lo abaixo, preservando o valor atual como ponto de partida.</p></section>
+   <p className="sheet-description">A atualização ocorre aproximadamente a cada minuto, inclusive com a comanda aberta. Meses anteriores ficam preservados. Os novos dados entram a partir de {connection.starts_on.slice(0,10).split('-').reverse().join('/')}.</p>
+   <section className="sheet-manual-explanation"><h3>Prioridade às alterações manuais</h3><p>Ao alterar um campo vinculado na planilha, ele passa a ser manual. O cadastro atual de serviços aparece na aba Serviços e preços, sem recalcular valores históricos. Você pode reativá-lo abaixo, preservando o valor atual como ponto de partida.</p></section>
    {!!connection.status?.manual_cells.length&&<section><h3>Campos manuais</h3><ul className="sheet-manual-fields">{connection.status.manual_cells.map(cell=><li key={cell.sheet_id+'|'+cell.a1}><span>{cell.sheet} · {cell.a1}</span>{settings?.owner&&<button className="text-action" disabled={busy} onClick={()=>void run('resume',{revision:connection.revision,cell:{sheet_id:cell.sheet_id,a1:cell.a1}})}>Retomar automático</button>}</li>)}</ul></section>}
    {settings?.owner&&<button className="outline" aria-expanded={configuring} onClick={()=>setConfiguring(!configuring)}><Settings2 size={17}/>Configurar sincronização</button>}
    {configuring&&<form className="sheet-settings" onSubmit={e=>{e.preventDefault();void run('settings',{revision:connection.revision,enabled,mappings})}}>

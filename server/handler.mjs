@@ -86,15 +86,15 @@ export default async function handler(req,res) {
       const cookies=response.headers.getSetCookie(); if(cookies.length)res.setHeader('Set-Cookie',cookies)
       res.statusCode=response.status; res.end(Buffer.from(await response.arrayBuffer())); return
     }
-    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.21.7',professionalVersion:'1.3.8',backend:process.env.HOSTING_PLATFORM||'local',database:'postgresql',mode:process.env.APP_MODE||'production'}); return }
-    if(['/api/sheets/feed','/api/sheets/ack'].includes(path)) {
+    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.21.8',professionalVersion:'1.3.9',backend:process.env.HOSTING_PLATFORM||'local',database:'postgresql',mode:process.env.APP_MODE||'production'}); return }
+    if(['/api/sheets/feed','/api/sheets/ack','/api/sheets/heartbeat'].includes(path)) {
       return await spreadsheetExternal(req,res,{readBody,send,pool,transaction},path.split('/').pop())
     }
     if(path.startsWith('/api/sheets/')) {
       const route=path.slice('/api/sheets/'.length)
       if(!(['settings','connect','credentials','resume'].includes(route))||!['GET','POST'].includes(req.method)||req.method==='GET'&&route!=='settings')throw fail('Operação inválida.',405)
       const session=await officeSession(req,req.method==='POST')
-      const body=req.method==='POST'?await readBody(req,64000):{}
+      const body=req.method==='POST'?await readBody(req,64000):{...(url.searchParams.has('year')?{year:Number(url.searchParams.get('year'))}:{})}
       const data=await transaction(session.user.id,async client=>{
         const result=await spreadsheetAdmin(client,route,req.method,body,{id:session.user.id,role:session.profile.role},base)
         if(req.method==='POST')await client.query("insert into audit_logs(actor_profile_id,operation,entity_type,result) values($1,$2,'spreadsheet','success')",[session.user.id,'spreadsheet:'+route])
@@ -264,7 +264,7 @@ export default async function handler(req,res) {
     }
     if(path==='/api/system-status' && req.method==='GET') {
       const session=await officeSession(req)
-      send(res,200,{version:'1.21.7',professionalVersion:'1.3.8',backend:process.env.HOSTING_PLATFORM==='contabo'?'Contabo':'Local',database:'PostgreSQL',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs where tenant_id=$1 order by created_at desc limit 1',[session.profile.tenant_id])).rows[0]??null});return
+      send(res,200,{version:'1.21.8',professionalVersion:'1.3.9',backend:process.env.HOSTING_PLATFORM==='contabo'?'Contabo':'Local',database:'PostgreSQL',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs where tenant_id=$1 order by created_at desc limit 1',[session.profile.tenant_id])).rows[0]??null});return
     }
     throw fail('Página não encontrada.',404)
   } catch(error) {
