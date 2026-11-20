@@ -23,3 +23,9 @@ As planilhas já conectadas de 2026 e 2027 não são recriadas. Meses anteriores
 Preparar o projeto independente com scripts/build-google-sheet-installer.mjs. Publicar o Code.gs e o appsscript.json gerados, com execução USER_ACCESSING e acesso a contas Google. Configurar GOOGLE_SHEETS_WEBAPP_URL no servidor com a URL /exec publicada. Nenhuma senha, token de unidade ou credencial de cliente faz parte do código publicado.
 
 Os testes de isolamento, HTTP, troca de conta, recebimento e instalador usam banco descartável ou dados fictícios. Não criam unidades de teste na produção.
+
+## Validação externa em 20/11/2026
+
+A publicação Google está na versão 3, executando como o usuário que acessa. A autorização inicial e a criação no Drive ainda precisam de validação real: neste navegador com várias contas Google conectadas, o endereço publicado apresentou “Página não encontrada”. Os testes automatizados do instalador usam serviços Google simulados; não substituem essa validação externa. As conexões existentes de 2026 e 2027 continuam sincronizando e não foram substituídas.
+
+O Google documenta que múltiplas contas simultâneas não são suportadas em web apps do Apps Script: https://developers.google.com/apps-script/guides/projects#multiple_google_accounts. Para conferir a primeira autorização, usar uma sessão com somente o Gmail da unidade. Não sair das demais contas sem garantir acesso a elas. A autorização faz parte da seção Planilha do mesmo aplicativo; não há APK instalador separado.

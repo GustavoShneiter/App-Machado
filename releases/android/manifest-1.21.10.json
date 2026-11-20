@@ -40,6 +40,11 @@
     "webApp": "https://script.google.com/macros/s/AKfycbxY-DY7vrceaX1I3d-juuiaSEQXM04S0S264yLKRT89MAMa1XLb5Oje4fe8lziHhFqB2Q/exec",
     "execution": "USER_ACCESSING",
     "requiresEachOwnerAuthorization": true,
-    "separateApk": false
+    "separateApk": false,
+    "verification": {
+      "automatedTests": "passed: isolated database, real HTTP authentication and mocked Google services",
+      "publication": "version 3 published; existing 2026/2027 connectors continue synchronizing",
+      "firstOwnerAuthorization": "pending live verification: Google returned file-not-found in the browser with multiple accounts signed in"
+    }
   }
 }
