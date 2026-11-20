@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { Fragment, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Check, Copy } from 'lucide-react'
@@ -11,6 +11,7 @@ import './admin-access.css'
 export function AdminAccess({ children }: { children: ReactNode }) {
   const [checking, setChecking] = useState(true)
   const [allowed, setAllowed] = useState(false)
+  const [accountId,setAccountId] = useState('')
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [name, setName] = useState('')
   const [businessName, setBusinessName] = useState('')
@@ -28,21 +29,21 @@ export function AdminAccess({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let alive = true, generation = 0
-    const check = async (hasSession: boolean) => {
+    const check = async (id: string | null) => {
       const current = ++generation
-      if (!hasSession) { if (alive) { setAllowed(false); setChecking(false) }; return }
+      if (!id) { if (alive) { setAllowed(false); setChecking(false) }; return }
       try {
         const result = await backend.rpc('can_access_admin')
         if (!alive || current !== generation) return
-        setAllowed(!result.error && result.data === true)
+        setAccountId(id); setAllowed(!result.error && result.data === true)
         if (result.error) setError('Não foi possível verificar o acesso. Tente novamente.')
         else if (result.data !== true) setError('Esta conta não tem permissão para acessar o painel.')
       } catch {
         if (alive && current === generation) { setAllowed(false); setError('Não foi possível verificar o acesso. Tente novamente.') }
       } finally { if (alive && current === generation) setChecking(false) }
     }
-    const { data } = backend.auth.onAuthStateChange((_event, session) => { window.setTimeout(() => { if (alive) void check(Boolean(session)) }, 0) })
-    void backend.auth.getSession().then(result => check(Boolean(result.data.session))).catch(() => {
+    const { data } = backend.auth.onAuthStateChange((_event, session) => { generation++; setAllowed(false); setChecking(true); window.setTimeout(() => { if (alive) void check(session?.user.id ?? null) }, 0) })
+    void backend.auth.getSession().then(result => check(result.data.session?.user.id ?? null)).catch(() => {
       if (alive) { setChecking(false); setError('Não foi possível verificar o acesso. Confira sua conexão e tente novamente.') }
     })
     return () => { alive = false; generation++; data.subscription.unsubscribe() }
@@ -93,7 +94,7 @@ export function AdminAccess({ children }: { children: ReactNode }) {
     finally { setSubmitting(false) }
   }
 
-  if (allowed) return <>{children}</>
+  if (allowed) return <Fragment key={accountId}>{children}</Fragment>
   if (checking) return <main className="auth-shell machado-ui"><p role="status">{native || isWebApp() ? 'Abrindo Machado Gestão…' : 'Verificando acesso…'}</p></main>
   if (registration) return <main className="auth-shell machado-ui access-shell"><section className="auth-card access-card access-recovery" aria-labelledby="registration-title">
     <img className="access-logo" src="/logo-machado.png" alt="Machado"/>

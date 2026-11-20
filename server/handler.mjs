@@ -12,6 +12,7 @@ import { adminProfessionalGoals } from './professional-goals.mjs'
 import { externalAgent } from './agent.mjs'
 import { administrativeAgent } from './agent-settings.mjs'
 import {spreadsheetAdmin,spreadsheetExternal} from './spreadsheets.mjs'
+import {automationAdmin,automationExternal,ensureAnnualWorkbook} from './spreadsheet-automation.mjs'
 
 const publicRpcs = new Set(['public_booking_slots','public_available_slots','create_public_appointment'])
 const rpcArguments = {
@@ -51,6 +52,7 @@ async function readBody(req,maxBytes=1024*1024) {
 async function sessionFor(req,professional=false) {
   const session=await (professional?getProfessionalAuth():getAuth()).api.getSession({headers:fromNodeHeaders(req.headers)})
   if (!session) return null
+  if(req.headers['x-machado-account']&&req.headers['x-machado-account']!==session.user.id)throw Object.assign(fail('A conta mudou em outra aba. Entre novamente para acessar a unidade correta.',409),{code:'account_changed'})
   const profile=await pool.query('select id,role,tenant_id from profiles where id=$1::uuid and active',[session.user.id])
   return profile.rows[0] ? { ...session, profile:profile.rows[0] } : null
 }
@@ -68,7 +70,7 @@ export default async function handler(req,res) {
   const origin=req.headers.origin
   if(origin && origins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin',origin); res.setHeader('Access-Control-Allow-Credentials','true'); res.setHeader('Vary','Origin')
-    res.setHeader('Access-Control-Allow-Headers','Content-Type, Authorization, Idempotency-Key'); res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS'); res.setHeader('Access-Control-Expose-Headers','set-auth-token, X-Request-Id')
+    res.setHeader('Access-Control-Allow-Headers','Content-Type, Authorization, Idempotency-Key, X-Machado-Account'); res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS'); res.setHeader('Access-Control-Expose-Headers','set-auth-token, X-Request-Id')
   }
   if(req.method==='OPTIONS') { res.statusCode=origin && !origins.includes(origin)?403:204; res.end(); return }
   try {
@@ -86,7 +88,18 @@ export default async function handler(req,res) {
       const cookies=response.headers.getSetCookie(); if(cookies.length)res.setHeader('Set-Cookie',cookies)
       res.statusCode=response.status; res.end(Buffer.from(await response.arrayBuffer())); return
     }
-    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.21.9',professionalVersion:'1.3.10',backend:process.env.HOSTING_PLATFORM||'local',database:'postgresql',mode:process.env.APP_MODE||'production'}); return }
+    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.21.10',professionalVersion:'1.3.11',backend:process.env.HOSTING_PLATFORM||'local',database:'postgresql',mode:process.env.APP_MODE||'production'}); return }
+    if(path.startsWith('/api/sheets/automatic/')){
+      const route=path.slice('/api/sheets/automatic/'.length)
+      if(['claim','jobs','complete'].includes(route)){
+        await rateLimit(req,'sheet-automatic-'+route,route==='claim'?20:120,60)
+        return await automationExternal(req,res,{pool,transaction,readBody,send},route)
+      }
+      if(!['status','authorize'].includes(route)||req.method!==(route==='status'?'GET':'POST'))throw fail('Operação inválida.',405)
+      const session=await officeSession(req,route==='authorize')
+      const data=await transaction(session.user.id,client=>automationAdmin(client,route,{}, {id:session.user.id,role:session.profile.role}))
+      send(res,200,{data});return
+    }
     if(['/api/sheets/feed','/api/sheets/ack','/api/sheets/heartbeat'].includes(path)) {
       return await spreadsheetExternal(req,res,{readBody,send,pool,transaction},path.split('/').pop())
     }
@@ -220,6 +233,7 @@ export default async function handler(req,res) {
           const access=await ensureProfessionalAccess(client,result.id,credentials===undefined?{}:{email:credentials.email,password:credentials.password})
           if(access)result={...result,access}
         }
+        if(name==='can_access_admin'&&result===true&&session.profile.role==='owner')await ensureAnnualWorkbook(client,{id:session.user.id,role:'owner'})
         if(session && name!=='office_snapshot' && name!=='can_access_admin') await client.query("insert into audit_logs(actor_profile_id,operation,entity_type,result) values($1,$2,'operation','success')",[session.user.id,name==='office_action'?`office_action:${String(params.action).slice(0,70)}`:name])
         return result
       },{businessSlug:publicRpcs.has(name)?url.searchParams.get('unit')||undefined:undefined})
@@ -264,7 +278,7 @@ export default async function handler(req,res) {
     }
     if(path==='/api/system-status' && req.method==='GET') {
       const session=await officeSession(req)
-      send(res,200,{version:'1.21.9',professionalVersion:'1.3.10',backend:process.env.HOSTING_PLATFORM==='contabo'?'Contabo':'Local',database:'PostgreSQL',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs where tenant_id=$1 order by created_at desc limit 1',[session.profile.tenant_id])).rows[0]??null});return
+      send(res,200,{version:'1.21.10',professionalVersion:'1.3.11',backend:process.env.HOSTING_PLATFORM==='contabo'?'Contabo':'Local',database:'PostgreSQL',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs where tenant_id=$1 order by created_at desc limit 1',[session.profile.tenant_id])).rows[0]??null});return
     }
     throw fail('Página não encontrada.',404)
   } catch(error) {

@@ -5,9 +5,10 @@ import {Modal} from '../ManagementPages'
 import {dayKey,dateTime} from '../operations'
 import {saveExport} from '../fileExport'
 import './spreadsheet.css'
+import {GoogleSheetAuthorization} from './GoogleSheetAuthorization'
 
 type ManualCell={sheet_id:number;sheet:string;a1:string}
-type Connection={spreadsheet_id:string;url:string;year:number;starts_on:string;enabled:boolean;revision:number;
+type Connection={automatic?:boolean;spreadsheet_id:string;url:string;year:number;starts_on:string;enabled:boolean;revision:number;
  mappings:Record<string,string>;last_sync_at:string|null;status:null|{manual_cells:ManualCell[];headers:string[];error:string|null;bindings:number}}
 type Settings={connections?:Connection[];connection:Connection|null;catalog:{key:string;name:string;price:number}[];owner:boolean}
 
@@ -28,9 +29,23 @@ function SpreadsheetDialog({close}:{close:()=>void}){
   const result=await apiRequest<{data:Settings}>('/sheets/settings'+(selectedYear?'?year='+selectedYear:''))
   setSettings(result.data);setEnabled(result.data.connection?.enabled??true);setMappings(result.data.connection?.mappings??{})
  }
- useEffect(()=>{let active=true;apiRequest<{data:Settings}>('/sheets/settings'+(selectedYear?'?year='+selectedYear:'')).then(result=>{
-  if(active){setSettings(result.data);setEnabled(result.data.connection?.enabled??true);setMappings(result.data.connection?.mappings??{})}
- }).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[selectedYear])
+ useEffect(()=>{
+  let active=true
+  const refresh=()=>apiRequest<{data:Settings}>('/sheets/settings'+(selectedYear?'?year='+selectedYear:'')).then(result=>{
+   if(active){setSettings(result.data);setEnabled(result.data.connection?.enabled??true);setMappings(result.data.connection?.mappings??{})}
+  }).catch(e=>{if(active)setError(e.message)})
+  void refresh()
+  return()=>{active=false}
+ },[selectedYear])
+ const waitingForWorkbook=Boolean(settings&&!settings.connection)
+ useEffect(()=>{
+  if(!waitingForWorkbook)return
+  let active=true
+  const refresh=()=>apiRequest<{data:Settings}>('/sheets/settings'+(selectedYear?'?year='+selectedYear:'')).then(result=>{if(active){setSettings(result.data);setEnabled(result.data.connection?.enabled??true);setMappings(result.data.connection?.mappings??{})}}).catch(()=>{})
+  window.addEventListener('focus',refresh);const timer=window.setInterval(()=>{if(document.visibilityState==='visible')void refresh()},10000)
+  return()=>{active=false;window.clearInterval(timer);window.removeEventListener('focus',refresh)}
+ },[waitingForWorkbook,selectedYear])
+
  async function run(route:string,body:Record<string,unknown>){
   if(busy)return
   setBusy(true);setError('');setNotice('')
@@ -45,8 +60,8 @@ function SpreadsheetDialog({close}:{close:()=>void}){
   {!settings&&!error&&<p role="status">Carregando a conexão…</p>}
   {settings&&!!settings.connections?.length&&<label className="field"><span>Ano da planilha</span><select aria-label="Ano da planilha conectada" value={selectedYear||String(settings.connection?.year??'')} disabled={busy} onChange={e=>{setSelectedYear(e.target.value);setConfiguring(false);setScript('');setNotice('')}}>{settings.connections.map(c=><option key={c.year} value={c.year}>{c.year}</option>)}</select></label>}
   {connection&&<>
-   <p className="sheet-connection-state"><span className={connection.enabled?'sheet-connected':'sheet-paused'}/>{!connection.enabled?'Sincronização pausada':connection.last_sync_at?'Sincronização automática':'Aguardando autorização no Google'}</p>
-   <p className="sheet-description">{connection.last_sync_at?'Última sincronização em '+dateTime(connection.last_sync_at):'Instale e autorize o conector nesta planilha para iniciar a atualização automática.'}</p>
+   <p className="sheet-connection-state"><span className={connection.enabled?'sheet-connected':'sheet-paused'}/>{!connection.enabled?'Sincronização pausada':connection.last_sync_at?'Sincronização automática':connection.automatic?'Preparando primeira atualização':'Aguardando autorização no Google'}</p>
+   <p className="sheet-description">{connection.last_sync_at?'Última sincronização em '+dateTime(connection.last_sync_at):connection.automatic?'A planilha foi criada na conta Google desta unidade. A primeira atualização ocorrerá automaticamente.':'Instale e autorize o conector nesta planilha para iniciar a atualização automática.'}</p>
    {connection.status?.error&&<p role="alert" className="form-error">{connection.status.error}</p>}
    <div className="sheet-primary-actions">
     <a className="primary" href={connection.url} target="_blank" rel="noopener noreferrer"><ExternalLink size={18}/>Abrir e editar planilha</a>
@@ -61,16 +76,18 @@ function SpreadsheetDialog({close}:{close:()=>void}){
     <h3>Serviços e planos</h3><p className="sheet-description">Escolha a coluna correspondente. No modo automático, serviços novos ganham uma coluna própria. Os planos históricos poderão ser vinculados quando forem cadastrados no app.</p>
     {settings?.catalog.filter(item=>!item.key.startsWith('commission:')).map(item=><label className="field" key={item.key}><span>{item.name}</span><select aria-label={'Coluna para '+item.name} value={mappings[item.key]??''} onChange={e=>setMappings({...mappings,[item.key]:e.target.value})}><option value="">Reconhecer ou criar automaticamente</option>{(connection.status?.headers??[]).filter(h=>!['TOTAL','DESCONTOS','PRODUTOS','OUTROS','AJUSTES DO APP'].includes(h.trim().toUpperCase())).map(header=><option key={header} value={header}>{header}</option>)}</select></label>)}
     <button className="primary" disabled={busy}>{busy?'Salvando…':'Salvar configuração'}</button>
-    <button className="outline" type="button" disabled={busy} onClick={()=>{if(window.confirm('Gerar um novo conector revoga o anterior. Será necessário instalar o novo código na mesma planilha.'))void run('credentials',{revision:connection.revision})}}>Gerar novo conector</button>
+    {!connection.automatic&&<button className="outline" type="button" disabled={busy} onClick={()=>{if(window.confirm('Gerar um novo conector revoga o anterior. Será necessário instalar o novo código na mesma planilha.'))void run('credentials',{revision:connection.revision})}}>Gerar novo conector</button>}
+    {connection.automatic&&<GoogleSheetAuthorization reconnect/>}
    </form>}
   </>}
-  {settings&&!connection&&settings.owner&&<form className="sheet-settings" onSubmit={e=>{e.preventDefault();void run('connect',{spreadsheet_url:url,year:Number(year),starts_on:starts})}}>
+  {settings&&!connection&&settings.owner&&<GoogleSheetAuthorization/>}
+  {settings&&!connection&&settings.owner&&<details><summary>Conectar uma planilha existente</summary><form className="sheet-settings" onSubmit={e=>{e.preventDefault();void run('connect',{spreadsheet_url:url,year:Number(year),starts_on:starts})}}>
    <p>Conecte uma planilha da sua conta Google. Os dados existentes serão a base histórica da integração.</p>
    <label className="field"><span>Link da planilha</span><input required type="url" value={url} placeholder="https://docs.google.com/spreadsheets/d/…" onChange={e=>setUrl(e.target.value)}/></label>
    <label className="field"><span>Ano da planilha</span><input required type="number" min="2020" max="2100" value={year} onChange={e=>setYear(e.target.value)}/></label>
    <label className="field"><span>Início dos novos lançamentos</span><input required type="date" value={starts} onChange={e=>setStarts(e.target.value)}/></label>
    <button className="primary" disabled={busy}>{busy?'Preparando…':'Preparar conexão'}</button>
-  </form>}
+  </form></details>}
   {settings&&!connection&&!settings.owner&&<p>O proprietário pode configurar a planilha por esta tela.</p>}
   {script&&<section className="sheet-setup"><h3>Instalar o conector</h3><p>Na planilha, abra Extensões → Apps Script, cole este código e execute instalarMachado. Autorize a conexão na sua conta Google. A atualização será feita aproximadamente a cada minuto.</p><textarea aria-label="Código privado do conector" readOnly value={script}/><button className="outline" onClick={()=>void saveExport('Machado-Planilha.gs',script,'text/plain').catch(e=>setError(e.message))}><Download size={17}/>Salvar conector</button></section>}
   {notice&&<p role="status" className="sheet-notice">{notice}</p>}

@@ -78,6 +78,10 @@ export function OperationsProvider({ children, professionalId }: { children: Rea
   useEffect(() => {
     alive.current = true;
     void refresh();
+    const auth=backend.auth.onAuthStateChange((_event,session)=>{
+      request.current++;setData(emptyOperations);setLoading(true);setRefreshed('');setError('');setLoadError('');
+      if(session)window.setTimeout(()=>void refresh(),0);
+    });
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible") void refresh();
     }, professionalId ? 30000 : 10000);
@@ -90,6 +94,7 @@ export function OperationsProvider({ children, professionalId }: { children: Rea
     return () => {
       alive.current = false;
       request.current++;
+      auth.data.subscription.unsubscribe();
       clearInterval(timer);
       window.removeEventListener("focus", focus);
       window.removeEventListener("online", focus);

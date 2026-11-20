@@ -57,7 +57,7 @@ export async function sheetCatalog(client){
 function publicConnection(row){
  if(!row)return null
  return {spreadsheet_id:row.spreadsheet_id,url:'https://docs.google.com/spreadsheets/d/'+row.spreadsheet_id+'/edit',
-  year:row.year,starts_on:day(row.starts_on),enabled:row.enabled,revision:row.revision,mappings:row.mappings,
+  automatic:Boolean(row.automatic),year:row.year,starts_on:day(row.starts_on),enabled:row.enabled,revision:row.revision,mappings:row.mappings,
   connected_at:row.connected_at,last_sync_at:row.last_sync_at,status:row.last_status}
 }
 async function connector(base,id,token){
@@ -68,7 +68,7 @@ export async function spreadsheetAdmin(client,route,method,body,user,base){
  const year=body.year===undefined?Number(new Intl.DateTimeFormat('en',{year:'numeric',timeZone:'America/Sao_Paulo'}).format(new Date())):Number(body.year)
  if(!Number.isInteger(year)||year<2020||year>2100)throw fail('Ano inválido.')
  if(method==='GET'){
-  const connections=(await client.query('select * from spreadsheet_connections order by year desc')).rows
+  const connections=(await client.query('select c.*,exists(select 1 from spreadsheet_creation_jobs j where j.year=c.year and j.spreadsheet_id=c.spreadsheet_id and j.completed_at is not null) automatic from spreadsheet_connections c order by year desc')).rows
   return {connection:publicConnection(connections.find(c=>c.year===year)??(body.year===undefined?connections[0]:null)),connections:connections.map(publicConnection),catalog:await sheetCatalog(client),owner:user.role==='owner'}
  }
  if(user.role!=='owner')throw fail('Somente o proprietário configura a integração.',403)
@@ -79,12 +79,13 @@ export async function spreadsheetAdmin(client,route,method,body,user,base){
   const starts=body.starts_on??new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date())
   if(!Number.isInteger(year)||year<2020||year>2100||typeof starts!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(starts)||starts.slice(0,4)!==String(year)||!Number.isFinite(Date.parse(starts+'T12:00:00Z'))||new Date(starts+'T12:00:00Z').toISOString().slice(0,10)!==starts)throw fail('Confira o ano e a data inicial.')
   const token=randomBytes(48).toString('base64url')
-  await client.query("insert into spreadsheet_connections(spreadsheet_id,year,starts_on,created_by,token_hash,baseline,sync_mode) values($1,$2,$3,$4,$5,$6,'live')",[id,year,starts,user.id,hash(token),JSON.stringify(await sheetSnapshot(client,year,starts))])
+  try{await client.query("insert into spreadsheet_connections(spreadsheet_id,year,starts_on,created_by,token_hash,baseline,sync_mode) values($1,$2,$3,$4,$5,$6,'live')",[id,year,starts,user.id,hash(token),JSON.stringify(await sheetSnapshot(client,year,starts))])}catch(error){if(error.code==='23505'&&error.constraint==='spreadsheet_connections_document_key')throw fail('Esta planilha já está vinculada. Use uma cópia exclusiva para esta unidade e ano.',409);throw error}
   return {script:await connector(base,id,token)}
  }
  if(!existing)throw fail('Configure a planilha primeiro.',404)
  if(body.revision!==existing.revision)throw fail('As configurações mudaram. Reabra a janela para atualizar.',409)
  if(route==='credentials'){
+  if((await client.query('select 1 from spreadsheet_creation_jobs where year=$1 and completed_at is not null',[year])).rowCount)throw fail('Use Reconectar Google para restaurar a sincronização automática desta planilha.',409)
   const token=randomBytes(48).toString('base64url')
   await client.query('update spreadsheet_connections set token_hash=$1,revision=revision+1 where year=$2',[hash(token),year])
   return {script:await connector(base,existing.spreadsheet_id,token)}
@@ -114,7 +115,8 @@ export async function spreadsheetExternal(req,res,{pool,transaction,readBody,sen
    const catalog=await sheetCatalog(client)
    for(const row of cfg.baseline)if(row.name&&!catalog.some(item=>item.key===row.key)&&/^(service|package):/.test(row.key))catalog.push({key:row.key,name:row.name,price:0})
    const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date())
-   const currentMonth=today.slice(0,7)
+   const freshAutomatic=!cfg.last_sync_at&&(await client.query('select 1 from spreadsheet_creation_jobs where year=$1 and spreadsheet_id=$2 and completed_at is not null',[cfg.year,cfg.spreadsheet_id])).rowCount>0
+   const currentMonth=freshAutomatic?String(cfg.year)+'-01':today.slice(0,7)
    const latest=cfg.enabled?subtractBaseline(await sheetSnapshot(client,cfg.year,cfg.starts_on,{live:cfg.sync_mode==='live'}),cfg.baseline):[]
    const rows=cfg.enabled?[...cfg.last_rows.filter(row=>row.date.slice(0,7)<currentMonth),...latest.filter(row=>row.date.slice(0,7)>=currentMonth)]:[]
    if(cfg.enabled)await client.query('update spreadsheet_connections set last_rows=$1,catalog_state=$2 where year=$3',[JSON.stringify(rows),JSON.stringify(catalog),cfg.year])

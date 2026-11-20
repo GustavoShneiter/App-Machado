@@ -10,3 +10,5 @@
 .sheet-setup textarea{height:120px;font-family:monospace;font-size:11px}.sheet-manual-fields{list-style:none;padding:0;margin:0;max-height:240px;overflow:auto}
 .sheet-manual-fields li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #e3e9e5;font-size:13px}
 .sheet-manual-fields button{min-height:44px;max-width:55%}.sheet-notice{font-size:13px;color:#216953}
+
+.sheet-google-setup{display:flex;gap:14px;align-items:flex-start;margin:16px 0 24px;padding:20px;background:#e7f4ee;color:#103f33;border-radius:14px}.sheet-google-setup>svg{flex:none;margin-top:3px}.sheet-google-setup>div{min-width:0;display:grid;gap:12px}.sheet-google-setup h3{font-size:16px;margin:0}.sheet-google-setup p{margin:0;line-height:1.6;font-size:14px}.sheet-google-setup small{display:block;line-height:1.6;font-size:12px}.sheet-google-setup .primary{min-height:48px;display:flex;gap:8px;align-items:center;justify-content:center;text-decoration:none}.sheet-google-setup .form-error{color:#a43249}.sheet-panel details>summary{min-height:44px;cursor:pointer;color:#155442}.sheet-panel details>.sheet-settings{margin-top:16px}

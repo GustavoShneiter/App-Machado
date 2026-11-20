@@ -245,3 +245,12 @@ body:has(.machado-ui){background:#f7f8fa;color:#1c2925;overscroll-behavior-y:aut
 .machado-ui .pro-profile-avatar>button{width:44px;height:44px;right:-12px;bottom:-8px}
 
 .machado-ui .command-product-form .form-hint{color:var(--muted);font-size:13px;line-height:1.6}
+
+/* Receipt actions must not inherit full-width modal submit-button rules. */
+.machado-ui .approved-receipts .approved-receipt-row{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center}
+.machado-ui .approved-receipts .approved-receipt-row>.tonal-icon{width:40px;height:40px;flex:none}
+.machado-ui .approved-receipts .approved-receipt-row>.money-copy{min-width:0;gap:6px}
+.machado-ui .approved-receipts .approved-receipt-row .money-copy strong{overflow-wrap:anywhere;line-height:1.5}
+.machado-ui .approved-receipts .approved-receipt-row .money-copy b{white-space:nowrap;font-variant-numeric:tabular-nums}
+.machado-ui.modal-layer .modal .approved-receipt-row>.primary{width:auto;min-width:90px;min-height:44px;margin:0;justify-self:end;padding:12px 16px}
+@media(max-width:359px){.machado-ui .approved-receipts .approved-receipt-row{grid-template-columns:36px minmax(0,1fr);gap:10px}.machado-ui.modal-layer .modal .approved-receipt-row>.primary{grid-column:2;justify-self:stretch}.machado-ui .approved-receipts .approved-receipt-row>.tonal-icon{width:36px;height:36px}}

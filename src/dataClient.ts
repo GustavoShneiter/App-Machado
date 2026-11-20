@@ -27,6 +27,8 @@ export async function apiRequest<T = any>(path: string, options: RequestInit = {
   const requestRevision = sessionRevision
   if (isProfessionalExperience() && path.startsWith('/auth/')) path = '/professional-auth/' + path.slice('/auth/'.length)
   const headers = new Headers(options.headers)
+  const authPath=path.startsWith('/auth/')||path.startsWith('/professional-auth/');
+  if (cachedSession && !authPath) headers.set('X-Machado-Account',cachedSession.user.id)
   if (options.body) headers.set('Content-Type', 'application/json')
   if (Capacitor.isNativePlatform()) {
     const token = localStorage.getItem(tokenKey)
@@ -38,6 +40,8 @@ export async function apiRequest<T = any>(path: string, options: RequestInit = {
     if (token) localStorage.setItem(tokenKey, token)
   }
   const result = await response.json()
+  if(!authPath && requestRevision!==sessionRevision)throw Object.assign(new Error('A conta foi alterada. Reabra esta tela.'),{status:409,code:'session_changed'})
+  if(result.error?.code==='account_changed' && requestRevision===sessionRevision){notify('SIGNED_OUT',null);throw Object.assign(new Error(result.error.message),{status:409,code:'account_changed'})}
   if (response.status === 401 && requestRevision === sessionRevision && !path.startsWith('/auth/') && !path.startsWith('/professional-auth/')) {
     if (Capacitor.isNativePlatform()) localStorage.removeItem(tokenKey)
     notify('SIGNED_OUT', null)
@@ -46,18 +50,23 @@ export async function apiRequest<T = any>(path: string, options: RequestInit = {
   if (!response.ok) throw Object.assign(new Error(typeof result.error === 'string' ? result.error : result.error?.message || result.message || 'Não foi possível concluir a operação.'), { status: response.status, code: result.error?.code || result.code })
   return result
 }
-const notify = (event: AuthEvent, session: Session | null) => { sessionRevision++; cachedSession = session; checkedAt = Date.now(); for (const listener of listeners) listener(event, session) }
+const accountEventKey=tokenKey+'-changed'
+const notify = (event: AuthEvent, session: Session | null, broadcast=true) => {
+  sessionRevision++; cachedSession = session; checkedAt = Date.now(); for (const listener of listeners) listener(event, session)
+  if(broadcast)try{localStorage.setItem(accountEventKey,Date.now()+':'+Math.random())}catch{/* In-memory protection remains active when storage is unavailable. */}
+}
+if(typeof window!=='undefined')window.addEventListener('storage',event=>{if(event.key===accountEventKey)notify('SIGNED_OUT',null,false)})
 async function getSession(force = false) {
   if (force || Date.now() - checkedAt > 15000) {
     sessionRequest ??= (async () => {
       const revision = sessionRevision
       const result = await apiRequest('/auth/get-session')
       if (revision === sessionRevision) {
-        const hadSession = Boolean(cachedSession)
-        cachedSession = result?.user ? { user: result.user } : null
-        checkedAt = Date.now()
-        if (!cachedSession && Capacitor.isNativePlatform()) localStorage.removeItem(tokenKey)
-        if (!cachedSession && hadSession) notify('SIGNED_OUT', null)
+        const next:Session|null=result?.user?{user:result.user}:null
+        const changed=Boolean(cachedSession)&&cachedSession?.user.id!==next?.user.id
+        if(changed)notify(next?'SIGNED_IN':'SIGNED_OUT',next)
+        else {cachedSession=next;checkedAt=Date.now()}
+        if(!next&&Capacitor.isNativePlatform())localStorage.removeItem(tokenKey)
       }
       return cachedSession
     })().finally(() => { sessionRequest = null })
