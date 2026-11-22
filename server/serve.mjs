@@ -1,11 +1,12 @@
 import {createServer} from 'node:http'
 import {createReadStream} from 'node:fs'
-import {stat} from 'node:fs/promises'
+import {stat,readFile} from 'node:fs/promises'
 import {resolve,extname,join,sep} from 'node:path'
 import {timingSafeEqual} from 'node:crypto'
 import handler from './handler.mjs'
 import {pool} from './db.mjs'
 import {dataDirectory} from './file-storage.mjs'
+import {applyWebAppMetadata} from '../shared/web-app-metadata.mjs'
 
 const staticRoot=resolve('dist'),types={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.webmanifest':'application/manifest+json','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.ttf':'font/ttf','.woff2':'font/woff2'}
 function migrationAuthorized(req){const wanted=process.env.MIGRATION_TEST_TOKEN,value=req.headers['x-migration-test'];if(typeof value!=='string'||!wanted)return false;const a=Buffer.from(value),b=Buffer.from(wanted);return a.length===b.length&&timingSafeEqual(a,b)}
@@ -35,8 +36,13 @@ const server=createServer(async(req,res)=>{
    if(pathname.startsWith('/media/')||extname(pathname)){res.writeHead(404);res.end();return}
    path=join(staticRoot,'index.html');info=await stat(path)
   }
+  if(path.endsWith('index.html')){
+   const html=applyWebAppMetadata(await readFile(path,'utf8'),pathname)
+   res.setHeader('Content-Type','text/html; charset=utf-8');res.setHeader('Content-Length',Buffer.byteLength(html));res.setHeader('Cache-Control','no-cache')
+   res.end(req.method==='HEAD'?undefined:html);return
+  }
   res.setHeader('Content-Type',types[extname(path)]||'application/octet-stream')
-  res.setHeader('Content-Length',info.size);res.setHeader('Cache-Control',path.endsWith('index.html')?'no-cache':pathname.startsWith('/assets/')?'public, max-age=31536000, immutable':'public, max-age=300')
+  res.setHeader('Content-Length',info.size);res.setHeader('Cache-Control',extname(path)==='.webmanifest'?'no-cache':pathname.startsWith('/assets/')?'public, max-age=31536000, immutable':'public, max-age=300')
   if(req.method==='HEAD'){res.end();return}createReadStream(path).on('error',()=>res.destroy()).pipe(res)
  }catch{if(!res.headersSent)res.writeHead(500);res.end()}
 })

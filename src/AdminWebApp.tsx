@@ -2,28 +2,19 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { publicSiteUrl } from './runtime'
-import { isWebApp, isProfessionalExperience } from './appExperience'
+import { isWebApp } from './appExperience'
+import { webAppMetadata } from '../shared/web-app-metadata.mjs'
 
 export function WebAppMetadata() {
   const { pathname } = useLocation()
   useEffect(() => {
-    const app = isWebApp()
-    if (isProfessionalExperience()) {
-      document.querySelector('link[rel="manifest"]')?.setAttribute('href', '/professional.webmanifest')
-      document.querySelector('link[rel="apple-touch-icon"]')?.setAttribute('href', '/professional-apple-touch-icon.png')
-      document.querySelector('meta[name="apple-mobile-web-app-title"]')?.setAttribute('content', 'Machado Pro')
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#ffffff')
-      document.querySelector('link[rel="icon"]')?.setAttribute('href', '/professional-icon-192.png')
-      document.title = 'Machado Profissional'
-      return
-    }
-    const admin = app || pathname.startsWith('/admin') || pathname === '/recuperar-acesso'
-    document.querySelector('link[rel="manifest"]')?.setAttribute('href', app ? '/app.webmanifest' : admin ? '/admin.webmanifest' : '/manifest.webmanifest')
-    document.querySelector('meta[name="apple-mobile-web-app-title"]')?.setAttribute('content', admin ? 'Machado Gestão' : 'Barbearia Machado')
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', admin ? '#ffffff' : '#121212')
-    document.querySelector('link[rel="apple-touch-icon"]')?.setAttribute('href', admin ? '/admin-apple-touch-icon.png' : '/apple-touch-icon.png')
-    document.querySelector('link[rel="icon"]')?.setAttribute('href', admin ? '/admin-icon-192.png' : '/icon.svg')
-    document.title = admin ? 'Machado Gestão' : 'Barbearia Machado'
+    const meta = webAppMetadata(window.location.pathname, import.meta.env.VITE_APP_EDITION === 'professional')
+    document.querySelector('link[rel="manifest"]')?.setAttribute('href', meta.manifest)
+    document.querySelector('meta[name="apple-mobile-web-app-title"]')?.setAttribute('content', meta.appleTitle)
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', meta.theme)
+    document.querySelector('link[rel="apple-touch-icon"]')?.setAttribute('href', meta.appleIcon)
+    document.querySelector('link[rel="icon"]')?.setAttribute('href', meta.icon)
+    document.title = meta.title
   }, [pathname])
   return null
 }
@@ -32,7 +23,7 @@ export function AdminWebHelp() {
   if (Capacitor.isNativePlatform() || isWebApp()) return null
   return <section className="web-access-help" aria-label="Acesso no PC e iPhone">
     <h3>PC e iPhone</h3>
-    <a href={`${publicSiteUrl}/admin`}>{publicSiteUrl}/admin</a>
+    <a href={`${publicSiteUrl}/app/admin`}>{publicSiteUrl}/app/admin</a>
     <details><summary>Adicionar ao iPhone</summary><p>No Safari, toque em Compartilhar → Adicionar à Tela de Início. Ative Abrir como App da Web, se disponível.</p></details>
     <details><summary>Usar no computador</summary><p>Abra o link e entre com seu e-mail e senha. Requer internet.</p></details>
   </section>
