@@ -36,6 +36,10 @@ export async function transaction(userId, work, options = {}) {
   const client = await pool.connect()
   try {
     await client.query(options.readOnly ? 'begin isolation level repeatable read read only' : options.repeatableRead ? 'begin isolation level repeatable read' : 'begin')
+    // RLS-protected operational snapshots are short OLTP queries. Their estimated
+    // plan cost can trigger expensive LLVM compilation before any rows return.
+    // Keep this transaction-local; authentication and unit policies stay intact.
+    await client.query('set local jit=off')
     await client.query("select set_config('request.jwt.claim.sub',$1,true)", [userId ?? ''])
     if (options.internal === true) {
       // Reserved for server-owned provisioning and global backup jobs. Request

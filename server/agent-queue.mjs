@@ -45,7 +45,7 @@ export async function claimNotification(client,cfg,integration) {
   order by (kind='confirmation') desc,available_at,id for update skip locked limit 1`,[cfg.confirmations_enabled,cfg.reminders_enabled,cfg.birthday_enabled,cfg.reactivation_enabled,cfg.campaign_start_hour,cfg.campaign_end_hour])).rows[0]
  if(!row)return null
  const customer=(await client.query('select id,name,phone,birth_date from customers where id=$1',[row.customer_id])).rows[0]
- const a=row.appointment_id?(await client.query(`select a.id,a.starts_at,a.notification_cycle_at,a.status,a.appointment_notification_revision revision,s.name service_name,p.name professional_name from appointments a join services s on s.id=a.service_id join professionals p on p.id=a.professional_id where a.id=$1`,[row.appointment_id])).rows[0]:null
+ const a=row.appointment_id?(await client.query(`select a.id,a.starts_at,a.notification_cycle_at,a.status,a.appointment_notification_revision revision,coalesce((select string_agg(i.description,' + ' order by i.id) from commands cmd join command_items i on i.command_id=cmd.id where cmd.appointment_id=a.id and i.type='service'),s.name) service_name,p.name professional_name from appointments a join services s on s.id=a.service_id join professionals p on p.id=a.professional_id where a.id=$1`,[row.appointment_id])).rows[0]:null
  let suppress=!customer||!/^[1-9]\d{9,10}$/.test(customer.phone)
  if(row.kind==='confirmation'||row.kind==='reminder') {
   suppress ||= !a||a.revision!==row.appointment_revision||['completed','cancelled','no_show'].includes(a.status)||new Date(a.starts_at)<=new Date()

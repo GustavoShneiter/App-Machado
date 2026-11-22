@@ -11,7 +11,7 @@ export async function customerContext(client,payload) {
  if(rows.length!==1)return {business,found:false,ambiguous:rows.length>1,customer:null,upcoming_appointments:[]}
  const customer=rows[0]
  const upcoming=(await client.query(`select a.id,coalesce(nullif(a.attendee_name,''),c.name) customer_name,
-  s.name service_name,p.name professional_name,a.starts_at,a.status
+  coalesce((select string_agg(i.description,' + ' order by i.id) from commands cmd join command_items i on i.command_id=cmd.id where cmd.appointment_id=a.id and i.type='service'),s.name) service_name,p.name professional_name,a.starts_at,a.status
   from appointments a join customers c on c.id=a.customer_id join services s on s.id=a.service_id join professionals p on p.id=a.professional_id
   where a.customer_id=$1 and a.starts_at>=now() and a.status in ('scheduled','confirmed','arrived','in_service') order by a.starts_at,a.id limit 5`,[customer.id])).rows
  return {business,found:true,ambiguous:false,customer,upcoming_appointments:upcoming}
