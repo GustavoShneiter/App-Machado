@@ -1,0 +1,34 @@
+{
+  "date": "2026-11-22",
+  "admin": "1.21.11",
+  "professional": "1.3.11",
+  "backend": "contabo",
+  "status": "available",
+  "artifacts": [
+    {
+      "edition": "Gestao",
+      "version": "1.21.11",
+      "versionCode": 44,
+      "applicationId": "com.barbeariamachado.gestao",
+      "file": "releases/android/Machado-Gestao-v1.21.11.apk",
+      "bytes": 5967024,
+      "sha256": "bb692cdb8b29571cfe315aa2dadd6b0f49c0df56809694792d87ca4a5469898e",
+      "signingCertificateSha256": "2d1fb76948ff838499c639defeaaebc4ee3834792f7bec11581066640ebf3094",
+      "defender": "scan unavailable on build host"
+    }
+  ],
+  "changes": [
+    "Extrato: filtro de mês inteiro acima da escolha de caixa, incluindo todos os caixas da unidade",
+    "Saldo do período, entradas e saídas com filtros de pagamento, profissional, direção e busca",
+    "Limites mensais no fuso America/Sao_Paulo; saldo de abertura e comissões ainda não pagas não são somados às movimentações"
+  ],
+  "verification": {
+    "build": "passed",
+    "lint": "passed",
+    "monthlyLedger": "passed: multiple sessions, month boundaries, payment, professional, direction, search, empty month",
+    "apkSignature": "verified v2, same signing certificate as previous release",
+    "embeddedAdministrativePassword": false,
+    "productionBrowser": "passed: mobile 390px and desktop 1160px, monthly totals, empty month, individual cash session, no horizontal overflow",
+    "physicalAndroidDevice": "not performed; signed APK built and packaged assets verified"
+  }
+}

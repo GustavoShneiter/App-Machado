@@ -24,6 +24,22 @@ export const labels: Record<string, string> = { scheduled: 'Agendado', confirmed
 export const methods: Record<string, string> = { cash: 'Dinheiro', pix: 'Pix', debit: 'Débito', credit: 'Crédito', other: 'Outro' }
 export const commandTotal = (state: Operations, command: Command) => state.items.filter(i => i.command_id === command.id).reduce((s, i) => s + i.unit_price_cents * i.quantity, 0) - command.discount_cents + command.surcharge_cents
 export const cashBalance = (state: Operations, session: CashSession) => session.opening_balance_cents + state.movements.filter(m => m.session_id === session.id && m.payment_method === 'cash').reduce((s, m) => s + m.amount_cents, 0)
+export function cashLedger(state: Operations, filters: { sessionId?: string; month?: string; method?: string; direction?: string; professional?: string; search?: string }) {
+  const { sessionId, month, method = 'all', direction = 'all', professional = '', search = '' } = filters
+  const query = search.trim().toLocaleLowerCase('pt-BR')
+  const movements = state.movements.filter(m => {
+    if (month ? dayKey(m.created_at).slice(0, 7) !== month : m.session_id !== sessionId) return false
+    if (direction === 'in' && m.amount_cents <= 0 || direction === 'out' && m.amount_cents >= 0) return false
+    if (method !== 'all' && !(method === 'cards' ? ['debit', 'credit'].includes(m.payment_method) : m.payment_method === method)) return false
+    if (professional && !state.items.some(i => i.command_id === m.command_id && i.professional_id === professional) && !state.commissions.some(c => c.id === m.commission_entry_id && c.professional_id === professional)) return false
+    const command = state.commands.find(c => c.id === m.command_id)
+    const customer = state.customers.find(c => c.id === command?.customer_id)
+    return !query || [m.notes, customer?.name, command?.attendee_name, methods[m.payment_method]].some(value => value?.toLocaleLowerCase('pt-BR').includes(query))
+  }).sort((a, b) => b.created_at.localeCompare(a.created_at))
+  const incoming = movements.reduce((sum, m) => sum + Math.max(0, m.amount_cents), 0)
+  const outgoing = movements.reduce((sum, m) => sum - Math.min(0, m.amount_cents), 0)
+  return { movements, incoming, outgoing, balance: incoming - outgoing }
+}
 export function receivedOnDay(state: Operations, day: string, method = 'all') {
   const matches = (value: string) => method === 'all' || (method === 'cards' ? ['debit', 'credit'].includes(value) : value === method)
   return state.payments.filter(p => !p.reversed_at && dayKey(p.paid_at) === day && matches(p.method)).reduce((sum,p) => sum+p.amount_cents,0)

@@ -13,7 +13,7 @@ const result = await build({
     import {AppointmentModal} from './src/ManagementPages'
     import {CatalogProvider} from './src/CatalogStore'
     import {TestContext} from './src/OperationsStore'
-    import {emptyOperations,summarize,cashBalance,commandTotal,dayKey,csvCell,receivedOnDay} from './src/operations'
+    import {emptyOperations,summarize,cashBalance,cashLedger,commandTotal,dayKey,csvCell,receivedOnDay} from './src/operations'
     import {fixture} from './scripts/operations-fixture.mjs'
     import {addDays,addMonths,agendaTimes,recurringForDay} from './src/schedule'
     const pages=['','agenda','caixa','comandas','clientes','produtos','servicos','profissionais','pacotes','empresa','relatorios','configuracoes']
@@ -42,6 +42,25 @@ const result = await build({
     assert.equal(receivedOnDay(fixture,'2026-09-17'),7000)
     assert.equal(receivedOnDay(fixture,'2026-09-18','cash'),0)
     assert.equal(dayKey('2026-09-19T01:00:00Z'),'2026-09-18')
+    const ledgerData=structuredClone(fixture)
+    const movement=fixture.movements[0]
+    ledgerData.movements=[
+      {...movement,id:'october',session_id:'previous',created_at:'2026-11-01T02:59:59Z',amount_cents:600},
+      {...movement,id:'november-start',session_id:'previous',created_at:'2026-11-01T03:00:00Z',amount_cents:10000},
+      {...movement,id:'expense',session_id:'next',created_at:'2026-11-15T15:00:00Z',amount_cents:-1500,payment_method:'cash',command_id:null,notes:'Material'},
+      {...movement,id:'november-end',session_id:'next',created_at:'2026-12-01T02:59:59Z',amount_cents:500,payment_method:'credit'},
+      {...movement,id:'december',session_id:'next',created_at:'2026-12-01T03:00:00Z',amount_cents:700},
+    ]
+    const ledger=cashLedger(ledgerData,{month:'2026-11'})
+    assert.equal(ledger.movements.length,3,'Month includes all cash sessions, using local transaction dates')
+    assert.equal(ledger.incoming,10500);assert.equal(ledger.outgoing,1500);assert.equal(ledger.balance,9000,'Opening cash and unpaid commissions are not movements')
+    assert.equal(cashLedger(ledgerData,{month:'2026-11',method:'cards'}).incoming,500)
+    assert.equal(cashLedger(ledgerData,{month:'2026-11',direction:'out'}).balance,-1500)
+    assert.equal(cashLedger(ledgerData,{month:'2026-11',professional:'p1'}).incoming,10500)
+    assert.equal(cashLedger(ledgerData,{month:'2026-11',search:'material'}).outgoing,1500)
+    assert.equal(cashLedger(ledgerData,{sessionId:'previous'}).incoming,10600,'Session view retains its full ledger')
+    assert.equal(cashLedger(ledgerData,{month:'2027-01'}).balance,0)
+    console.log('PASS Extrato mensal: vários caixas, limites do mês no fuso local, saldo, meios, profissional e busca')
     assert.equal(csvCell('=1+1').charCodeAt(1),39)
     assert.equal(csvCell('  =1+1').charCodeAt(1),39)
     const mixed=structuredClone(fixture)
