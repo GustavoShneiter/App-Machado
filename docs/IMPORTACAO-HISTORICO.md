@@ -19,6 +19,15 @@ as regras de comissão para novos atendimentos são preservados. Quando a origem
 fornece somente a data de um recebimento, o lançamento usa a contabilização do
 caixa de origem, sem inferir o horário em que o cliente pagou.
 
+Uma alteração posterior da regra de comissão pode restaurar pendências da
+origem, inclusive para o proprietário. Essa conciliação usa os itens originais
+das comandas, preserva percentuais e valores históricos e não cria recebimentos
+nem repasses pagos. As regras para novos atendimentos são configuradas
+separadamente por serviço e produto. A verificação deve cobrir o Caixa do
+Gestão, o caixa profissional e a geração de comissão ao concluir um atendimento,
+revertendo as alterações usadas no teste. O ajuste não deve alterar outros
+profissionais, recebimentos, o histórico da planilha ou as mensagens do agente.
+
 As confirmações da importação são suprimidas antes do commit. Lembretes futuros
 continuam seguindo os horários configurados. A importação não concede
 consentimento para campanhas nem altera as configurações do agente.
