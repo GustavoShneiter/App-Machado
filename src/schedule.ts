@@ -1,9 +1,16 @@
 import { type RecurringBlock, type ScheduleBlock } from './operations'
 
-export const agendaTimes = Array.from({length:26},(_,index)=>{
-  const minutes=360+index*40
-  return `${String(Math.floor(minutes/60)).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`
-})
+export const defaultBusinessHours = Array.from({length:6},(_,index)=>({weekday:index+1,opens_at:'08:00',closes_at:'22:00'}))
+export function hoursForDay(hours:import('./operations').BusinessHour[]|undefined,date:string) {
+  const weekday=((new Date(date+'T12:00:00Z').getUTCDay()+6)%7)+1
+  return (hours??defaultBusinessHours).filter(row=>row.weekday===weekday).sort((a,b)=>a.opens_at.localeCompare(b.opens_at))
+}
+export const timeMinutes=(time:string)=>Number(time.slice(0,2))*60+Number(time.slice(3,5))
+export const minutesTime=(minutes:number)=>`${String(Math.floor(minutes/60)).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`
+export function agendaTimesForDay(hours:import('./operations').BusinessHour[]|undefined,date:string) {
+  return hoursForDay(hours,date).flatMap(row=>Array.from({length:Math.ceil((timeMinutes(row.closes_at)-timeMinutes(row.opens_at))/40)},(_,i)=>minutesTime(timeMinutes(row.opens_at)+i*40)))
+}
+export const agendaTimes=agendaTimesForDay(defaultBusinessHours,'2026-11-23')
 export function addDays(date:string,days:number) {
   const value=new Date(`${date}T12:00:00Z`);value.setUTCDate(value.getUTCDate()+days)
   return value.toISOString().slice(0,10)

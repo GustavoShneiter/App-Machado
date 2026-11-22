@@ -35,7 +35,7 @@ import {
 import { registerDismissibleLayer } from "./dismissibleLayers";
 import { AgendaCreateModal } from './AgendaScheduling';
 import { AgendaDatePicker } from './AgendaDatePicker';
-import { agendaTimes, recurringForDay } from './schedule';
+import { agendaTimesForDay, hoursForDay, timeMinutes, minutesTime, recurringForDay } from './schedule';
 import { ApprovedCashView } from './ApprovedCashView';
 import { ApprovedHome } from './ApprovedHome';
 import { AgentContactConsent } from './AgentWhatsApp';
@@ -261,7 +261,7 @@ export function AppointmentModal({
   fitIn?: boolean;
 }) {
   const { services, professionals } = useCatalog();
-  const { run, busy, error } = useOperations();
+  const { data:operations, run, busy, error } = useOperations();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [service, setService] = useState(
@@ -272,6 +272,8 @@ export function AppointmentModal({
   );
   const [date, setDate] = useState(initialDate);
   const [time, setTime] = useState(initialTime);
+  const workHours=hoursForDay(operations.businessHours,date);
+  const openTime=workHours[0]?.opens_at.slice(0,5),closeTime=workHours[workHours.length-1]?.closes_at.slice(0,5);
   const [price, setPrice] = useState(
     String(services.find((s) => s.id === service)?.preco ?? 0),
   );
@@ -424,7 +426,7 @@ export function AppointmentModal({
             />
           </label>
         </div>
-        {fitIn ? <><div className="schedule-time-pair"><label className="field"><span>Horário do encaixe</span><input type="time" min="06:00" max="22:59" required value={time} onChange={event => setTime(event.target.value)} /></label><label className="field"><span>Duração do encaixe (minutos)</span><input type="number" min="5" max="480" required value={duration} onChange={event => setDuration(Number(event.target.value))} /></label></div><p className="form-hint">Escolha um horário entre 06h e 23h. O encaixe respeita os outros atendimentos e os bloqueios.</p></> : <div className="admin-slot-picker">
+        {fitIn ? <><div className="schedule-time-pair"><label className="field"><span>Horário do encaixe</span><input type="time" min={openTime} max={closeTime} disabled={!workHours.length} required value={time} onChange={event => setTime(event.target.value)} /></label><label className="field"><span>Duração do encaixe (minutos)</span><input type="number" min="5" max="480" required value={duration} onChange={event => setDuration(Number(event.target.value))} /></label></div><p className="form-hint">{workHours.length?`Funcionamento: ${openTime} às ${closeTime}. O atendimento precisa terminar até o fechamento.`:'Barbearia fechada neste dia. Escolha outra data.'}</p></> : <div className="admin-slot-picker">
           <span>Horário</span>
           {loadingSlots ? (
             <p>Buscando horários…</p>
@@ -458,7 +460,7 @@ export function AppointmentModal({
             {error}
           </p>
         )}
-        <button disabled={busy || loadingSlots || !time} className="primary">
+        <button disabled={busy || loadingSlots || !time || !workHours.length} className="primary">
           {busy ? "Salvando…" : "Salvar agendamento"}
         </button>
       </form>
@@ -518,7 +520,7 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
   const dayStart = new Date(date+'T00:00:00-03:00').getTime();
   const dayEnd = dayStart+86400000;
   const dayBlocks = [...data.blocks,...recurringForDay(data.recurringBlocks ?? [],date)]
-    .filter(block => new Date(block.starts_at).getTime()<dayEnd-3600000 && new Date(block.ends_at).getTime()>dayStart+6*3600000 && (!professional || block.professional_id===professional))
+    .filter(block => new Date(block.starts_at).getTime()<dayEnd && new Date(block.ends_at).getTime()>dayStart && (!professional || block.professional_id===professional))
     .sort((a,b)=>a.starts_at.localeCompare(b.starts_at));
   const shiftDate = (amount: number) => {
     const next = new Date(selectedDate);
@@ -529,14 +531,17 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
     month: "long",
     year: "numeric",
   });
-  const firstHour = 6, lastHour = 23, hourHeight = professionalOnly ? 66 : 108;
+  const workHours=hoursForDay(data.businessHours,date),closed=!workHours.length;
+  const firstHour=Math.floor(Math.min(...workHours.map(h=>timeMinutes(h.opens_at)),...rows.map(a=>timeMinutes(new Date(a.starts_at).toLocaleTimeString('en-GB',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}))),...(workHours.length?[]:[480]))/60);
+  const lastHour=Math.ceil(Math.max(...workHours.map(h=>timeMinutes(h.closes_at)),...rows.map(a=>timeMinutes(new Date(a.ends_at).toLocaleTimeString('en-GB',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}))),...(workHours.length?[]:[1320]))/60);
+  const hourHeight = professionalOnly ? 66 : 108;
   const gridHeight=(lastHour-firstHour)*hourHeight;
-  const slots=agendaTimes.map(time=>{const [h,m]=time.split(':').map(Number);return {time,top:((h*60+m-360)/60)*hourHeight,major:true};});
-  const hours=[...slots.map(slot=>({time:slot.time,top:slot.top})),{time:'23:00',top:gridHeight}];
+  const slots=agendaTimesForDay(data.businessHours,date).map(time=>{const [h,m]=time.split(':').map(Number);return {time,top:((h*60+m-firstHour*60)/60)*hourHeight,major:true};});
+  const hours=[...slots.map(slot=>({time:slot.time,top:slot.top})),{time:minutesTime(lastHour*60),top:gridHeight}];
   const position=(entry:{starts_at:string;ends_at:string})=>{
-    const gridStart=new Date(date+'T06:00:00-03:00').getTime();
+    const gridStart=new Date(date+'T'+minutesTime(firstHour*60)+':00-03:00').getTime();
     const start=Math.max(gridStart,new Date(entry.starts_at).getTime());
-    const end=Math.min(gridStart+17*3600000,new Date(entry.ends_at).getTime());
+    const end=Math.min(gridStart+(lastHour-firstHour)*3600000,new Date(entry.ends_at).getTime());
     return {top:Math.max(0,(start-gridStart)/3600000*hourHeight),height:Math.max(24,(end-start)/3600000*hourHeight)};
   };
   // Pack overlapping bookings into visible lanes rather than painting one over another.
@@ -552,7 +557,7 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
   finishCluster();
   const slotDate=(time:string)=>new Date(date+'T'+time+':00-03:00');
   const occupied=(time:string)=>{
-    const start=slotDate(time).getTime(),end=start+Math.min(40,(23*60-(Number(time.slice(0,2))*60+Number(time.slice(3)))))*60000;
+    const start=slotDate(time).getTime(),end=start+Math.min(40,(lastHour*60-(Number(time.slice(0,2))*60+Number(time.slice(3)))))*60000;
     return [...rows.filter(row=>row.status!=='no_show'),...dayBlocks].some(entry=>new Date(entry.starts_at).getTime()<end&&new Date(entry.ends_at).getTime()>start);
   };
   const nextStatus = (status: string) =>
@@ -573,8 +578,9 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
       <section className="agenda-daybar" aria-label="Navegação por semana"><button aria-label="Semana anterior" onClick={()=>shiftDate(-7)}><ChevronLeft size={20}/></button><button className="agenda-week-picker" aria-label="Semana selecionada: escolher mês e ano" aria-haspopup="dialog" onClick={()=>setCalendarOpen(true)}><CalendarDays size={18}/><strong>{monthLabel}</strong><ChevronDown size={15}/></button><button aria-label="Próxima semana" onClick={()=>shiftDate(7)}><ChevronRight size={20}/></button></section>
       <section className="agenda-week" aria-label="Dias da semana">{weekDays.map(day=><button type="button" className={date===day.key?'active':''} aria-pressed={date===day.key} key={day.key} onClick={()=>setDate(day.key)}><small>{day.label}</small><strong>{day.number}</strong></button>)}</section>
       {!professionalOnly&&<section className="agenda-professionals" aria-label="Selecionar profissional">{activeProfessionals.map(item=><button key={item.id} type="button" className={professional===item.id?'active':''} aria-pressed={professional===item.id} onClick={()=>setProfessional(item.id)}>{item.foto_url?<img src={item.foto_url} alt=""/>:<span>{item.iniciais||item.nome.slice(0,2).toUpperCase()}</span>}<small>{item.nome}</small></button>)}</section>}
+      {closed&&<p className="form-note" role="status">Barbearia fechada neste dia. Os agendamentos existentes continuam disponíveis para consulta.</p>}
       <div className="agenda-list-toolbar"><span>{rows.filter(a=>!search||[a.customer_name,a.service_name,a.professional_name].some(v=>v.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR')))).length} agendamentos</span><div role="group" aria-label="Visualização da agenda"><button aria-label="Lista" aria-pressed={view==='list'} onClick={()=>setView('list')}><List size={18}/></button><button aria-label="Grade de horários" aria-pressed={view==='grid'} onClick={()=>setView('grid')}><CalendarRange size={18}/></button></div></div>
-      {view==='list'&&<div className="approved-agenda-list">{rows.filter(a=>!search||[a.customer_name,a.service_name,a.professional_name].some(v=>v.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR')))).map(a=><button className="agenda-list-row" key={a.id} onClick={()=>setFocused(a)}><span className="agenda-list-time"><b>{new Date(a.starts_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'})}</b><small>{Math.round((Date.parse(a.ends_at)-Date.parse(a.starts_at))/60000)} min</small></span><span className="agenda-list-person"><strong>{a.customer_name}</strong><small><b>{a.professional_name}</b> · {a.service_name}</small><span className={'status-tag '+a.status}>{labels[a.status]??a.status}{a.is_fit_in?' · Encaixe':''}</span></span><ChevronRight size={17}/></button>)}{!rows.length&&<div className="approved-empty"><CalendarDays size={24}/><strong>Nenhum agendamento neste dia</strong><p>Crie um horário ou consulte outra data.</p><button className="primary" onClick={()=>setSlotChoice('new')}>Novo agendamento</button></div>}{dayBlocks.length>0&&<details className="agenda-block-summary"><summary>{dayBlocks.length} bloqueios neste dia</summary>{dayBlocks.map(block=><button className="outline" key={block.id} onClick={()=>setFocusedBlock(block)}>{block.reason||'Agenda bloqueada'} · {dateTime(block.starts_at)}</button>)}</details>}</div>}
+      {view==='list'&&<div className="approved-agenda-list">{rows.filter(a=>!search||[a.customer_name,a.service_name,a.professional_name].some(v=>v.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR')))).map(a=><button className="agenda-list-row" key={a.id} onClick={()=>setFocused(a)}><span className="agenda-list-time"><b>{new Date(a.starts_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'})}</b><small>{Math.round((Date.parse(a.ends_at)-Date.parse(a.starts_at))/60000)} min</small></span><span className="agenda-list-person"><strong>{a.customer_name}</strong><small><b>{a.professional_name}</b> · {a.service_name}</small><span className={'status-tag '+a.status}>{labels[a.status]??a.status}{a.is_fit_in?' · Encaixe':''}</span></span><ChevronRight size={17}/></button>)}{!rows.length&&<div className="approved-empty"><CalendarDays size={24}/><strong>Nenhum agendamento neste dia</strong><p>{closed?'A barbearia não abre neste dia. Consulte outra data.':'Crie um horário ou consulte outra data.'}</p>{!closed&&<button className="primary" onClick={()=>setSlotChoice('new')}>Novo agendamento</button>}</div>}{dayBlocks.length>0&&<details className="agenda-block-summary"><summary>{dayBlocks.length} bloqueios neste dia</summary>{dayBlocks.map(block=><button className="outline" key={block.id} onClick={()=>setFocusedBlock(block)}>{block.reason||'Agenda bloqueada'} · {dateTime(block.starts_at)}</button>)}</details>}</div>}
       {filtersOpen&&<Modal title="Filtro da agenda" close={()=>setFiltersOpen(false)}><label className="field"><span>Data</span><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label>{!professionalOnly&&<label className="field"><span>Profissional</span><select value={professional} onChange={e=>setProfessional(e.target.value)}>{activeProfessionals.map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}</select></label>}<label className="field"><span>Buscar cliente ou serviço</span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Nome do cliente ou serviço"/></label><button className="outline" onClick={()=>{setFiltersOpen(false);setBlocksOpen(true)}}>Gerenciar bloqueios</button><button className="primary" onClick={()=>setFiltersOpen(false)}>Aplicar filtros</button></Modal>}
       {view==='grid'&&<section className="agenda-schedule" aria-label="Horários do dia">
 
@@ -601,7 +607,7 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
                 occupied(slot.time) ||
                 slotDate(slot.time).getTime() < Date.now()
               }
-              style={{ top: slot.top, height: Math.min(40,23*60-Number(slot.time.slice(0,2))*60-Number(slot.time.slice(3)))/60*hourHeight }}
+              style={{ top: slot.top, height: Math.min(40,lastHour*60-Number(slot.time.slice(0,2))*60-Number(slot.time.slice(3)))/60*hourHeight }}
               key={slot.time}
               onClick={() => setSlotChoice(slot.time)}
             >

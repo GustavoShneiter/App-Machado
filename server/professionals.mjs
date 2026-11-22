@@ -75,6 +75,7 @@ export async function professionalSnapshot(client,id) {
     recurringBlocks:(await client.query('select id,professional_id,starts_on,until_on,weekdays,start_time,end_time,reason from recurring_schedule_blocks where professional_id=$1 order by starts_on',[id])).rows,
     products:(await client.query('select id,name,sale_price_cents,quantity,active from products where active and quantity>0 order by name,id')).rows,
     customers:[],commissions:[],sessions:[],movements:[],packages:[],packageSales:[],business:[],
+    businessHours:(await client.query('select weekday,opens_at,closes_at from business_hours order by weekday,opens_at')).rows,
     ...await professionalCommands(client,id),
   }
 }

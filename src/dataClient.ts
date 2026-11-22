@@ -27,6 +27,7 @@ export async function apiRequest<T = any>(path: string, options: RequestInit = {
   const requestRevision = sessionRevision
   if (isProfessionalExperience() && path.startsWith('/auth/')) path = '/professional-auth/' + path.slice('/auth/'.length)
   const headers = new Headers(options.headers)
+  if (isProfessionalExperience()) headers.set('X-Machado-Experience', 'professional')
   const authPath=path.startsWith('/auth/')||path.startsWith('/professional-auth/');
   if (cachedSession && !authPath) headers.set('X-Machado-Account',cachedSession.user.id)
   if (options.body) headers.set('Content-Type', 'application/json')

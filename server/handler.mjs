@@ -13,6 +13,7 @@ import { externalAgent } from './agent.mjs'
 import { administrativeAgent } from './agent-settings.mjs'
 import {spreadsheetAdmin,spreadsheetExternal} from './spreadsheets.mjs'
 import {automationAdmin,automationExternal,ensureAnnualWorkbook} from './spreadsheet-automation.mjs'
+import {businessHours,readBusinessHours} from './business-hours.mjs'
 
 const publicRpcs = new Set(['public_booking_slots','public_available_slots','create_public_appointment'])
 const rpcArguments = {
@@ -70,7 +71,7 @@ export default async function handler(req,res) {
   const origin=req.headers.origin
   if(origin && origins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin',origin); res.setHeader('Access-Control-Allow-Credentials','true'); res.setHeader('Vary','Origin')
-    res.setHeader('Access-Control-Allow-Headers','Content-Type, Authorization, Idempotency-Key, X-Machado-Account'); res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS'); res.setHeader('Access-Control-Expose-Headers','set-auth-token, X-Request-Id')
+    res.setHeader('Access-Control-Allow-Headers','Content-Type, Authorization, Idempotency-Key, X-Machado-Account, X-Machado-Experience'); res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS'); res.setHeader('Access-Control-Expose-Headers','set-auth-token, X-Request-Id')
   }
   if(req.method==='OPTIONS') { res.statusCode=origin && !origins.includes(origin)?403:204; res.end(); return }
   try {
@@ -135,6 +136,15 @@ export default async function handler(req,res) {
       await rateLimit(req,'unit-registration',8,3600)
       const data=await registerOfficeAccount(await readBody(req,8192))
       send(res,201,{data});return
+    }
+    if(path==='/api/business-hours'||path==='/api/professional/business-hours') {
+      if(!['GET','POST'].includes(req.method))throw fail('Operação inválida.',405)
+      const session=await sessionFor(req,path.startsWith('/api/professional/'))
+      if(!session)throw fail('Entre novamente para continuar.',401)
+      if(req.method==='POST')await rateLimit(req,'business-hours',30)
+      const body=req.method==='POST'?await readBody(req,24000):undefined
+      const data=await transaction(session.user.id,client=>businessHours(client,session.user.id,body),{readOnly:req.method==='GET'})
+      send(res,200,{data,error:null});return
     }
     if(path==='/api/professional-goals') {
       if(!['GET','POST'].includes(req.method))throw fail('Operação inválida.',405)
@@ -219,7 +229,7 @@ export default async function handler(req,res) {
       let session=null
       if(name==='can_access_admin') session=await sessionFor(req)
       else if(!publicRpcs.has(name)) session=await officeSession(req)
-      else await rateLimit(req,name,name==='create_public_appointment'?6:180)
+      else {await rateLimit(req,name,name==='create_public_appointment'?6:180);if(!url.searchParams.get('unit'))session=await sessionFor(req,req.headers['x-machado-experience']==='professional')}
       if(name==='can_access_admin' && !session) {send(res,200,{data:false,error:null}); return}
       const data=await transaction(session?.user.id,async client=>{
         const keys=allowed.filter(key=>Object.hasOwn(params,key))
@@ -227,6 +237,7 @@ export default async function handler(req,res) {
         const tableResult=name==='public_booking_slots'||name==='public_available_slots'
         const statement=tableResult?`select coalesce(jsonb_agg(to_jsonb(x)),'[]'::jsonb) as value from public."${name}"(${args}) x`:`select public."${name}"(${args}) as value`
         let result=(await client.query(statement,keys.map(key=>params[key]))).rows[0]?.value
+        if(name==='office_snapshot')result={...result,businessHours:await readBusinessHours(client)}
         if(result?.id&&(name==='save_professional_profile'||(name==='office_action'&&params.action==='save_professional'))) {
           const credentials=params.payload?.access
           if(credentials!==undefined&&(!credentials||typeof credentials!=='object'||Array.isArray(credentials)))throw fail('Dados de acesso inválidos.')

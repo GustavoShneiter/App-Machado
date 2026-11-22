@@ -46,6 +46,7 @@ import {
   Modal,
   Page,
 } from "./ManagementPages";
+import { BusinessHoursPage } from "./BusinessHoursPage";
 import { CompanySettings, Packages } from "./BusinessPages";
 import { backend } from "./dataClient";
 import { dismissTopLayer, registerDismissibleLayer } from "./dismissibleLayers";
@@ -66,6 +67,7 @@ const navItems = [
   { to: "/admin/produtos", label: "Produtos", icon: Package },
   { to: "/admin/servicos", label: "Serviços", icon: Scissors },
   { to: "/admin/profissionais", label: "Profissionais", icon: Users },
+  { to: "/admin/horarios", label: "Horário de funcionamento", icon: CalendarDays },
   { to: "/admin/configuracoes", label: "Configurações", icon: Settings },
 ];
 
@@ -225,6 +227,7 @@ export function AdminLayout() {
             <Route path="profissionais" element={<ProfessionalsV2 />} />
             <Route path="pacotes" element={<Packages />} />
             <Route path="empresa" element={<CompanySettings />} />
+            <Route path="horarios" element={<BusinessHoursPage />} />
             <Route path="configuracoes" element={<SettingsPage />} />
             <Route
               path="comissoes"
@@ -345,6 +348,7 @@ function SettingsPage() {
           </span>
           <ArrowRight />
         </Link>
+        <Link to="/admin/horarios"><CalendarDays/><span><strong>Horário de funcionamento</strong></span><ArrowRight/></Link>
         <Link to="/admin/agente"><MessageCircle/><span><strong>Agente de WhatsApp</strong></span><ArrowRight/></Link>
       </section>
       <section className="panel operation-panel admin-access-panel">

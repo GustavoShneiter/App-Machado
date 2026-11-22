@@ -15,8 +15,8 @@ const result = await build({
     import {TestContext} from './src/OperationsStore'
     import {emptyOperations,summarize,cashBalance,cashLedger,commandTotal,dayKey,csvCell,receivedOnDay} from './src/operations'
     import {fixture} from './scripts/operations-fixture.mjs'
-    import {addDays,addMonths,agendaTimes,recurringForDay} from './src/schedule'
-    const pages=['','agenda','caixa','comandas','clientes','produtos','servicos','profissionais','pacotes','empresa','relatorios','configuracoes']
+    import {addDays,addMonths,agendaTimes,agendaTimesForDay,hoursForDay,recurringForDay} from './src/schedule'
+    const pages=['','agenda','caixa','comandas','clientes','produtos','servicos','profissionais','pacotes','empresa','relatorios','configuracoes','horarios']
     for(const data of [emptyOperations,fixture]){
       const value={data,loading:false,error:'',busy:false,refreshed:'12:00',refresh:async()=>{},clearError:()=>{},run:async()=>true}
       for(const page of pages){
@@ -78,7 +78,11 @@ const result = await build({
     assert.equal(addMonths('2026-01-31',1),'2026-02-28')
     assert.equal(addMonths('2028-02-29',12),'2029-02-28')
     assert.equal(addDays('2026-12-31',1),'2027-01-01')
-    assert.deepEqual(agendaTimes.slice(0,3),['06:00','06:40','07:20']);assert.equal(agendaTimes.at(-1),'22:40')
+    assert.deepEqual(agendaTimes.slice(0,3),['08:00','08:40','09:20']);assert.equal(agendaTimes.at(-1),'21:20')
+    assert.deepEqual(agendaTimesForDay(undefined,'2026-11-22'),[],'Sunday is closed by default')
+    assert.equal(hoursForDay(undefined,'2026-11-23')[0].closes_at,'22:00')
+    assert.deepEqual(agendaTimesForDay([{weekday:1,opens_at:'09:00',closes_at:'10:00'}],'2026-11-23'),['09:00','09:40'])
+    assert.deepEqual(agendaTimesForDay([],'2026-11-23'),[],'An entirely closed week must not use defaults')
     const rule={id:'rule',professional_id:'p1',starts_on:'2026-10-24',until_on:null,weekdays:[6],start_time:'00:00',end_time:'24:00',reason:'Sábado'}
     const blocks=recurringForDay([rule],'2026-10-24')
     assert.equal(blocks.length,1);assert.equal(blocks[0].ends_at,'2026-10-25T00:00:00-03:00')

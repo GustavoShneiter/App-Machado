@@ -3,7 +3,7 @@ import { useCatalog } from './CatalogStore'
 import { useOperations } from './OperationsStore'
 import { AppointmentModal, Modal } from './ManagementPages'
 import { dayKey } from './operations'
-import { addDays, addMonths } from './schedule'
+import { addDays, addMonths, hoursForDay, minutesTime, timeMinutes } from './schedule'
 
 type Props={close:()=>void;initialDate?:string;initialTime?:string;initialProfessional?:string;manageBlocks?:()=>void}
 export function AgendaCreateModal(props:Props) {
@@ -20,20 +20,21 @@ export function AgendaCreateModal(props:Props) {
     </div>
   </Modal>
 }
-export function ScheduleBlockModal({close,initialDate=dayKey(),initialTime='06:00',initialProfessional=''}:Props) {
-  const {professionals}=useCatalog(),{run,busy,error}=useOperations()
+export function ScheduleBlockModal({close,initialDate=dayKey(),initialTime='',initialProfessional=''}:Props) {
+  const {professionals}=useCatalog(),{data,run,busy,error}=useOperations()
+  const defaultStart=initialTime||hoursForDay(data.businessHours,initialDate)[0]?.opens_at.slice(0,5)||'08:00'
   const [professional,setProfessional]=useState(initialProfessional||professionals.find(pro=>pro.ativo)?.id||'')
   const [kind,setKind]=useState('period'),[preset,setPreset]=useState('hours')
-  const [start,setStart]=useState(`${initialDate}T${initialTime||'06:00'}`)
+  const [start,setStart]=useState(`${initialDate}T${defaultStart}`)
   const [end,setEnd]=useState(()=>{
-    const value=new Date(`${initialDate}T${initialTime||'06:00'}:00Z`)
+    const value=new Date(`${initialDate}T${defaultStart}:00Z`)
     value.setUTCMinutes(value.getUTCMinutes()+40)
     return value.toISOString().slice(0,16)
   })
   const [reason,setReason]=useState(''),[formError,setFormError]=useState('')
   const [startsOn,setStartsOn]=useState(initialDate),[untilOn,setUntilOn]=useState(addDays(addMonths(initialDate,2),-1))
   const [duration,setDuration]=useState('2months'),[allDay,setAllDay]=useState(false)
-  const [startTime,setStartTime]=useState(initialTime||'06:00'),[endTime,setEndTime]=useState('08:00')
+  const [startTime,setStartTime]=useState(defaultStart),[endTime,setEndTime]=useState(minutesTime(Math.min(timeMinutes(defaultStart)+40,1439)))
   const [weekdays,setWeekdays]=useState<number[]>([((new Date(`${initialDate}T12:00:00Z`).getUTCDay()+6)%7)+1])
   const choosePreset=(value:string)=>{
     setPreset(value)

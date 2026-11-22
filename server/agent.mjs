@@ -32,7 +32,7 @@ export async function agentAction(client,action,p,integration) {
  if(action==='customer_context')return customerContext(client,p)
  if(action==='catalog') {
   const value=(await client.query('select public_catalog() value')).rows[0].value
-  return {services:value.services.map(s=>({id:s.id,name:s.name,price:s.price_cents,duration_minutes:s.duration_minutes})),professionals:value.professionals.map(p=>({id:p.id,name:p.name})),business:value.business}
+  return {services:value.services.map(s=>({id:s.id,name:s.name,price:s.price_cents,duration_minutes:s.duration_minutes})),professionals:value.professionals.map(p=>({id:p.id,name:p.name})),business:{...value.business,hours:(await client.query('select weekday,opens_at,closes_at from business_hours order by weekday,opens_at')).rows,timezone:'America/Sao_Paulo'}}
  }
  if(action==='availability') {
   if(!/^\d{4}-\d{2}-\d{2}$/.test(p.day||'')||!Number.isFinite(Date.parse(p.day))||new Date(p.day).toISOString().slice(0,10)!==p.day)throw fail('Dia inválido.')
