@@ -272,3 +272,14 @@ body:has(.machado-ui){background:#f7f8fa;color:#1c2925;overscroll-behavior-y:aut
 @media(max-width:480px){.machado-ui .work-hours-section{padding:16px}.machado-ui .work-hours-times{width:100%;justify-content:flex-end}.machado-ui .work-hours-day{gap:0}.machado-ui .work-hours-day:has(.work-hours-times){padding-bottom:18px}}
 
 .machado-ui .work-hours-times label>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+
+.machado-ui .customer-lookup{min-width:0;align-self:start}
+.machado-ui .customer-matches{margin-top:8px;border:1px solid var(--line-strong);border-radius:12px;background:var(--surface);overflow:hidden}
+.machado-ui .customer-matches [role=listbox]{max-height:260px;overflow-y:auto;overscroll-behavior:contain}
+.machado-ui .customer-matches [role=option]{display:block;text-align:left;width:100%;min-height:56px;padding:12px 14px;border:0;border-radius:0;border-bottom:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.machado-ui .customer-matches [role=option][aria-selected=true],.machado-ui .customer-matches [role=option]:hover{background:var(--mint)}
+.machado-ui .customer-matches strong,.machado-ui .customer-matches small{display:block;overflow-wrap:anywhere}
+.machado-ui .customer-matches small{color:var(--muted);font-size:12px;margin-top:4px}
+.machado-ui .customer-matches p{margin:0;padding:10px 14px;font-size:12px;color:var(--muted)}
+.machado-ui .customer-selection{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:var(--green);margin-top:8px}
+.machado-ui .customer-selection button{min-height:36px;font-size:12px}

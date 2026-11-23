@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-23",
+  "admin": "1.21.13",
+  "professional": "1.3.13",
+  "backend": "contabo",
+  "status": "available",
+  "artifacts": [
+    {
+      "edition": "Gestao",
+      "version": "1.21.13",
+      "versionCode": 46,
+      "file": "releases/android/Machado-Gestao-v1.21.13.apk",
+      "bytes": 5971457,
+      "sha256": "610608234e7231a3e991c79c4f67f153b773d9b73344b2ed596c9efbf8ff98d5",
+      "signingCertificateSha256": "2d1fb76948ff838499c639defeaaebc4ee3834792f7bec11581066640ebf3094",
+      "defender": "scan unavailable on build host"
+    },
+    {
+      "edition": "Profissional",
+      "version": "1.3.13",
+      "versionCode": 21,
+      "file": "releases/android/Machado-Profissional-v1.3.13.apk",
+      "bytes": 5881492,
+      "sha256": "be7a822b5b222bb8373ed59ef25abe5200ba5ed791fd3642258136942f5b1b2c",
+      "signingCertificateSha256": "2d1fb76948ff838499c639defeaaebc4ee3834792f7bec11581066640ebf3094",
+      "defender": "scan unavailable on build host"
+    }
+  ],
+  "changes": [
+    "Busca de clientes por nome ou telefone em agendamentos e encaixes nos dois apps",
+    "Seleção preenche nome e WhatsApp, com busca sem acentos e diferenciação de homônimos",
+    "Vínculo pelo ID do cliente da unidade, sem duplicar ou reescrever cadastro, inclusive registros sem telefone",
+    "Profissionais consultam a base completa da unidade; observações continuam restritas aos clientes das próprias comandas"
+  ],
+  "verification": {
+    "build": "passed",
+    "lint": "passed",
+    "database": "passed: full unit directory, private notes, foreign unit rejection, explicit ID with duplicate phones, missing phone, no duplicate or changed profile; all fixtures and notification jobs rolled back",
+    "search": "passed: accents, terms, duplicate names, phone, no phone, empty result",
+    "productionBrowser": "not performed: browser control unavailable; Windows browser URL could not be verified safely",
+    "physicalAndroidDevice": "not tested"
+  }
+}

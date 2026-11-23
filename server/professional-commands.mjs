@@ -63,7 +63,8 @@ export async function professionalCommands(client,id) {
  const ids=commands.map(c=>c.id)
  return {
   commands,
-  customers:(await client.query('select id,name,phone,notes from customers where id in(select customer_id from commands where id=any($1::uuid[]))',[ids])).rows,
+  // Full unit booking directory; keep notes restricted to this professional's existing commands.
+  customers:(await client.query('select id,name,phone,case when id in(select customer_id from commands where id=any($1::uuid[])) then notes else null end notes from customers order by name,id',[ids])).rows,
   commandProfessionals:(await client.query('select id,name,photo_url from professionals where active order by name,id')).rows,
   commandServices:(await client.query('select s.id,s.name,s.price_cents,ps.professional_id from services s join professional_services ps on ps.service_id=s.id join professionals p on p.id=ps.professional_id where s.active and p.active order by s.name,p.name')).rows,
   items:(await client.query('select id,command_id,type,service_id,product_id,professional_id,description,unit_price_cents,quantity from command_items where command_id=any($1::uuid[]) and professional_id=$2',[ids,id])).rows,

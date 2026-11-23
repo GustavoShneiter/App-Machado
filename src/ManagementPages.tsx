@@ -1,3 +1,4 @@
+import {CustomerLookup} from "./CustomerLookup"
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CommissionFields } from "./CommissionFields";
 import { createPortal } from "react-dom";
@@ -264,6 +265,8 @@ export function AppointmentModal({
   const { data:operations, run, busy, error } = useOperations();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [customerId,setCustomerId]=useState('');
+  const selectedCustomer=operations.customers.find(c=>c.id===customerId);
   const [service, setService] = useState(
     services.find((s) => s.ativo)?.id ?? "",
   );
@@ -329,6 +332,7 @@ export function AppointmentModal({
             await run("create_appointment", {
               name,
               phone,
+              ...(selectedCustomer?{customer_id:selectedCustomer.id}:{}),
               professional_id: professional,
               service_id: service,
               starts_at: `${date}T${time}:00-03:00`,
@@ -341,21 +345,15 @@ export function AppointmentModal({
         }}
       >
         <div className="form-grid">
-          <label className="field">
-            <span>Cliente</span>
-            <input
-              required
-              minLength={2}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </label>
+          <CustomerLookup customers={operations.customers} name={name} selected={selectedCustomer} onName={value=>{setName(value);if(customerId)setPhone('');setCustomerId('')}} onSelect={customer=>{setCustomerId(customer.id);setName(customer.name);setPhone(customer.phone)}} onClear={()=>{setCustomerId('');setName('');setPhone('')}}/>
           <label className="field">
             <span>WhatsApp</span>
             <input
-              required
+              required={!selectedCustomer}
+              readOnly={Boolean(selectedCustomer)}
               type="tel"
-              minLength={10}
+              placeholder={selectedCustomer?'Sem WhatsApp cadastrado':'WhatsApp do cliente'}
+              minLength={selectedCustomer?undefined:10}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />

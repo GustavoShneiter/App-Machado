@@ -16,6 +16,7 @@ const result = await build({
     import {emptyOperations,summarize,cashBalance,cashLedger,commandTotal,dayKey,csvCell,receivedOnDay} from './src/operations'
     import {fixture} from './scripts/operations-fixture.mjs'
     import {addDays,addMonths,agendaTimes,agendaTimesForDay,hoursForDay,recurringForDay} from './src/schedule'
+    import {matchingCustomers} from './src/customerSearch'
     const pages=['','agenda','caixa','comandas','clientes','produtos','servicos','profissionais','pacotes','empresa','relatorios','configuracoes','horarios']
     for(const data of [emptyOperations,fixture]){
       const value={data,loading:false,error:'',busy:false,refreshed:'12:00',refresh:async()=>{},clearError:()=>{},run:async()=>true}
@@ -75,6 +76,13 @@ const result = await build({
     later.payments[0].paid_at='2026-09-19T15:00:00-03:00'
     assert.equal(summarize(later,'2026-09-19','2026-09-19','p1').received,4000)
     console.log('PASS financeiro: comissões, filtros, cancelados, dinheiro vs Pix, CSV')
+    const directory=[{id:'one',name:'João da Silva',phone:'45999990001'},{id:'two',name:'João da Silva',phone:'45999990002'},{id:'three',name:'José Santos',phone:''}]
+    assert.equal(matchingCustomers(directory,'joao silva').length,2,'Ignore accents and match name terms')
+    assert.equal(matchingCustomers(directory,'99990002')[0].id,'two','Phone disambiguates duplicate names')
+    assert.equal(matchingCustomers(directory,'jose')[0].id,'three','Existing customer may have no phone')
+    assert.equal(matchingCustomers(directory,'inexistente').length,0)
+    assert.equal(matchingCustomers(directory,'   ').length,0)
+    console.log('PASS busca de clientes: acentos, termos, homônimos, telefone, ausência de telefone e busca vazia')
     assert.equal(addMonths('2026-01-31',1),'2026-02-28')
     assert.equal(addMonths('2028-02-29',12),'2029-02-28')
     assert.equal(addDays('2026-12-31',1),'2027-01-01')
