@@ -8,7 +8,7 @@ import { shortDate } from './periods'
 
 export const periods = [{ id: 'current', label: 'Esta semana' }, { id: 'previous', label: 'Semana passada' }, { id: 'older', label: 'Semana retrasada' }, { id: 'custom', label: 'Escolher período' }]
 export function BalanceDialog({ close }: { close: () => void }) {
-  return <Modal title="Meu saldo a receber" close={close}><div className="pro-info-dialog"><span className="pro-dialog-symbol"><WalletCards size={25} /></span><h3>Comissões pendentes</h3><p>Todos os períodos · aguardando repasse.</p><button className="primary pro-dialog-save" onClick={close}>Entendi</button></div></Modal>
+  return <Modal title="Meu saldo a receber" close={close}><div className="pro-info-dialog"><span className="pro-dialog-symbol"><WalletCards size={25} /></span><h3>Comissões pendentes</h3><p>O valor mostra apenas os atendimentos do período escolhido. Use o filtro de datas para consultar outras semanas.</p><button className="primary pro-dialog-save" onClick={close}>Entendi</button></div></Modal>
 }
 export function ProfessionalReportDialog({ selected, weeks, loading, close, period, inline = false }: { selected: ProfessionalCashData; weeks: ProfessionalCashData[]; loading: boolean; close: () => void; period: () => void; inline?: boolean }) {
   const composition = [

@@ -77,6 +77,12 @@ body:has(.machado-ui){background:#f7f8fa;color:#1c2925;overscroll-behavior-y:aut
 .machado-ui .cash-state{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}.machado-ui .cash-state:before{content:'';width:6px;height:6px;background:#9da7a2;border-radius:50%}.machado-ui .cash-state.open:before{background:#359b73}
 .machado-ui .context-tabs{display:flex;gap:4px;background:#ebefed;border-radius:12px;padding:4px;margin-bottom:18px}.machado-ui .context-tabs button{flex:1;border:0;border-radius:9px;color:var(--muted);font-size:13px;font-weight:750;min-height:44px;background:transparent}.machado-ui .context-tabs button[aria-pressed=true]{background:white;color:var(--green)}
 .machado-ui .finance-caption{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:12px;min-height:48px;margin:8px 0 12px;gap:12px}
+.machado-ui .payout-date-presets{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.machado-ui .payout-date-presets button{min-height:44px;padding:9px 13px;border:1px solid var(--line);border-radius:10px;background:white;color:var(--green);font-size:12px;font-weight:650}
+.machado-ui .payout-date-presets button[aria-pressed=true]{background:var(--mint);border-color:#bed9ca}
+.machado-ui .payout-date-range{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.machado-ui .payout-date-range .field{min-width:0}
+@media(max-width:380px){.machado-ui .payout-date-range{grid-template-columns:1fr}}
 .machado-ui .finance-main-amount{padding:10px 0 20px}.machado-ui .finance-main-amount h2{font-size:13px;font-weight:650;color:var(--muted);margin:0 0 10px}.machado-ui .finance-main-amount>strong{font-size:38px;font-weight:750;letter-spacing:-.035em;line-height:1.4;color:var(--ink);display:block;overflow-wrap:anywhere}.machado-ui .finance-main-amount>p{color:var(--muted);font-size:12px;margin:10px 0 0}
 .machado-ui .filter-chips{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 20px}.machado-ui .filter-chips button{min-height:40px;padding:8px 14px;font-size:12px;font-weight:650;background:white;color:var(--muted);border-radius:24px}.machado-ui .filter-chips button[aria-pressed=true]{background:var(--green);color:white}
 .machado-ui .bank-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:24px 0 30px}.machado-ui .bank-actions button{min-height:88px;display:flex;flex-direction:column;align-items:center;gap:10px;background:transparent;color:var(--ink);font-size:12px;font-weight:650;padding:0}

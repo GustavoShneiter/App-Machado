@@ -77,15 +77,15 @@ export function ProfessionalCash({ professionalId, reportOnly = false }: { profe
     {error && <div className="form-error" role="alert">{error}<button className="outline small" onClick={() => setReload(value => value + 1)}>Tentar novamente</button></div>}
     {loading && !selected && !error && <div className="pro-cash-skeleton" role="status"><span>Preparando suas comissões…</span></div>}
     {selected && current && prefs && (reportOnly ? <ProfessionalReportDialog inline selected={selected} weeks={weeks} loading={loading} close={()=>{}} period={()=>setPopup('period')}/> : <>
+      <div className="pro-period-toolbar"><button className="pro-period-trigger" aria-label="Filtrar datas das comissões" onClick={() => setPopup('period')}><CalendarDays size={16} /><span>{period === 'custom' ? 'Datas escolhidas' : periods.find(item => item.id === period)?.label}</span><ChevronDown size={15} /></button><span>{shortDate(range.from)} a {shortDate(range.to)}</span></div>
       <div className={'pro-wallet-top' + (prefs.show_goals !== false ? ' with-goals' : '')}>
-        <section className="pro-wallet-balance" aria-label="Comissão total a receber">
+        <section className="pro-wallet-balance" aria-label="Comissões a receber no período selecionado">
           <div className="pro-wallet-balance-label"><h2>Comissões a receber</h2><button aria-label="Entender meu saldo" onClick={() => setPopup('balance')}><CircleHelp size={17} /></button></div>
-          <strong>{money(selected.totalPending)}</strong><p>Todos os períodos</p>
+          <strong>{money(selected.pending)}</strong><p>{shortDate(range.from)} a {shortDate(range.to)}</p>
         </section>
         <ProfessionalGoals current={current} edit={() => setPopup('settings')} details={() => setPopup('progress')} />
       </div>
 
-      <div className="pro-period-toolbar"><button className="pro-period-trigger" aria-label="Escolher período das comissões" onClick={() => setPopup('period')}><CalendarDays size={16} /><span>{periods.find(item => item.id === period)?.label}</span><ChevronDown size={15} /></button><span>{shortDate(range.from)} a {shortDate(range.to)}</span></div>
       <div className="pro-wallet-lower">
       <details className="pro-results-disclosure">
         <summary><span><strong>Meu resultado</strong><small>{shortDate(range.from)} a {shortDate(range.to)}</small></span><ChevronDown size={19} aria-hidden="true" /></summary>

@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-23",
+  "admin": "1.21.15",
+  "professional": "1.3.15",
+  "backend": "contabo",
+  "status": "available",
+  "artifacts": [
+    {
+      "sha256": "90a0a6fdfd56e324d4350b70928cb0024e082a5658a18a5e3c2a0c5a26905972",
+      "versionCode": 48,
+      "version": "1.21.15",
+      "file": "releases/android/Machado-Gestao-v1.21.15.apk",
+      "edition": "Gestao",
+      "bytes": 5974881,
+      "signingCertificateSha256": "2d1fb76948ff838499c639defeaaebc4ee3834792f7bec11581066640ebf3094"
+    },
+    {
+      "sha256": "ee5e66e4f13dc3de76b6d43c62c47677740f46b4660e17755f77bc400ca26dbf",
+      "versionCode": 23,
+      "version": "1.3.15",
+      "file": "releases/android/Machado-Profissional-v1.3.15.apk",
+      "edition": "Profissional",
+      "bytes": 5884132,
+      "signingCertificateSha256": "2d1fb76948ff838499c639defeaaebc4ee3834792f7bec11581066640ebf3094"
+    }
+  ],
+  "changes": [
+    "Gestão: repasses filtráveis por período de atendimento ou data de pagamento, com datas inicial e final",
+    "Gestão: o total e a ação de repasse usam exatamente os lançamentos visíveis no filtro",
+    "Profissional: saldo a receber corresponde ao período selecionado, com o filtro acima do saldo",
+    "Gestão: seleção de cliente por toque no agendamento móvel e destaque do próximo horário livre"
+  ],
+  "verification": {
+    "physicalAndroidDevice": "not tested",
+    "lint": "passed",
+    "build": "passed",
+    "periodLogic": "passed: inclusive local dates, professional, pending versus paid",
+    "apkSignature": "passed: both APKs use the established signing certificate"
+  }
+}

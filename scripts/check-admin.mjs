@@ -13,7 +13,7 @@ const result = await build({
     import {AppointmentModal} from './src/ManagementPages'
     import {CatalogProvider} from './src/CatalogStore'
     import {TestContext} from './src/OperationsStore'
-    import {emptyOperations,summarize,cashBalance,cashLedger,commandTotal,dayKey,csvCell,receivedOnDay} from './src/operations'
+    import {emptyOperations,summarize,cashBalance,cashLedger,commandTotal,dayKey,csvCell,receivedOnDay,commissionsInPeriod} from './src/operations'
     import {fixture} from './scripts/operations-fixture.mjs'
     import {addDays,addMonths,agendaTimes,agendaTimesForDay,hoursForDay,recurringForDay} from './src/schedule'
     import {matchingCustomers} from './src/customerSearch'
@@ -64,6 +64,15 @@ const result = await build({
     assert.equal(cashLedger(ledgerData,{sessionId:'previous'}).incoming,10600,'Session view retains its full ledger')
     assert.equal(cashLedger(ledgerData,{month:'2027-01'}).balance,0)
     console.log('PASS Extrato mensal: vários caixas, limites do mês no fuso local, saldo, meios, profissional e busca')
+    const payoutData=structuredClone(fixture)
+    payoutData.commissions.push({...payoutData.commissions[0],id:'e2',status:'paid',paid_at:'2026-09-21T02:59:59Z'})
+    payoutData.commissions.push({...payoutData.commissions[0],id:'e3',status:'paid',paid_at:'2026-09-21T03:00:00Z'})
+    payoutData.commissions.push({...payoutData.commissions[0],id:'e4',professional_id:'p2'})
+    assert.deepEqual(commissionsInPeriod(payoutData,{status:'pending',professional:'p1',from:'2026-09-18',to:'2026-09-18'}).map(item=>item.id),['e1'])
+    assert.deepEqual(commissionsInPeriod(payoutData,{status:'pending',professional:'p1',from:'2026-09-19',to:'2026-09-25'}),[])
+    assert.deepEqual(commissionsInPeriod(payoutData,{status:'paid',from:'2026-09-20',to:'2026-09-20'}).map(item=>item.id),['e2'])
+    assert.deepEqual(commissionsInPeriod(payoutData,{status:'paid',from:'2026-09-21',to:'2026-09-21'}).map(item=>item.id),['e3'])
+    console.log('PASS Repasses: período inclusivo, fuso da barbearia, profissional e data do pagamento')
     assert.equal(csvCell('=1+1').charCodeAt(1),39)
     assert.equal(csvCell('  =1+1').charCodeAt(1),39)
     const mixed=structuredClone(fixture)

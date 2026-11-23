@@ -24,6 +24,20 @@ export const dateTime = (value: string) => new Date(value).toLocaleString('pt-BR
 export const labels: Record<string, string> = { scheduled: 'Agendado', confirmed: 'Confirmado', arrived: 'Cliente chegou', in_service: 'Em atendimento', completed: 'Concluído', cancelled: 'Cancelado', no_show: 'Não compareceu', open: 'Em aberto', awaiting_payment: 'Aguardando pagamento', closed: 'Paga', voided: 'Cancelada', refunded: 'Estornada' }
 export const methods: Record<string, string> = { cash: 'Dinheiro', pix: 'Pix', debit: 'Débito', credit: 'Crédito', other: 'Outro' }
 export const commandTotal = (state: Operations, command: Command) => state.items.filter(i => i.command_id === command.id).reduce((s, i) => s + i.unit_price_cents * i.quantity, 0) - command.discount_cents + command.surcharge_cents
+export function commissionPeriodDate(state: Operations, commission: Commission) {
+  if (commission.status === 'paid' && commission.paid_at) return dayKey(commission.paid_at)
+  const item = state.items.find(value => value.id === commission.command_item_id)
+  const command = state.commands.find(value => value.id === item?.command_id)
+  const appointment = state.appointments.find(value => value.id === command?.appointment_id)
+  return dayKey(command?.occurred_at ?? appointment?.starts_at ?? command?.created_at ?? commission.created_at)
+}
+export function commissionsInPeriod(state: Operations, filters: { status: string; professional?: string; from?: string; to?: string }) {
+  return state.commissions.filter(commission => commission.commission_cents > 0
+    && commission.status === filters.status
+    && (!filters.professional || commission.professional_id === filters.professional)
+    && (!filters.from || commissionPeriodDate(state, commission) >= filters.from)
+    && (!filters.to || commissionPeriodDate(state, commission) <= filters.to))
+}
 export const cashBalance = (state: Operations, session: CashSession) => session.opening_balance_cents + state.movements.filter(m => m.session_id === session.id && m.payment_method === 'cash').reduce((s, m) => s + m.amount_cents, 0)
 export function cashLedger(state: Operations, filters: { sessionId?: string; month?: string; method?: string; direction?: string; professional?: string; search?: string }) {
   const { sessionId, month, method = 'all', direction = 'all', professional = '', search = '' } = filters
