@@ -283,6 +283,13 @@ body:has(.machado-ui){background:#f7f8fa;color:#1c2925;overscroll-behavior-y:aut
 .machado-ui .customer-matches strong,.machado-ui .customer-matches small{display:block;overflow-wrap:anywhere}
 .machado-ui .customer-matches small{color:var(--muted);font-size:12px;margin-top:4px}
 .machado-ui .customer-matches p{margin:0;padding:10px 14px;font-size:12px;color:var(--muted)}
+.machado-ui.modal-layer .admin-slot-picker>span{color:var(--ink);font-size:13px}
+.machado-ui.modal-layer .admin-slot-picker>.next-free-slot{display:block;width:100%;min-height:44px;margin:0 0 12px;padding:10px 14px;background:var(--mint);border:1px solid #bad9ca;border-radius:10px;color:var(--green);font-size:13px;text-align:center}
+.machado-ui.modal-layer .admin-slot-picker>.slot-grid{gap:8px}
+.machado-ui.modal-layer .admin-slot-picker .slot-grid>button{min-height:48px;background:white;border:1px solid #cbd6cf;color:var(--ink);font-size:13px}
+.machado-ui.modal-layer .admin-slot-picker .slot-grid>button.selected{background:var(--green);border-color:var(--green);color:white}
+.machado-ui.modal-layer .admin-slot-picker .slot-grid>button.unavailable{opacity:1;background:#eef1ef;border-color:#d4ddda;color:#62716a}
+.machado-ui.modal-layer .admin-slot-picker .slot-grid>button.unavailable small{color:#62716a;font-size:10px}
 .machado-ui .customer-selection{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:var(--green);margin-top:8px}
 .machado-ui .customer-selection button{min-height:36px;font-size:12px}
 

@@ -288,14 +288,17 @@ export function AppointmentModal({
     Array<{ time: string; available: boolean }>
   >([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [slotsError, setSlotsError] = useState(false);
   useEffect(() => {
     let alive = true;
     if (fitIn || !backend || !service || !professional) {
       setSlots([]);
+      setSlotsError(false);
       setLoadingSlots(false);
       return;
     }
     setLoadingSlots(true);
+    setSlotsError(false);
     void backend
       .rpc("public_booking_slots", {
         chosen_service: service,
@@ -315,17 +318,21 @@ export function AppointmentModal({
               available: Boolean(slot.available),
             }));
         setSlots(mapped);
-        if (
-          time &&
-          !mapped.some((slot) => slot.time === time && slot.available)
-        )
-          setTime("");
+        setSlotsError(Boolean(slotError));
+        setTime(current => current && !mapped.some(slot => slot.time === current && slot.available) ? "" : current);
+        setLoadingSlots(false);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setSlots([]);
+        setSlotsError(true);
         setLoadingSlots(false);
       });
     return () => {
       alive = false;
     };
-  }, [service, professional, date, time, fitIn]);
+  }, [service, professional, date, fitIn]);
+  const nextSlot = slots.find(slot => slot.available)?.time;
   return (
     <Modal title={fitIn ? 'Criar encaixe' : 'Novo agendamento'} close={close}>
       <form
@@ -432,7 +439,9 @@ export function AppointmentModal({
           {loadingSlots ? (
             <p>Buscando horários…</p>
           ) : (
-            <div>
+            <>
+            {nextSlot && <button type="button" className="next-free-slot" onClick={() => setTime(nextSlot)}>Próximo horário livre: {nextSlot}</button>}
+            <div className="slot-grid">
               {slots.map((slot) => (
                 <button
                   type="button"
@@ -446,11 +455,14 @@ export function AppointmentModal({
                 </button>
               ))}
             </div>
+            </>
           )}
         </div>}
+        {slotsError && <p role="alert" className="form-error">Não foi possível consultar os horários. Tente novamente após reabrir o agendamento.</p>}
         {!fitIn && !loadingSlots &&
           professional &&
           service &&
+          !slotsError &&
           !slots.some((slot) => slot.available) && (
             <p className="form-hint">
               Não há horário livre para esse profissional e serviço nesta data.
