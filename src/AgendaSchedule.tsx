@@ -17,6 +17,14 @@ export function AgendaSchedule({date,businessHours,slotIntervalMinutes=15,column
   const duration=Math.min(slotIntervalMinutes,(limit?timeMinutes(limit.closes_at):lastHour*60)-timeMinutes(time))
   return {time,duration,top:(timeMinutes(time)-firstHour*60)/60*hourHeight}
  })
+ const timeWithinBlock=(block:ScheduleBlock,clientY:number,top:number,target:HTMLElement)=>{
+  const clickedMinute=firstHour*60+(top+Math.max(0,clientY-target.getBoundingClientRect().top))/hourHeight*60
+  const period=workHours.find(h=>clickedMinute>=timeMinutes(h.opens_at)&&clickedMinute<timeMinutes(h.closes_at))??workHours[0]
+  if(!period)return minutesTime(Math.max(firstHour*60,localMinutes(block.starts_at)))
+  const open=timeMinutes(period.opens_at),close=timeMinutes(period.closes_at)
+  const lastSlot=open+Math.floor((close-1-open)/slotIntervalMinutes)*slotIntervalMinutes
+  return minutesTime(Math.min(lastSlot,Math.max(open,open+Math.floor((clickedMinute-open)/slotIntervalMinutes)*slotIntervalMinutes)))
+ }
  const lanes=agendaLanes(appointments)
  const visibleColumns=split?columns:[columns[0]??{id:'',name:''}]
  return <div className={split?'agenda-board-scroll':'agenda-board-single'}><section className={'agenda-schedule'+(split?' agenda-multi-schedule':'')} aria-label="Horários do dia" style={{gridTemplateColumns:`52px repeat(${Math.max(1,visibleColumns.length)},minmax(0,1fr))`,...(split?{minWidth:52+visibleColumns.length*200}:{})}}>
@@ -31,9 +39,9 @@ export function AgendaSchedule({date,businessHours,slotIntervalMinutes=15,column
    return <section className="agenda-professional-column" aria-label={split?`Agenda de ${column.name}`:undefined} key={column.id||'single'}>
     {split&&<header className="agenda-column-heading">{column.photo?<img src={column.photo} alt=""/>:<span>{column.name.slice(0,2).toUpperCase()}</span>}<strong title={column.name}>{column.name}</strong></header>}
     <div className="agenda-time-grid" style={{height:gridHeight}}>
-     {slots.map(slot=><button key={slot.time} type="button" className="agenda-slot major" aria-label={`${occupied(slot.time,slot.duration)?'Ocupado':'Abrir opções'} às ${slot.time}${split?' · '+column.name:''}`} disabled={occupied(slot.time,slot.duration)||Date.parse(date+'T'+slot.time+':00-03:00')<Date.now()} style={{top:slot.top,height:slot.duration/60*hourHeight}} onClick={()=>chooseTime(slot.time,column.id)}><span>{slot.time}</span></button>)}
+     {slots.map(slot=><button key={slot.time} type="button" className="agenda-slot major" aria-label={`${occupied(slot.time,slot.duration)?'Horário ocupado ou bloqueado, abrir opções':'Abrir opções'} às ${slot.time}${split?' · '+column.name:''}`} style={{top:slot.top,height:slot.duration/60*hourHeight}} onClick={()=>chooseTime(slot.time,column.id)}><span>{slot.time}</span></button>)}
      <i className="agenda-grid-end" style={{top:gridHeight}}/>
-     {columnBlocks.map(block=>{const layout=position(block);return <button key={block.id} type="button" className="agenda-event blocked" style={layout} onClick={()=>chooseBlock(block)}><small>{dateTime(block.starts_at)}–{new Date(block.ends_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'})}</small><strong>Agenda bloqueada{block.reason&&block.reason!=='Agenda bloqueada'?' · '+block.reason:''}</strong></button>})}
+     {columnBlocks.map(block=>{const layout=position(block);return <button key={block.id} type="button" className="agenda-event blocked" aria-label={`Abrir opções no bloqueio de ${column.name}`} style={layout} onClick={event=>chooseTime(timeWithinBlock(block,event.clientY,layout.top,event.currentTarget),column.id)} onContextMenu={event=>{event.preventDefault();chooseBlock(block)}}><small>{dateTime(block.starts_at)}–{new Date(block.ends_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'})}</small><strong>Agenda bloqueada{block.reason&&block.reason!=='Agenda bloqueada'?' · '+block.reason:''}</strong></button>})}
      {rows.map(appointment=>{const layout=position(appointment),lane=lanes.get(appointment.id)!;return <button key={appointment.id} type="button" className={`agenda-event ${appointment.status}${layout.height<44?' compact':''}${layout.height<25?' tiny':''}`} aria-label={`${appointment.customer_name}, ${appointment.professional_name}, ${appointment.service_name}, ${dateTime(appointment.starts_at)}`} style={{...layout,left:`calc(${lane.column*100/lane.columns}% + 5px)`,right:'auto',width:`calc(${100/lane.columns}% - 10px)`,...(lane.columns>1?{padding:'3px 6px'}:{})}} onClick={()=>chooseAppointment(appointment)}><small>{new Date(appointment.starts_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'})}–{new Date(appointment.ends_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'})}</small><strong>{!appointment.is_additional_service&&appointment.is_fit_in?'Encaixe · ':''}{appointment.service_name} · {appointment.customer_name}</strong></button>})}
     </div>
    </section>

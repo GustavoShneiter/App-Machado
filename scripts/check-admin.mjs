@@ -104,7 +104,7 @@ const result = await build({
     assert.equal(lanes.get('parallel-two').columns,1,'Different professionals must not share overlap lanes')
     const board=renderToString(h(AgendaSchedule,{date:'2098-03-10',columns:[{id:'p1',name:'Araújo'},{id:'p2',name:'Machado'},{id:'p3',name:'Gustavo'}],appointments:parallel.map(a=>({...a,starts_at:a.starts_at.replace('2026-11-23','2098-03-10'),ends_at:a.ends_at.replace('2026-11-23','2098-03-10')})),busyAppointments:parallel.map(a=>({...a,starts_at:a.starts_at.replace('2026-11-23','2098-03-10'),ends_at:a.ends_at.replace('2026-11-23','2098-03-10')})),blocks:[],split:true,chooseTime(){},chooseAppointment(){},chooseBlock(){}}))
     assert.ok(board.includes('Agenda de Araújo')&&board.includes('Agenda de Machado'),'A separate labeled column for every selected professional')
-    assert.ok(board.includes('Ocupado às 08:00 · Araújo')&&board.includes('Ocupado às 08:00 · Machado'))
+    assert.ok(board.includes('Horário ocupado ou bloqueado, abrir opções às 08:00 · Araújo')&&board.includes('Horário ocupado ou bloqueado, abrir opções às 08:00 · Machado'))
     assert.ok(board.includes('Abrir opções às 08:00 · Gustavo'),'A reservation for one professional must not block another')
     console.log('PASS Agenda conjunta: seleção válida, profissionais excluídos, colunas independentes e encaixes do mesmo profissional')
     assert.equal(addMonths('2026-01-31',1),'2026-02-28')

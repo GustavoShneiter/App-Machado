@@ -2,13 +2,12 @@ import {AgendaSchedule} from "./AgendaSchedule"
 import {resolveAgendaProfessionals} from "./agendaLayout"
 import {Capacitor} from "@capacitor/core"
 import {CustomerLookup} from "./CustomerLookup"
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CommissionFields } from "./CommissionFields";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useOperations } from "./OperationsStore";
 import { useCatalog } from "./CatalogStore";
-import { backend } from "./dataClient";
 import {
   cashBalance,
   commandTotal,
@@ -39,7 +38,7 @@ import {
 import { registerDismissibleLayer } from "./dismissibleLayers";
 import { AgendaCreateModal } from './AgendaScheduling';
 import { AgendaDatePicker } from './AgendaDatePicker';
-import { hoursForDay, recurringForDay } from './schedule';
+import { agendaTimesForDay, hoursForDay, recurringForDay, timeMinutes } from './schedule';
 import { ApprovedCashView } from './ApprovedCashView';
 import { ApprovedHome } from './ApprovedHome';
 import { AgentContactConsent } from './AgentWhatsApp';
@@ -278,61 +277,28 @@ export function AppointmentModal({
   );
   const [date, setDate] = useState(initialDate);
   const [time, setTime] = useState(initialTime);
-  const workHours=hoursForDay(operations.businessHours,date);
+  const workHours=useMemo(()=>hoursForDay(operations.businessHours,date),[operations.businessHours,date]);
   const openTime=workHours[0]?.opens_at.slice(0,5),closeTime=workHours[workHours.length-1]?.closes_at.slice(0,5);
   const [price, setPrice] = useState(
     String(services.find((s) => s.id === service)?.preco ?? 0),
   );
   const [duration, setDuration] = useState(services.find(s => s.id === service)?.duracao ?? 40);
-  const [slots, setSlots] = useState<
-    Array<{ time: string; available: boolean }>
-  >([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
-  const [slotsError, setSlotsError] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    if (fitIn || !backend || !service || !professional) {
-      setSlots([]);
-      setSlotsError(false);
-      setLoadingSlots(false);
-      return;
-    }
-    setLoadingSlots(true);
-    setSlotsError(false);
-    void backend
-      .rpc("public_booking_slots", {
-        chosen_service: service,
-        booking_day: date,
-        preferred_professional: professional,
-      })
-      .then(({ data, error: slotError }) => {
-        if (!alive) return;
-        const found = (data ?? []) as Array<{
-          slot_time: string;
-          available: boolean;
-        }>;
-        const mapped = slotError
-          ? []
-          : found.map((slot) => ({
-              time: String(slot.slot_time).slice(0, 5),
-              available: Boolean(slot.available),
-            }));
-        setSlots(mapped);
-        setSlotsError(Boolean(slotError));
-        setTime(current => current && !mapped.some(slot => slot.time === current && slot.available) ? "" : current);
-        setLoadingSlots(false);
-      })
-      .catch(() => {
-        if (!alive) return;
-        setSlots([]);
-        setSlotsError(true);
-        setLoadingSlots(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [service, professional, date, fitIn]);
-  const nextSlot = slots.find(slot => slot.available)?.time;
+  useEffect(() => { if (!service) { const first=services.find(item=>item.ativo); if(first){setService(first.id);setDuration(first.duracao);setPrice(String(first.preco))} } }, [service,services]);
+  useEffect(() => { if (!professional) setProfessional(professionals.find(item=>item.ativo)?.id??'') }, [professional,professionals]);
+  // Manual scheduling uses the unit's working hours, including past dates and
+  // blocked periods. The server remains authoritative for concurrent bookings.
+  const slots = useMemo(() => {
+    if (fitIn || !service || !professional) return [];
+    const minutes=services.find(item=>item.id===service)?.duracao??duration;
+    return agendaTimesForDay(operations.businessHours,date,operations.slotIntervalMinutes).map(slotTime=>{
+      const start=Date.parse(`${date}T${slotTime}:00-03:00`),end=start+minutes*60000;
+      const within=workHours.some(hour=>timeMinutes(slotTime)>=timeMinutes(hour.opens_at)&&end<=Date.parse(`${date}T${hour.closes_at.slice(0,5)}:00-03:00`));
+      const occupied=operations.appointments.some(item=>item.professional_id===professional&&!['cancelled','no_show'].includes(item.status)&&Date.parse(item.starts_at)<end&&Date.parse(item.ends_at)>start);
+      return {time:slotTime,available:within&&!occupied,within};
+    }).filter(slot=>slot.within);
+  },[date,duration,fitIn,operations.appointments,operations.businessHours,operations.slotIntervalMinutes,professional,service,services,workHours]);
+  const selectedSlotAvailable=fitIn||slots.some(slot=>slot.time===time&&slot.available);
+  const nextSlot=slots.find(slot=>slot.available&&Date.parse(`${date}T${slot.time}:00-03:00`)>=Date.now())?.time;
   return (
     <Modal title={fitIn ? 'Criar encaixe' : 'Novo agendamento'} close={close}>
       <form
@@ -417,7 +383,6 @@ export function AppointmentModal({
             <input
               type="date"
               required
-              min={dayKey()}
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />
@@ -436,10 +401,7 @@ export function AppointmentModal({
         </div>
         {fitIn ? <><div className="schedule-time-pair"><label className="field"><span>Horário do encaixe</span><input type="time" min={openTime} max={closeTime} disabled={!workHours.length} required value={time} onChange={event => setTime(event.target.value)} /></label><label className="field"><span>Duração do encaixe (minutos)</span><input type="number" min="5" max="480" required value={duration} onChange={event => setDuration(Number(event.target.value))} /></label></div><p className="form-hint">{workHours.length?`Funcionamento: ${openTime} às ${closeTime}. O atendimento precisa terminar até o fechamento.`:'Barbearia fechada neste dia. Escolha outra data.'}</p></> : <div className="admin-slot-picker">
           <span>Horário</span>
-          {loadingSlots ? (
-            <p>Buscando horários…</p>
-          ) : (
-            <>
+          <>
             {nextSlot && <button type="button" className="next-free-slot" onClick={() => setTime(nextSlot)}>Próximo horário livre: {nextSlot}</button>}
             <div className="slot-grid">
               {slots.map((slot) => (
@@ -455,14 +417,12 @@ export function AppointmentModal({
                 </button>
               ))}
             </div>
-            </>
-          )}
+          </>
         </div>}
-        {slotsError && <p role="alert" className="form-error">Não foi possível consultar os horários. Tente novamente após reabrir o agendamento.</p>}
-        {!fitIn && !loadingSlots &&
+        {!fitIn && time && !selectedSlotAvailable && <p className="form-hint">Este horário já tem atendimento. Para colocar outro atendimento no mesmo horário, escolha Criar encaixe.</p>}
+        {!fitIn &&
           professional &&
           service &&
-          !slotsError &&
           !slots.some((slot) => slot.available) && (
             <p className="form-hint">
               Não há horário livre para esse profissional e serviço nesta data.
@@ -473,7 +433,7 @@ export function AppointmentModal({
             {error}
           </p>
         )}
-        <button disabled={busy || loadingSlots || !time || !workHours.length} className="primary">
+        <button disabled={busy || !time || !workHours.length || !selectedSlotAvailable} className="primary">
           {busy ? "Salvando…" : "Salvar agendamento"}
         </button>
       </form>
@@ -579,7 +539,7 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
       {view==='list'&&<div className="approved-agenda-list">{rows.map(a=><button className="agenda-list-row" key={a.id} onClick={()=>setFocused(a)}><span className="agenda-list-time"><b>{new Date(a.starts_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'})}</b><small>{Math.round((Date.parse(a.ends_at)-Date.parse(a.starts_at))/60000)} min</small></span><span className="agenda-list-person"><strong>{a.customer_name}</strong><small><b>{a.professional_name}</b> · {a.service_name}</small><span className={'status-tag '+a.status}>{labels[a.status]??a.status}{a.is_fit_in?' · Encaixe':''}</span></span><ChevronRight size={17}/></button>)}{!rows.length&&<div className="approved-empty"><CalendarDays size={24}/><strong>Nenhum agendamento neste dia</strong><p>{closed?'A barbearia não abre neste dia. Consulte outra data.':'Crie um horário ou consulte outra data.'}</p>{!closed&&<button className="primary" onClick={()=>setSlotChoice('new')}>Novo agendamento</button>}</div>}{dayBlocks.length>0&&<details className="agenda-block-summary"><summary>{dayBlocks.length} bloqueios neste dia</summary>{dayBlocks.map(block=><button className="outline" key={block.id} onClick={()=>setFocusedBlock(block)}>{block.reason||'Agenda bloqueada'} · {dateTime(block.starts_at)}</button>)}</details>}</div>}
       {filtersOpen&&<Modal title="Filtro da agenda" close={()=>setFiltersOpen(false)}><label className="field"><span>Data</span><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label>{multi?<button className="outline" onClick={()=>{setFiltersOpen(false);setChoosingProfessionals(true)}}>Profissionais · {selectedIds.length} selecionados</button>:!professionalOnly&&<label className="field"><span>Profissional</span><select value={professional} onChange={e=>setProfessional(e.target.value)}>{activeProfessionals.map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}</select></label>}<label className="field"><span>Buscar cliente ou serviço</span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Nome do cliente ou serviço"/></label><button className="outline" onClick={()=>{setFiltersOpen(false);setBlocksOpen(true)}}>Gerenciar bloqueios</button><button className="primary" onClick={()=>setFiltersOpen(false)}>Aplicar filtros</button></Modal>}
       {choosingProfessionals&&<Modal title="Selecionar profissionais" close={()=>setChoosingProfessionals(false)}><p className="form-note">Escolha as agendas que deseja visualizar juntas. Mantenha pelo menos um profissional selecionado.</p><button className="outline" disabled={!activeProfessionals.length} onClick={()=>{setSelected(activeProfessionals.map(p=>p.id));if(activeProfessionals.length>1)setView('grid')}}>Selecionar todos</button><div className="agenda-team-options">{activeProfessionals.map(p=><label key={p.id}><input type="checkbox" checked={selectedIds.includes(p.id)} disabled={selectedIds.length===1&&selectedIds.includes(p.id)} onChange={()=>toggleProfessional(p.id)}/><span>{p.nome}</span></label>)}</div><button className="primary" onClick={()=>setChoosingProfessionals(false)}>Ver agendas</button></Modal>}
-      {view==='grid'&&<AgendaSchedule date={date} businessHours={data.businessHours} slotIntervalMinutes={data.slotIntervalMinutes} columns={selectedProfessionals.map(p=>({id:p.id,name:p.nome,photo:p.foto_url}))} appointments={rows} busyAppointments={calendarRows} blocks={dayBlocks} split={multi} compact={professionalOnly} chooseTime={(time,id)=>{setSlotProfessional(id);setSlotChoice(time)}} chooseBlock={setFocusedBlock} chooseAppointment={appointment=>{const command=data.commands.find(c=>c.appointment_id===appointment.id);if(command&&!professionalOnly)navigate(`/admin/comandas?comanda=${command.id}`);else setFocused(appointment)}}/>}
+      {view==='grid'&&<AgendaSchedule date={date} businessHours={data.businessHours} slotIntervalMinutes={data.slotIntervalMinutes} columns={selectedProfessionals.map(p=>({id:p.id,name:p.nome,photo:p.foto_url}))} appointments={rows} busyAppointments={calendarRows} blocks={dayBlocks} split={multi} compact={professionalOnly} chooseTime={(time,id)=>{setSlotProfessional(id);setSlotChoice(time)}} chooseBlock={setFocusedBlock} chooseAppointment={setFocused}/>}
       {calendarOpen && <AgendaDatePicker date={date} choose={setDate} close={() => setCalendarOpen(false)} />}
       {slotChoice && <AgendaCreateModal initialDate={date} initialTime={slotChoice==='new'?'':slotChoice} initialProfessional={slotProfessional||selectedIds[0]||professional} close={()=>setSlotChoice('')} manageBlocks={()=>{setSlotChoice('');setBlocksOpen(true)}} />}
       {blocksOpen && <Modal title="Bloqueios da agenda" close={()=>setBlocksOpen(false)}><div className="schedule-block-list">
@@ -622,6 +582,7 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
           <AppointmentIdentity appointment={focused} />
           <div className="row-actions agenda-detail-actions">
             {data.commands.some(c=>c.appointment_id===focused.id)&&<button className="approved-secondary" onClick={()=>navigate((professionalOnly?'/profissional/atendimentos':'/admin/comandas')+'?comanda='+data.commands.find(c=>c.appointment_id===focused.id)?.id)}>Ver atendimento e pagamento</button>}
+            <button className="outline" onClick={()=>{setSlotProfessional(focused.professional_id);setSlotChoice(new Date(focused.starts_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}));setFocused(null)}}>Criar encaixe neste horário</button>
             {!["completed", "cancelled", "no_show"].includes(
               focused.status,
             ) && (
