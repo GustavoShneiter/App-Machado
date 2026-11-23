@@ -1,3 +1,6 @@
+import {AgendaSchedule} from "./AgendaSchedule"
+import {resolveAgendaProfessionals} from "./agendaLayout"
+import {Capacitor} from "@capacitor/core"
 import {CustomerLookup} from "./CustomerLookup"
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CommissionFields } from "./CommissionFields";
@@ -36,7 +39,7 @@ import {
 import { registerDismissibleLayer } from "./dismissibleLayers";
 import { AgendaCreateModal } from './AgendaScheduling';
 import { AgendaDatePicker } from './AgendaDatePicker';
-import { agendaTimesForDay, hoursForDay, timeMinutes, minutesTime, recurringForDay } from './schedule';
+import { hoursForDay, recurringForDay } from './schedule';
 import { ApprovedCashView } from './ApprovedCashView';
 import { ApprovedHome } from './ApprovedHome';
 import { AgentContactConsent } from './AgentWhatsApp';
@@ -472,13 +475,15 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
   const navigate = useNavigate();
   const [date, setDate] = useState(dayKey());
   const [professional, setProfessional] = useState("");
+  const multi=!professionalOnly&&!Capacitor.isNativePlatform();
+  const [selected,setSelected]=useState<string[]|null>(null),[choosingProfessionals,setChoosingProfessionals]=useState(false),[slotProfessional,setSlotProfessional]=useState('');
   const [focused, setFocused] = useState<Appointment | null>(null);
   const [focusedBlock, setFocusedBlock] = useState<ScheduleBlock | null>(null);
   const [slotChoice, setSlotChoice] = useState("");
   const [blocksOpen, setBlocksOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [view, setView] = useState('list'), [filtersOpen, setFiltersOpen] = useState(false), [search, setSearch] = useState('');
-  useEffect(() => { const open = () => setSlotChoice('new'); window.addEventListener('agenda:create',open); return () => window.removeEventListener('agenda:create',open); }, []);
+  useEffect(() => { const open = () => {setSlotProfessional('');setSlotChoice('new')}; window.addEventListener('agenda:create',open); return () => window.removeEventListener('agenda:create',open); }, []);
   const [confirmation, setConfirmation] = useState<{
     appointment: Appointment;
     status: string;
@@ -491,8 +496,15 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
       activeProfessionals.length &&
       !activeProfessionals.some((item) => item.id === professional)
     )
-      setProfessional(activeProfessionals[0].id);
-  }, [activeProfessionals, professional]);
+      setProfessional(activeProfessionals.find(p=>selected?.includes(p.id))?.id??activeProfessionals[0].id);
+  }, [activeProfessionals, professional, selected]);
+  const selectedIds=multi?resolveAgendaProfessionals(selected,activeProfessionals.map(p=>p.id),professional):[professional];
+  const selectedProfessionals=activeProfessionals.filter(p=>selectedIds.includes(p.id));
+  const toggleProfessional=(id:string)=>{
+    const next=selectedIds.includes(id)?selectedIds.filter(value=>value!==id):[...selectedIds,id];
+    if(!next.length)return;
+    setSelected(next);setProfessional(next[0]);if(next.length>1)setView('grid');
+  };
   const selectedDate = new Date(`${date}T12:00:00-03:00`);
   const weekStart = new Date(selectedDate);
   weekStart.setDate(selectedDate.getDate() - (selectedDate.getDay()+6)%7);
@@ -507,18 +519,19 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
       number: day.getDate(),
     };
   });
-  const rows = data.appointments
+  const calendarRows = data.appointments
     .filter(
       (a) =>
         a.status !== "cancelled" &&
         dayKey(a.starts_at) === date &&
-        (!professional || a.professional_id === professional),
+        (multi?selectedIds.includes(a.professional_id):!professional||a.professional_id===professional),
     )
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  const rows=calendarRows.filter(a=>!search||[a.customer_name,a.service_name,a.professional_name].some(v=>v.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR'))));
   const dayStart = new Date(date+'T00:00:00-03:00').getTime();
   const dayEnd = dayStart+86400000;
   const dayBlocks = [...data.blocks,...recurringForDay(data.recurringBlocks ?? [],date)]
-    .filter(block => new Date(block.starts_at).getTime()<dayEnd && new Date(block.ends_at).getTime()>dayStart && (!professional || block.professional_id===professional))
+    .filter(block => new Date(block.starts_at).getTime()<dayEnd && new Date(block.ends_at).getTime()>dayStart && (multi?selectedIds.includes(block.professional_id):!professional||block.professional_id===professional))
     .sort((a,b)=>a.starts_at.localeCompare(b.starts_at));
   const shiftDate = (amount: number) => {
     const next = new Date(selectedDate);
@@ -530,34 +543,6 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
     year: "numeric",
   });
   const workHours=hoursForDay(data.businessHours,date),closed=!workHours.length;
-  const firstHour=Math.floor(Math.min(...workHours.map(h=>timeMinutes(h.opens_at)),...rows.map(a=>timeMinutes(new Date(a.starts_at).toLocaleTimeString('en-GB',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}))),...(workHours.length?[]:[480]))/60);
-  const lastHour=Math.ceil(Math.max(...workHours.map(h=>timeMinutes(h.closes_at)),...rows.map(a=>timeMinutes(new Date(a.ends_at).toLocaleTimeString('en-GB',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}))),...(workHours.length?[]:[1320]))/60);
-  const hourHeight = professionalOnly ? 66 : 108;
-  const gridHeight=(lastHour-firstHour)*hourHeight;
-  const slots=agendaTimesForDay(data.businessHours,date).map(time=>{const [h,m]=time.split(':').map(Number);return {time,top:((h*60+m-firstHour*60)/60)*hourHeight,major:true};});
-  const hours=[...slots.map(slot=>({time:slot.time,top:slot.top})),{time:minutesTime(lastHour*60),top:gridHeight}];
-  const position=(entry:{starts_at:string;ends_at:string})=>{
-    const gridStart=new Date(date+'T'+minutesTime(firstHour*60)+':00-03:00').getTime();
-    const start=Math.max(gridStart,new Date(entry.starts_at).getTime());
-    const end=Math.min(gridStart+(lastHour-firstHour)*3600000,new Date(entry.ends_at).getTime());
-    return {top:Math.max(0,(start-gridStart)/3600000*hourHeight),height:Math.max(24,(end-start)/3600000*hourHeight)};
-  };
-  // Pack overlapping bookings into visible lanes rather than painting one over another.
-  const lanes=new Map<string,{column:number;columns:number}>();
-  let cluster:Appointment[]=[],clusterEnd=0;
-  const finishCluster=()=>{
-    const ends:number[]=[];
-    for(const entry of cluster){const start=new Date(entry.starts_at).getTime();let column=ends.findIndex(end=>end<=start);if(column<0)column=ends.length;ends[column]=new Date(entry.ends_at).getTime();lanes.set(entry.id,{column,columns:0});}
-    for(const entry of cluster)lanes.get(entry.id)!.columns=ends.length;
-    cluster=[];
-  };
-  for(const entry of rows){const start=new Date(entry.starts_at).getTime();if(cluster.length&&start>=clusterEnd)finishCluster();cluster.push(entry);clusterEnd=Math.max(cluster.length===1?0:clusterEnd,new Date(entry.ends_at).getTime());}
-  finishCluster();
-  const slotDate=(time:string)=>new Date(date+'T'+time+':00-03:00');
-  const occupied=(time:string)=>{
-    const start=slotDate(time).getTime(),end=start+Math.min(40,(lastHour*60-(Number(time.slice(0,2))*60+Number(time.slice(3)))))*60000;
-    return [...rows.filter(row=>row.status!=='no_show'),...dayBlocks].some(entry=>new Date(entry.starts_at).getTime()<end&&new Date(entry.ends_at).getTime()>start);
-  };
   const nextStatus = (status: string) =>
     status === "arrived"
       ? "in_service"
@@ -575,117 +560,16 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
       <header className="approved-agenda-heading"><h1>{professionalOnly?'Minha Agenda':'Agenda'}</h1><button className="text-action" onClick={()=>setFiltersOpen(true)}><SlidersHorizontal size={17}/>Filtro</button></header>
       <section className="agenda-daybar" aria-label="Navegação por semana"><button aria-label="Semana anterior" onClick={()=>shiftDate(-7)}><ChevronLeft size={20}/></button><button className="agenda-week-picker" aria-label="Semana selecionada: escolher mês e ano" aria-haspopup="dialog" onClick={()=>setCalendarOpen(true)}><CalendarDays size={18}/><strong>{monthLabel}</strong><ChevronDown size={15}/></button><button aria-label="Próxima semana" onClick={()=>shiftDate(7)}><ChevronRight size={20}/></button></section>
       <section className="agenda-week" aria-label="Dias da semana">{weekDays.map(day=><button type="button" className={date===day.key?'active':''} aria-pressed={date===day.key} key={day.key} onClick={()=>setDate(day.key)}><small>{day.label}</small><strong>{day.number}</strong></button>)}</section>
-      {!professionalOnly&&<section className="agenda-professionals" aria-label="Selecionar profissional">{activeProfessionals.map(item=><button key={item.id} type="button" className={professional===item.id?'active':''} aria-pressed={professional===item.id} onClick={()=>setProfessional(item.id)}>{item.foto_url?<img src={item.foto_url} alt=""/>:<span>{item.iniciais||item.nome.slice(0,2).toUpperCase()}</span>}<small>{item.nome}</small></button>)}</section>}
+      {!professionalOnly&&<section className="agenda-professionals" aria-label="Selecionar profissional">{activeProfessionals.map(item=><button key={item.id} type="button" className={selectedIds.includes(item.id)?'active':''} aria-pressed={selectedIds.includes(item.id)} onClick={()=>multi?toggleProfessional(item.id):setProfessional(item.id)}>{item.foto_url?<img src={item.foto_url} alt=""/>:<span>{item.iniciais||item.nome.slice(0,2).toUpperCase()}</span>}<small>{item.nome}</small></button>)}</section>}
+      {multi&&<div className="agenda-team-toolbar"><span>{selectedIds.length} {selectedIds.length===1?'profissional selecionado':'profissionais selecionados'}</span><button className="text-action" onClick={()=>setChoosingProfessionals(true)}>Selecionar profissionais</button></div>}
       {closed&&<p className="form-note" role="status">Barbearia fechada neste dia. Os agendamentos existentes continuam disponíveis para consulta.</p>}
-      <div className="agenda-list-toolbar"><span>{rows.filter(a=>!search||[a.customer_name,a.service_name,a.professional_name].some(v=>v.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR')))).length} agendamentos</span><div role="group" aria-label="Visualização da agenda"><button aria-label="Lista" aria-pressed={view==='list'} onClick={()=>setView('list')}><List size={18}/></button><button aria-label="Grade de horários" aria-pressed={view==='grid'} onClick={()=>setView('grid')}><CalendarRange size={18}/></button></div></div>
-      {view==='list'&&<div className="approved-agenda-list">{rows.filter(a=>!search||[a.customer_name,a.service_name,a.professional_name].some(v=>v.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR')))).map(a=><button className="agenda-list-row" key={a.id} onClick={()=>setFocused(a)}><span className="agenda-list-time"><b>{new Date(a.starts_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'})}</b><small>{Math.round((Date.parse(a.ends_at)-Date.parse(a.starts_at))/60000)} min</small></span><span className="agenda-list-person"><strong>{a.customer_name}</strong><small><b>{a.professional_name}</b> · {a.service_name}</small><span className={'status-tag '+a.status}>{labels[a.status]??a.status}{a.is_fit_in?' · Encaixe':''}</span></span><ChevronRight size={17}/></button>)}{!rows.length&&<div className="approved-empty"><CalendarDays size={24}/><strong>Nenhum agendamento neste dia</strong><p>{closed?'A barbearia não abre neste dia. Consulte outra data.':'Crie um horário ou consulte outra data.'}</p>{!closed&&<button className="primary" onClick={()=>setSlotChoice('new')}>Novo agendamento</button>}</div>}{dayBlocks.length>0&&<details className="agenda-block-summary"><summary>{dayBlocks.length} bloqueios neste dia</summary>{dayBlocks.map(block=><button className="outline" key={block.id} onClick={()=>setFocusedBlock(block)}>{block.reason||'Agenda bloqueada'} · {dateTime(block.starts_at)}</button>)}</details>}</div>}
-      {filtersOpen&&<Modal title="Filtro da agenda" close={()=>setFiltersOpen(false)}><label className="field"><span>Data</span><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label>{!professionalOnly&&<label className="field"><span>Profissional</span><select value={professional} onChange={e=>setProfessional(e.target.value)}>{activeProfessionals.map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}</select></label>}<label className="field"><span>Buscar cliente ou serviço</span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Nome do cliente ou serviço"/></label><button className="outline" onClick={()=>{setFiltersOpen(false);setBlocksOpen(true)}}>Gerenciar bloqueios</button><button className="primary" onClick={()=>setFiltersOpen(false)}>Aplicar filtros</button></Modal>}
-      {view==='grid'&&<section className="agenda-schedule" aria-label="Horários do dia">
-
-        <div
-          className="agenda-time-axis"
-          style={{ height: (lastHour - firstHour) * hourHeight }}
-        >
-          {hours.map((hour) => (
-            <time style={{ top: hour.top }} key={hour.time}>
-              {hour.time}
-            </time>
-          ))}
-        </div>
-        <div
-          className="agenda-time-grid"
-          style={{ height: (lastHour - firstHour) * hourHeight }}
-        >
-          {slots.map((slot) => (
-            <button
-              type="button"
-              className={`agenda-slot ${slot.major ? "major" : ""}`}
-              aria-label={`${occupied(slot.time) ? "Ocupado" : "Abrir opções"} às ${slot.time}`}
-              disabled={
-                occupied(slot.time) ||
-                slotDate(slot.time).getTime() < Date.now()
-              }
-              style={{ top: slot.top, height: Math.min(40,lastHour*60-Number(slot.time.slice(0,2))*60-Number(slot.time.slice(3)))/60*hourHeight }}
-              key={slot.time}
-              onClick={() => setSlotChoice(slot.time)}
-            >
-              <span>{slot.time}</span>
-            </button>
-          ))}
-          <i
-            className="agenda-grid-end"
-            style={{ top: (lastHour - firstHour) * hourHeight }}
-          />
-          {dayBlocks.map((block) => {
-            const layout = position(block);
-            return (
-              <button
-                type="button"
-                className="agenda-event blocked"
-                style={{ top: layout.top, height: layout.height }}
-                key={block.id}
-                onClick={() => setFocusedBlock(block)}
-              >
-                <small>
-                  {new Date(block.starts_at).toLocaleTimeString("pt-BR", {
-                    hour: "2-digit",
-                    minute: "2-digit", timeZone: "America/Sao_Paulo",
-                  })}
-                  –
-                  {new Date(block.ends_at).toLocaleTimeString("pt-BR", {
-                    hour: "2-digit",
-                    minute: "2-digit", timeZone: "America/Sao_Paulo",
-                  })}
-                </small>
-                <strong>
-                  Agenda bloqueada
-                  {block.reason && block.reason !== "Agenda bloqueada"
-                    ? ` · ${block.reason}`
-                    : ""}
-                </strong>
-              </button>
-            );
-          })}
-          {rows.map((appointment) => {
-            const layout = position(appointment);
-            const lane=lanes.get(appointment.id)!;
-            const command = data.commands.find(
-              (item) => item.appointment_id === appointment.id,
-            );
-            return (
-              <button
-                type="button"
-                className={`agenda-event ${appointment.status}${professionalOnly && layout.height < 40 && lane.columns===1 ? ' compact' : ''}`}
-                aria-label={professionalOnly ? `${appointment.customer_name}, ${appointment.service_name}, ${dateTime(appointment.starts_at)}` : undefined}
-                style={{ top: layout.top, height: layout.height, left: 'calc('+lane.column*100/lane.columns+'% + 5px)',right:'auto',width:'calc('+100/lane.columns+'% - 10px)',...(lane.columns>1?{padding:'3px 6px'}:{}) }}
-                key={appointment.id}
-                onClick={() =>
-                  command && !professionalOnly
-                    ? navigate(`/admin/comandas?comanda=${command.id}`)
-                    : setFocused(appointment)
-                }
-              >
-                <small>
-                  {new Date(appointment.starts_at).toLocaleTimeString("pt-BR", {
-                    hour: "2-digit",
-                    minute: "2-digit", timeZone: "America/Sao_Paulo",
-                  })}
-                  –
-                  {new Date(appointment.ends_at).toLocaleTimeString("pt-BR", {
-                    hour: "2-digit",
-                    minute: "2-digit", timeZone: "America/Sao_Paulo",
-                  })}
-                </small>
-                <strong>
-                  {!appointment.is_additional_service && appointment.is_fit_in ? "Encaixe · " : ""}{appointment.service_name} · {appointment.customer_name}
-                </strong>
-              </button>
-            );
-          })}
-        </div>
-      </section>}
+      <div className="agenda-list-toolbar"><span>{rows.length} agendamentos</span><div role="group" aria-label="Visualização da agenda"><button aria-label="Lista" aria-pressed={view==='list'} onClick={()=>setView('list')}><List size={18}/></button><button aria-label="Grade de horários" aria-pressed={view==='grid'} onClick={()=>setView('grid')}><CalendarRange size={18}/></button></div></div>
+      {view==='list'&&<div className="approved-agenda-list">{rows.map(a=><button className="agenda-list-row" key={a.id} onClick={()=>setFocused(a)}><span className="agenda-list-time"><b>{new Date(a.starts_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'})}</b><small>{Math.round((Date.parse(a.ends_at)-Date.parse(a.starts_at))/60000)} min</small></span><span className="agenda-list-person"><strong>{a.customer_name}</strong><small><b>{a.professional_name}</b> · {a.service_name}</small><span className={'status-tag '+a.status}>{labels[a.status]??a.status}{a.is_fit_in?' · Encaixe':''}</span></span><ChevronRight size={17}/></button>)}{!rows.length&&<div className="approved-empty"><CalendarDays size={24}/><strong>Nenhum agendamento neste dia</strong><p>{closed?'A barbearia não abre neste dia. Consulte outra data.':'Crie um horário ou consulte outra data.'}</p>{!closed&&<button className="primary" onClick={()=>setSlotChoice('new')}>Novo agendamento</button>}</div>}{dayBlocks.length>0&&<details className="agenda-block-summary"><summary>{dayBlocks.length} bloqueios neste dia</summary>{dayBlocks.map(block=><button className="outline" key={block.id} onClick={()=>setFocusedBlock(block)}>{block.reason||'Agenda bloqueada'} · {dateTime(block.starts_at)}</button>)}</details>}</div>}
+      {filtersOpen&&<Modal title="Filtro da agenda" close={()=>setFiltersOpen(false)}><label className="field"><span>Data</span><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label>{multi?<button className="outline" onClick={()=>{setFiltersOpen(false);setChoosingProfessionals(true)}}>Profissionais · {selectedIds.length} selecionados</button>:!professionalOnly&&<label className="field"><span>Profissional</span><select value={professional} onChange={e=>setProfessional(e.target.value)}>{activeProfessionals.map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}</select></label>}<label className="field"><span>Buscar cliente ou serviço</span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Nome do cliente ou serviço"/></label><button className="outline" onClick={()=>{setFiltersOpen(false);setBlocksOpen(true)}}>Gerenciar bloqueios</button><button className="primary" onClick={()=>setFiltersOpen(false)}>Aplicar filtros</button></Modal>}
+      {choosingProfessionals&&<Modal title="Selecionar profissionais" close={()=>setChoosingProfessionals(false)}><p className="form-note">Escolha as agendas que deseja visualizar juntas. Mantenha pelo menos um profissional selecionado.</p><button className="outline" disabled={!activeProfessionals.length} onClick={()=>{setSelected(activeProfessionals.map(p=>p.id));if(activeProfessionals.length>1)setView('grid')}}>Selecionar todos</button><div className="agenda-team-options">{activeProfessionals.map(p=><label key={p.id}><input type="checkbox" checked={selectedIds.includes(p.id)} disabled={selectedIds.length===1&&selectedIds.includes(p.id)} onChange={()=>toggleProfessional(p.id)}/><span>{p.nome}</span></label>)}</div><button className="primary" onClick={()=>setChoosingProfessionals(false)}>Ver agendas</button></Modal>}
+      {view==='grid'&&<AgendaSchedule date={date} businessHours={data.businessHours} columns={selectedProfessionals.map(p=>({id:p.id,name:p.nome,photo:p.foto_url}))} appointments={rows} busyAppointments={calendarRows} blocks={dayBlocks} split={multi} compact={professionalOnly} chooseTime={(time,id)=>{setSlotProfessional(id);setSlotChoice(time)}} chooseBlock={setFocusedBlock} chooseAppointment={appointment=>{const command=data.commands.find(c=>c.appointment_id===appointment.id);if(command&&!professionalOnly)navigate(`/admin/comandas?comanda=${command.id}`);else setFocused(appointment)}}/>}
       {calendarOpen && <AgendaDatePicker date={date} choose={setDate} close={() => setCalendarOpen(false)} />}
-      {slotChoice && <AgendaCreateModal initialDate={date} initialTime={slotChoice==='new'?'':slotChoice} initialProfessional={professional} close={()=>setSlotChoice('')} manageBlocks={()=>{setSlotChoice('');setBlocksOpen(true)}} />}
+      {slotChoice && <AgendaCreateModal initialDate={date} initialTime={slotChoice==='new'?'':slotChoice} initialProfessional={slotProfessional||selectedIds[0]||professional} close={()=>setSlotChoice('')} manageBlocks={()=>{setSlotChoice('');setBlocksOpen(true)}} />}
       {blocksOpen && <Modal title="Bloqueios da agenda" close={()=>setBlocksOpen(false)}><div className="schedule-block-list">
         <button className="primary" onClick={()=>{setBlocksOpen(false);setSlotChoice('new')}}>Novo bloqueio ou agendamento</button>
         {(data.recurringBlocks??[]).filter(rule=>rule.professional_id===professional).map(rule=><article key={rule.id}><strong>{rule.reason||'Bloqueio recorrente'}</strong><p>{rule.weekdays.map(day=>['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'][day-1]).join(', ')} · {rule.start_time.slice(0,5)}–{rule.end_time.slice(0,5)}</p><small>{rule.starts_on} até {rule.until_on||'sempre'}</small><button className="danger-button" disabled={busy} onClick={async()=>{if(window.confirm('Excluir toda esta recorrência?') )await run('delete_recurring_block',{id:rule.id})}}>Excluir recorrência</button></article>)}

@@ -17,6 +17,8 @@ const result = await build({
     import {fixture} from './scripts/operations-fixture.mjs'
     import {addDays,addMonths,agendaTimes,agendaTimesForDay,hoursForDay,recurringForDay} from './src/schedule'
     import {matchingCustomers} from './src/customerSearch'
+    import {agendaLanes,resolveAgendaProfessionals} from './src/agendaLayout'
+    import {AgendaSchedule} from './src/AgendaSchedule'
     const pages=['','agenda','caixa','comandas','clientes','produtos','servicos','profissionais','pacotes','empresa','relatorios','configuracoes','horarios']
     for(const data of [emptyOperations,fixture]){
       const value={data,loading:false,error:'',busy:false,refreshed:'12:00',refresh:async()=>{},clearError:()=>{},run:async()=>true}
@@ -83,6 +85,19 @@ const result = await build({
     assert.equal(matchingCustomers(directory,'inexistente').length,0)
     assert.equal(matchingCustomers(directory,'   ').length,0)
     console.log('PASS busca de clientes: acentos, termos, homônimos, telefone, ausência de telefone e busca vazia')
+    assert.deepEqual(resolveAgendaProfessionals(['p2','p1','other-unit'],['p1','p2'],'p1'),['p1','p2'])
+    assert.deepEqual(resolveAgendaProfessionals(['deleted'],['p1','p2'],'deleted'),['p1'])
+    const parallel=[{...fixture.appointments[0],id:'parallel-one',starts_at:'2026-11-23T08:00:00-03:00',ends_at:'2026-11-23T08:40:00-03:00'},
+      {...fixture.appointments[0],id:'parallel-two',professional_id:'p2',starts_at:'2026-11-23T08:00:00-03:00',ends_at:'2026-11-23T08:40:00-03:00'},
+      {...fixture.appointments[0],id:'fit-in',starts_at:'2026-11-23T08:10:00-03:00',ends_at:'2026-11-23T08:25:00-03:00'}]
+    const lanes=agendaLanes(parallel)
+    assert.equal(lanes.get('parallel-one').columns,2);assert.equal(lanes.get('fit-in').columns,2)
+    assert.equal(lanes.get('parallel-two').columns,1,'Different professionals must not share overlap lanes')
+    const board=renderToString(h(AgendaSchedule,{date:'2098-03-10',columns:[{id:'p1',name:'Araújo'},{id:'p2',name:'Machado'},{id:'p3',name:'Gustavo'}],appointments:parallel.map(a=>({...a,starts_at:a.starts_at.replace('2026-11-23','2098-03-10'),ends_at:a.ends_at.replace('2026-11-23','2098-03-10')})),busyAppointments:parallel.map(a=>({...a,starts_at:a.starts_at.replace('2026-11-23','2098-03-10'),ends_at:a.ends_at.replace('2026-11-23','2098-03-10')})),blocks:[],split:true,chooseTime(){},chooseAppointment(){},chooseBlock(){}}))
+    assert.ok(board.includes('Agenda de Araújo')&&board.includes('Agenda de Machado'),'A separate labeled column for every selected professional')
+    assert.ok(board.includes('Ocupado às 08:00 · Araújo')&&board.includes('Ocupado às 08:00 · Machado'))
+    assert.ok(board.includes('Abrir opções às 08:00 · Gustavo'),'A reservation for one professional must not block another')
+    console.log('PASS Agenda conjunta: seleção válida, profissionais excluídos, colunas independentes e encaixes do mesmo profissional')
     assert.equal(addMonths('2026-01-31',1),'2026-02-28')
     assert.equal(addMonths('2028-02-29',12),'2029-02-28')
     assert.equal(addDays('2026-12-31',1),'2027-01-01')
