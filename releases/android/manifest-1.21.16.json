@@ -1,0 +1,38 @@
+{
+  "date": "2026-11-23",
+  "admin": "1.21.16",
+  "professional": "1.3.16",
+  "backend": "contabo",
+  "status": "available",
+  "artifacts": [
+    {
+      "bytes": 5975429,
+      "signingCertificateSha256": "2d1fb76948ff838499c639defeaaebc4ee3834792f7bec11581066640ebf3094",
+      "sha256": "c678b28fc19eb8ce5e1f3a0e58b261f72147272fe5298c05734e30ae5241d600",
+      "file": "releases/android/Machado-Gestao-v1.21.16.apk",
+      "version": "1.21.16",
+      "versionCode": 49,
+      "edition": "Gestao"
+    },
+    {
+      "bytes": 5884668,
+      "signingCertificateSha256": "2d1fb76948ff838499c639defeaaebc4ee3834792f7bec11581066640ebf3094",
+      "sha256": "6796dc7694413c1bee27561518b1a5a35e9659f0bbadfb05c3951dcbcdf41228",
+      "file": "releases/android/Machado-Profissional-v1.3.16.apk",
+      "version": "1.3.16",
+      "versionCode": 24,
+      "edition": "Profissional"
+    }
+  ],
+  "changes": [
+    "Agendas de Gestão e Profissional: linhas de horário mais escuras e agendamentos em verde de maior contraste",
+    "Comandas abertas ou prontas: verde claro; comandas finalizadas: verde escuro, nos dois apps"
+  ],
+  "verification": {
+    "physicalAndroidDevice": "not tested",
+    "lint": "passed",
+    "build": "passed",
+    "adminRoutes": "passed",
+    "apkSignature": "passed: both APKs use the established signing certificate"
+  }
+}

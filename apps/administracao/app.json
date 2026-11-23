@@ -1,7 +1,7 @@
 {
   "name": "Machado Gestão",
-  "version": "1.21.15",
-  "androidVersionCode": 48,
+  "version": "1.21.16",
+  "androidVersionCode": 49,
   "applicationId": "com.barbeariamachado.gestao",
   "webPath": "/app",
   "pcPath": "/admin",
