@@ -1,0 +1,39 @@
+{
+  "date": "2026-11-23",
+  "admin": "1.21.14",
+  "professional": "1.3.14",
+  "backend": "contabo",
+  "status": "available",
+  "artifacts": [
+    {
+      "sha256": "4ffa8a4b965fbefc5fd86999fdac4207aca5f34bcba747e079f84cb92f1c7a98",
+      "versionCode": 47,
+      "version": "1.21.14",
+      "file": "releases/android/Machado-Gestao-v1.21.14.apk",
+      "edition": "Gestao",
+      "bytes": 5973617,
+      "signingCertificateSha256": "2d1fb76948ff838499c639defeaaebc4ee3834792f7bec11581066640ebf3094"
+    },
+    {
+      "sha256": "16031e12235826c409145b1036260a14bbcd99e6abfbaa59fd12d002756d54fe",
+      "versionCode": 22,
+      "version": "1.3.14",
+      "file": "releases/android/Machado-Profissional-v1.3.14.apk",
+      "edition": "Profissional",
+      "bytes": 5883656,
+      "signingCertificateSha256": "2d1fb76948ff838499c639defeaaebc4ee3834792f7bec11581066640ebf3094"
+    }
+  ],
+  "changes": [
+    "Intervalo de horários configurável por unidade, inicial de 15 minutos, na seção Horário de funcionamento",
+    "Gestão, Profissional, página pública e agente usam o mesmo intervalo da unidade",
+    "Cartões da agenda respeitam sua altura e coluna sem transbordar"
+  ],
+  "verification": {
+    "physicalAndroidDevice": "not tested",
+    "lint": "passed",
+    "build": "passed",
+    "productionBrowser": "passed: admin settings, agenda grid, public 15-minute slots and occupied slots",
+    "database": "passed: interval, public availability, permissions, unit isolation, rollback of fixtures"
+  }
+}

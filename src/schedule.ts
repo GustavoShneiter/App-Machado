@@ -7,8 +7,9 @@ export function hoursForDay(hours:import('./operations').BusinessHour[]|undefine
 }
 export const timeMinutes=(time:string)=>Number(time.slice(0,2))*60+Number(time.slice(3,5))
 export const minutesTime=(minutes:number)=>`${String(Math.floor(minutes/60)).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`
-export function agendaTimesForDay(hours:import('./operations').BusinessHour[]|undefined,date:string) {
-  return hoursForDay(hours,date).flatMap(row=>Array.from({length:Math.ceil((timeMinutes(row.closes_at)-timeMinutes(row.opens_at))/40)},(_,i)=>minutesTime(timeMinutes(row.opens_at)+i*40)))
+export function agendaTimesForDay(hours:import('./operations').BusinessHour[]|undefined,date:string,interval=15) {
+  const minutes=Number.isInteger(interval)&&interval>=5&&interval<=120?interval:15
+  return hoursForDay(hours,date).flatMap(row=>Array.from({length:Math.ceil((timeMinutes(row.closes_at)-timeMinutes(row.opens_at))/minutes)},(_,i)=>minutesTime(timeMinutes(row.opens_at)+i*minutes)))
 }
 export const agendaTimes=agendaTimesForDay(defaultBusinessHours,'2026-11-23')
 export function addDays(date:string,days:number) {

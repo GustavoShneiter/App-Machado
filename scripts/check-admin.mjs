@@ -101,17 +101,19 @@ const result = await build({
     assert.equal(addMonths('2026-01-31',1),'2026-02-28')
     assert.equal(addMonths('2028-02-29',12),'2029-02-28')
     assert.equal(addDays('2026-12-31',1),'2027-01-01')
-    assert.deepEqual(agendaTimes.slice(0,3),['08:00','08:40','09:20']);assert.equal(agendaTimes.at(-1),'21:20')
+    assert.deepEqual(agendaTimes.slice(0,3),['08:00','08:15','08:30']);assert.equal(agendaTimes.at(-1),'21:45')
     assert.deepEqual(agendaTimesForDay(undefined,'2026-11-22'),[],'Sunday is closed by default')
     assert.equal(hoursForDay(undefined,'2026-11-23')[0].closes_at,'22:00')
-    assert.deepEqual(agendaTimesForDay([{weekday:1,opens_at:'09:00',closes_at:'10:00'}],'2026-11-23'),['09:00','09:40'])
+    assert.deepEqual(agendaTimesForDay([{weekday:1,opens_at:'09:00',closes_at:'10:00'}],'2026-11-23'),['09:00','09:15','09:30','09:45'])
+    assert.deepEqual(agendaTimesForDay([{weekday:1,opens_at:'09:00',closes_at:'10:00'}],'2026-11-23',20),['09:00','09:20','09:40'])
+    assert.deepEqual(agendaTimesForDay([{weekday:1,opens_at:'09:00',closes_at:'10:00'}],'2026-11-23',40),['09:00','09:40'])
     assert.deepEqual(agendaTimesForDay([],'2026-11-23'),[],'An entirely closed week must not use defaults')
     const rule={id:'rule',professional_id:'p1',starts_on:'2026-10-24',until_on:null,weekdays:[6],start_time:'00:00',end_time:'24:00',reason:'Sábado'}
     const blocks=recurringForDay([rule],'2026-10-24')
     assert.equal(blocks.length,1);assert.equal(blocks[0].ends_at,'2026-10-25T00:00:00-03:00')
     assert.equal(recurringForDay([{...rule,until_on:'2026-10-30'}],'2026-10-31').length,0)
     assert.equal(recurringForDay([rule],'2026-10-25').length,0)
-    console.log('PASS Agenda: fim do mês, ano bissexto, intervalo de 40 minutos e recorrência com fuso da barbearia.')
+    console.log('PASS Agenda: fim do mês, ano bissexto, intervalos configuráveis e recorrência com fuso da barbearia.')
   `,
     resolveDir: process.cwd(),
     loader: "tsx",

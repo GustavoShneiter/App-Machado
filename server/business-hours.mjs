@@ -11,7 +11,7 @@ export async function businessHours(client,actor,body){
  if(body){
   if(!editable)throw fail('O Gestão precisa autorizar sua conta para alterar os horários.',403)
   if(body.action==='permissions'&&!administrative)throw fail('Somente o Gestão pode conceder permissões.',403)
-  const current=(await client.query('select hours_revision from business_settings where id=true for update')).rows[0]
+  const current=(await client.query('select hours_revision,slot_interval_minutes from business_settings where id=true for update')).rows[0]
   if(!Number.isInteger(body.revision)||body.revision!==current.hours_revision)throw fail('Os horários foram atualizados por outra conta. Recarregue esta tela antes de salvar.',409)
   if(body.action==='hours'){
    if(!Array.isArray(body.hours)||body.hours.length!==7)throw fail('Confira os sete dias da semana.')
@@ -23,6 +23,9 @@ export async function businessHours(client,actor,body){
    }
    await client.query('delete from business_hours where tenant_id=current_business_id()')
    for(const row of body.hours.filter(row=>!row.closed))await client.query('insert into business_hours(weekday,opens_at,closes_at) values($1,$2,$3)',[row.weekday,row.opens_at,row.closes_at])
+  }else if(body.action==='interval'){
+   if(!Number.isInteger(body.minutes)||body.minutes<5||body.minutes>120)throw fail('Escolha um intervalo inteiro entre 5 e 120 minutos.')
+   await client.query('update business_settings set slot_interval_minutes=$1 where id=true',[body.minutes])
   }else if(body.action==='permissions'){
    if(!Array.isArray(body.profile_ids)||body.profile_ids.length>500||body.profile_ids.some(id=>typeof id!=='string'||!/^[-a-f0-9]{36}$/i.test(id)))throw fail('Contas inválidas.')
    const allowed=(await client.query("select p.id from profiles p where p.role='professional' and p.active and exists(select from professionals b where b.profile_id=p.id and b.active)")).rows.map(p=>p.id)
@@ -32,5 +35,6 @@ export async function businessHours(client,actor,body){
   await client.query('update business_settings set hours_revision=hours_revision+1 where id=true')
   await client.query("insert into audit_logs(actor_profile_id,operation,entity_type,request_summary,result) values($1,$2,'business_hours',$3,'success')",[actor,'business-hours:'+body.action,JSON.stringify(body)])
  }
- return {hours:await readBusinessHours(client),revision:(await client.query('select hours_revision from business_settings where id=true')).rows[0].hours_revision,can_edit:editable,can_delegate:administrative,accounts:administrative?(await client.query("select p.id,coalesce(b.name,p.name) name,u.email,p.can_manage_business_hours from profiles p join auth_user u on u.id=p.id::text join professionals b on b.profile_id=p.id where p.role='professional' and p.active and b.active order by b.name")).rows:[],timezone:'America/Sao_Paulo'}
+ const config=(await client.query('select hours_revision,slot_interval_minutes from business_settings where id=true')).rows[0]
+ return {hours:await readBusinessHours(client),revision:config.hours_revision,slot_interval_minutes:config.slot_interval_minutes,can_edit:editable,can_delegate:administrative,accounts:administrative?(await client.query("select p.id,coalesce(b.name,p.name) name,u.email,p.can_manage_business_hours from profiles p join auth_user u on u.id=p.id::text join professionals b on b.profile_id=p.id where p.role='professional' and p.active and b.active order by b.name")).rows:[],timezone:'America/Sao_Paulo'}
 }

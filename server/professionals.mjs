@@ -76,6 +76,7 @@ export async function professionalSnapshot(client,id) {
     products:(await client.query('select id,name,sale_price_cents,quantity,active from products where active and quantity>0 order by name,id')).rows,
     customers:[],commissions:[],sessions:[],movements:[],packages:[],packageSales:[],business:[],
     businessHours:(await client.query('select weekday,opens_at,closes_at from business_hours order by weekday,opens_at')).rows,
+    slotIntervalMinutes:(await client.query('select slot_interval_minutes from business_settings where id=true')).rows[0]?.slot_interval_minutes??15,
     ...await professionalCommands(client,id),
   }
 }

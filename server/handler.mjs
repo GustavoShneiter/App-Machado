@@ -237,7 +237,7 @@ export default async function handler(req,res) {
         const tableResult=name==='public_booking_slots'||name==='public_available_slots'
         const statement=tableResult?`select coalesce(jsonb_agg(to_jsonb(x)),'[]'::jsonb) as value from public."${name}"(${args}) x`:`select public."${name}"(${args}) as value`
         let result=(await client.query(statement,keys.map(key=>params[key]))).rows[0]?.value
-        if(name==='office_snapshot')result={...result,businessHours:await readBusinessHours(client)}
+        if(name==='office_snapshot')result={...result,businessHours:await readBusinessHours(client),slotIntervalMinutes:(await client.query('select slot_interval_minutes from business_settings where id=true')).rows[0]?.slot_interval_minutes??15}
         if(result?.id&&(name==='save_professional_profile'||(name==='office_action'&&params.action==='save_professional'))) {
           const credentials=params.payload?.access
           if(credentials!==undefined&&(!credentials||typeof credentials!=='object'||Array.isArray(credentials)))throw fail('Dados de acesso inválidos.')
