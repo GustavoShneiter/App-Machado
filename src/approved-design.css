@@ -304,7 +304,7 @@ body:has(.machado-ui){background:#f7f8fa;color:#1c2925;overscroll-behavior-y:aut
 .machado-ui .agenda-team-options{display:grid;gap:4px;margin:16px 0}
 .machado-ui .agenda-team-options label{display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 4px;border-bottom:1px solid var(--line);font-weight:650}
 .machado-ui .agenda-team-options input{width:22px;height:22px;accent-color:var(--green)}
-.machado-ui .agenda-board-scroll{overflow:auto;max-height:70dvh;overscroll-behavior:contain;border-radius:12px}
+.machado-ui .agenda-board-scroll{overflow-x:auto;overflow-y:hidden;max-width:100%;min-width:0;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;border-radius:12px}
 .machado-ui .agenda-multi-schedule{margin:0;overflow:visible}
 .machado-ui .agenda-multi-schedule .agenda-time-axis{position:sticky;left:0;z-index:8;background:var(--canvas)}
 .machado-ui .agenda-professional-column{min-width:0;border-right:1px solid var(--line)}
@@ -330,15 +330,25 @@ body:has(.machado-ui){background:#f7f8fa;color:#1c2925;overscroll-behavior-y:aut
 .machado-ui .agenda-event.no_show{background:#eee0dc;border-color:#b88d83;color:#603e37}
 
 /* Comandas: cor acompanha o estado do recebimento. */
-.machado-ui .command-card:is(.open,.awaiting_payment){background:#deeee4;border:1px solid #b5d5c0;color:#173b2a}
+.machado-ui .command-card:is(.open,.awaiting_payment){background:#bcff83;border:1px solid #83d247;color:#173b2a}
 .machado-ui .command-card.closed{background:#14513b;border:1px solid #0d3f2d;color:#fff}
 .machado-ui .command-card:is(.open,.awaiting_payment) :is(.command-card-main,.command-card-main>strong,.command-card-footer>strong){color:#173b2a}
 .machado-ui .command-card:is(.open,.awaiting_payment) :is(.command-card-main p,.command-card-top small){color:#456a54}
 .machado-ui .command-card.closed :is(.command-card-main,.command-card-main>strong,.command-card-footer>strong){color:#fff}
 .machado-ui .command-card.closed :is(.command-card-main p,.command-card-top small){color:#d2e8d9}
-.machado-ui .command-card:is(.open,.awaiting_payment) .command-card-footer{border-top-color:#b5d5c0}
+.machado-ui .command-card:is(.open,.awaiting_payment) .command-card-footer{border-top-color:#cfe4d6}
 .machado-ui .command-card.closed .command-card-footer{border-top-color:#ffffff38}
-.machado-ui .command-card:is(.open,.awaiting_payment) .status{background:#bddbc7;color:#1b4f34}
+.machado-ui .command-card:is(.open,.awaiting_payment) .status{background:#dcefe2;color:#1b4f34}
 .machado-ui .command-card.closed .status{background:#d7ecdf;color:#174f36}
 .machado-ui .command-card.closed .text-button{color:#e7f5eb}
 .machado-ui .command-card.closed .command-plan:not(.used){background:#e3f0e8;color:#14513b}
+.machado-ui .agenda-event:not(.blocked):not(.no_show):not(.paid-command){background:#bcff83;border-color:#83d247;border-left-color:#4d9c25;color:#143721}
+.machado-ui .agenda-event:not(.blocked):not(.no_show):not(.paid-command) :is(small,strong){color:#143721}
+.machado-ui .agenda-event.paid-command{background:#14513b;border-color:#0d3f2d;color:#fff}
+.machado-ui .agenda-event.paid-command :is(small,strong){color:#fff}
+.machado-ui .product-photo{width:80px;height:100px;aspect-ratio:4/5;object-fit:cover;flex:none;border-radius:10px}
+.machado-ui .product-card{display:flex;align-items:flex-start;gap:12px;padding:12px}
+.machado-ui .product-card-body{min-width:0;padding:0;flex:1}
+.machado-ui .product-grid{gap:12px}
+.machado-ui .package-sale-actions{display:grid;gap:8px}
+@media(max-width:600px){.machado-ui .product-grid{grid-template-columns:1fr}.machado-ui .product-photo{width:64px;height:80px}}

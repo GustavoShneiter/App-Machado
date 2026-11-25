@@ -1,7 +1,7 @@
 // Called only inside the authenticated professional transaction (unit RLS stays active).
 const fail=(message,status=400)=>Object.assign(new Error(message),{status})
 const uuid=value=>typeof value==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
-export const commandActions=new Set(['add_command_service','edit_command_service','add_command_product','set_command_adjustments','remove_command_item','delete_command','receive','close_package_command','mark_command_ready'])
+export const commandActions=new Set(['reopen_command','add_command_service','edit_command_service','add_command_product','set_command_adjustments','remove_command_item','delete_command','receive','close_package_command','mark_command_ready'])
 
 async function addProduct(client, professionalId, command, payload) {
  const commandId=command.id
@@ -63,6 +63,10 @@ export async function professionalCommands(client,id) {
  const ids=commands.map(c=>c.id)
  return {
   commands,
+  packageSales:(await client.query(`select ps.*,p.name package_name,c.name customer_name,
+   coalesce((select jsonb_agg(jsonb_build_object('service_id',b.service_id,'service_name',s.name,'total',b.total,'remaining',b.remaining)) from package_sale_balances b join services s on s.id=b.service_id where b.sale_id=ps.id),'[]'::jsonb) balances
+   from package_sales ps join service_packages p on p.id=ps.package_id join customers c on c.id=ps.customer_id
+   where ps.customer_id in(select customer_id from appointments where professional_id=$1)`,[id])).rows,
   // Full unit booking directory; keep notes restricted to this professional's existing commands.
   customers:(await client.query('select id,name,phone,case when id in(select customer_id from commands where id=any($1::uuid[])) then notes else null end notes from customers order by name,id',[ids])).rows,
   commandProfessionals:(await client.query('select id,name,photo_url from professionals where active order by name,id')).rows,
@@ -75,6 +79,10 @@ export async function professionalCommands(client,id) {
 export async function professionalCommandAction(client,id,action,payload) {
  if(!commandActions.has(action))throw fail('Operação não disponível para profissionais.',403)
  await client.query('select require_schedule_access($1)',[id])
+ if(action==='reopen_command'){
+  if(!uuid(payload.id)||!(await client.query(ownCommands+' and c.id=$2',[id,payload.id])).rowCount)throw fail('Comanda não encontrada no seu acesso.',403)
+  return (await client.query('select reopen_command($1) result',[payload.id])).rows[0].result
+ }
  const commandId=['receive','close_package_command','delete_command'].includes(action)?payload.id:payload.command_id
  if(!uuid(commandId))throw fail('Atendimento inválido.')
  // Same lock order as office_action: active drawer, then command. Concurrent receipts serialize.

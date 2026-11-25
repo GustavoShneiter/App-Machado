@@ -60,6 +60,7 @@ function SpreadsheetDialog({close}:{close:()=>void}){
   {!settings&&!error&&<p role="status">Carregando a conexão…</p>}
   {settings&&!!settings.connections?.length&&<label className="field"><span>Ano da planilha</span><select aria-label="Ano da planilha conectada" value={selectedYear||String(settings.connection?.year??'')} disabled={busy} onChange={e=>{setSelectedYear(e.target.value);setConfiguring(false);setScript('');setNotice('')}}>{settings.connections.map(c=><option key={c.year} value={c.year}>{c.year}</option>)}</select></label>}
   {connection&&<>
+    <p className="sheet-notice">Os valores são publicados após o fechamento manual do caixa. “Ajustes do app” concilia diferenças de preço e gorjetas para o total bater com o aplicativo.</p>
    <p className="sheet-connection-state"><span className={connection.enabled?'sheet-connected':'sheet-paused'}/>{!connection.enabled?'Sincronização pausada':connection.last_sync_at?'Sincronização automática':connection.automatic?'Preparando primeira atualização':'Aguardando autorização no Google'}</p>
    <p className="sheet-description">{connection.last_sync_at?'Última sincronização em '+dateTime(connection.last_sync_at):connection.automatic?'A planilha foi criada na conta Google desta unidade. A primeira atualização ocorrerá automaticamente.':'Instale e autorize o conector nesta planilha para iniciar a atualização automática.'}</p>
    {connection.status?.error&&<p role="alert" className="form-error">{connection.status.error}</p>}

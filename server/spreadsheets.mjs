@@ -17,33 +17,33 @@ export function subtractBaseline(current,baseline){
   return {...(a??b),quantity:Number(a?.quantity??0)-Number(b?.quantity??0),amount:Number(a?.amount??0)-Number(b?.amount??0)}
  }).filter(row=>row.quantity!==0||row.amount!==0)
 }
-export async function sheetSnapshot(client,year,from,{live=false}={}){
+export async function sheetSnapshot(client,year,from,{live=false,closedCash=false}={}){
  const end=(year+1)+'-01-01'
  const items=(await client.query(`select to_char(coalesce(c.occurred_at,a.starts_at,c.created_at) at time zone 'America/Sao_Paulo','YYYY-MM-DD') date,
   case when i.type='product' then 'products' else 'service:'||i.service_id::text end key,
   sum(i.quantity)::int quantity,sum(i.unit_price_cents::bigint*i.quantity)::bigint amount,min(i.description) name
   from command_items i join commands c on c.id=i.command_id left join appointments a on a.id=c.appointment_id
-  where c.status=any($3::command_status[]) and (a.id is null or a.status<>all($4::appointment_status[]))
+  where ($5::boolean=false or exists(select 1 from cash_movements cm join cash_sessions cs on cs.id=cm.session_id where cm.command_id=c.id and cs.closed_at is not null and cm.type='sale')) and c.status=any($3::command_status[]) and (a.id is null or a.status<>all($4::appointment_status[]))
     and not exists(select 1 from package_redemptions r where r.command_item_id=i.id)
     and (coalesce(c.occurred_at,a.starts_at,c.created_at) at time zone 'America/Sao_Paulo')::date >=$1::date
     and (coalesce(c.occurred_at,a.starts_at,c.created_at) at time zone 'America/Sao_Paulo')::date <$2::date
-  group by 1,2`,[from,end,live?['open','awaiting_payment','closed']:['awaiting_payment','closed'],live?['cancelled','no_show']:['scheduled','confirmed','arrived','in_service','cancelled','no_show']])).rows
+  group by 1,2`,[from,end,live?['open','awaiting_payment','closed']:['awaiting_payment','closed'],live?['cancelled','no_show']:['scheduled','confirmed','arrived','in_service','cancelled','no_show'],closedCash])).rows
  const adjustments=(await client.query(`select to_char(coalesce(c.occurred_at,a.starts_at,c.created_at) at time zone 'America/Sao_Paulo','YYYY-MM-DD') date,
   sum(c.discount_cents)::bigint discount,sum(c.surcharge_cents)::bigint tip
-  from commands c left join appointments a on a.id=c.appointment_id where c.status=any($3::command_status[])
+  from commands c left join appointments a on a.id=c.appointment_id where ($5::boolean=false or exists(select 1 from cash_movements cm join cash_sessions cs on cs.id=cm.session_id where cm.command_id=c.id and cs.closed_at is not null and cm.type='sale')) and c.status=any($3::command_status[])
   and (a.id is null or a.status<>all($4::appointment_status[]))
   and (coalesce(c.occurred_at,a.starts_at,c.created_at) at time zone 'America/Sao_Paulo')::date >=$1::date
-  and (coalesce(c.occurred_at,a.starts_at,c.created_at) at time zone 'America/Sao_Paulo')::date <$2::date group by 1`,[from,end,live?['open','awaiting_payment','closed']:['awaiting_payment','closed'],live?['cancelled','no_show']:['scheduled','confirmed','arrived','in_service','cancelled','no_show']])).rows
+  and (coalesce(c.occurred_at,a.starts_at,c.created_at) at time zone 'America/Sao_Paulo')::date <$2::date group by 1`,[from,end,live?['open','awaiting_payment','closed']:['awaiting_payment','closed'],live?['cancelled','no_show']:['scheduled','confirmed','arrived','in_service','cancelled','no_show'],closedCash])).rows
  const packages=(await client.query(`select to_char(sold_at at time zone 'America/Sao_Paulo','YYYY-MM-DD') date,
   'package:'||package_id::text key,count(*)::int quantity,sum(amount_cents)::bigint amount,
   min((select name from service_packages where id=package_sales.package_id)) name from package_sales
-  where status<>'cancelled' and (sold_at at time zone 'America/Sao_Paulo')::date >=$1::date
-  and (sold_at at time zone 'America/Sao_Paulo')::date <$2::date group by 1,2`,[from,end])).rows
+  where ($3::boolean=false or exists(select 1 from cash_movements cm join cash_sessions cs on cs.id=cm.session_id where cm.package_sale_id=package_sales.id and cs.closed_at is not null)) and status<>'cancelled' and (sold_at at time zone 'America/Sao_Paulo')::date >=$1::date
+  and (sold_at at time zone 'America/Sao_Paulo')::date <$2::date group by 1,2`,[from,end,closedCash])).rows
  const payouts=(await client.query(`select to_char(paid_at at time zone 'America/Sao_Paulo','YYYY-MM-DD') date,
   'commission:'||professional_id::text key,0 quantity,sum(commission_cents)::bigint amount from commission_entries
-  where status='paid' and paid_at is not null and reversed_at is null
+  where ($3::boolean=false or exists(select 1 from cash_movements cm join cash_sessions cs on cs.id=cm.session_id where cm.commission_entry_id=commission_entries.id and cs.closed_at is not null)) and status='paid' and paid_at is not null and reversed_at is null
   and (paid_at at time zone 'America/Sao_Paulo')::date >=$1::date
-  and (paid_at at time zone 'America/Sao_Paulo')::date <$2::date group by 1,2`,[from,end])).rows
+  and (paid_at at time zone 'America/Sao_Paulo')::date <$2::date group by 1,2`,[from,end,closedCash])).rows
  return [...items,...packages,...payouts,...adjustments.flatMap(row=>[
   {date:row.date,key:'discounts',quantity:0,amount:row.discount},
   {date:row.date,key:'tips',quantity:0,amount:row.tip}
@@ -53,6 +53,15 @@ export async function sheetCatalog(client){
  return (await client.query(`select 'service:'||id::text key,name,price_cents price,active,duration_minutes,updated_at changed_at from services
   union all select 'package:'||id::text,name,price_cents,active,null,created_at from service_packages
   union all select 'commission:'||id::text,name,0,active,null,updated_at from professionals order by name`)).rows
+}
+export async function captureCashPublication(client){
+ const connections=(await client.query('select * from spreadsheet_connections where enabled and publish_on_cash_close for update')).rows
+ const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date()),month=today.slice(0,7)
+ for(const cfg of connections){
+  const fresh=subtractBaseline(await sheetSnapshot(client,cfg.year,cfg.starts_on,{closedCash:true}),cfg.baseline)
+  const rows=[...cfg.last_rows.filter(r=>r.date.slice(0,7)<month),...fresh.filter(r=>r.date.slice(0,7)>=month)]
+  await client.query('update spreadsheet_connections set last_rows=$1,catalog_state=$2,revision=revision+1 where year=$3',[JSON.stringify(rows),JSON.stringify(await sheetCatalog(client)),cfg.year])
+ }
 }
 function publicConnection(row){
  if(!row)return null
@@ -112,12 +121,12 @@ export async function spreadsheetExternal(req,res,{pool,transaction,readBody,sen
   const cfg=(await client.query('select * from spreadsheet_connections where tenant_id=$1 and year=$2 for update',[record.tenant_id,record.year])).rows[0]
   if(!cfg)throw fail('Conexão indisponível.',401)
   if(route==='feed'&&req.method==='GET'){
-   const catalog=await sheetCatalog(client)
+   const catalog=cfg.publish_on_cash_close&&cfg.catalog_state?.length?cfg.catalog_state:await sheetCatalog(client)
    for(const row of cfg.baseline)if(row.name&&!catalog.some(item=>item.key===row.key)&&/^(service|package):/.test(row.key))catalog.push({key:row.key,name:row.name,price:0})
    const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date())
    const freshAutomatic=!cfg.last_sync_at&&(await client.query('select 1 from spreadsheet_creation_jobs where year=$1 and spreadsheet_id=$2 and completed_at is not null',[cfg.year,cfg.spreadsheet_id])).rowCount>0
    const currentMonth=freshAutomatic?String(cfg.year)+'-01':today.slice(0,7)
-   const latest=cfg.enabled?subtractBaseline(await sheetSnapshot(client,cfg.year,cfg.starts_on,{live:cfg.sync_mode==='live'}),cfg.baseline):[]
+   const latest=cfg.publish_on_cash_close?cfg.last_rows:cfg.enabled?subtractBaseline(await sheetSnapshot(client,cfg.year,cfg.starts_on,{live:cfg.sync_mode==='live'}),cfg.baseline):[]
    const rows=cfg.enabled?[...cfg.last_rows.filter(row=>row.date.slice(0,7)<currentMonth),...latest.filter(row=>row.date.slice(0,7)>=currentMonth)]:[]
    if(cfg.enabled)await client.query('update spreadsheet_connections set last_rows=$1,catalog_state=$2 where year=$3',[JSON.stringify(rows),JSON.stringify(catalog),cfg.year])
    const fingerprint=hash(JSON.stringify({currentMonth,catalog:[...catalog].sort((a,b)=>a.key.localeCompare(b.key)),rows:[...rows].sort((a,b)=>(a.date+a.key).localeCompare(b.date+b.key)),mappings:cfg.mappings,resume:cfg.resume_cells,revision:cfg.revision}))

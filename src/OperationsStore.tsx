@@ -111,7 +111,11 @@ export function OperationsProvider({ children, professionalId }: { children: Rea
       const result = professionalId
         ? await apiRequest('/professional/action', { method: 'POST', body: JSON.stringify({ professional_id: professionalId, action, payload }) })
         :
-        action === "create_recurring_block"
+        action === "record_package_visit"
+          ? await backend.rpc('record_package_visit',{payload})
+          : action === "reopen_command"
+          ? await backend.rpc('reopen_command',{command_id:String(payload.id??'')})
+          : action === "create_recurring_block"
           ? await backend.rpc('create_recurring_schedule_block', { payload: payload.payload })
           : action === "delete_recurring_block"
             ? await backend.rpc('delete_recurring_schedule_block', { block_id: String(payload.id ?? '') })

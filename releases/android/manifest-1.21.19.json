@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-25",
+  "admin": "1.21.19",
+  "professional": "1.3.19",
+  "backend": "contabo",
+  "artifacts": [
+    {"file":"releases/android/Machado-Gestao-v1.21.19.apk","versionCode":52,"bytes":5977397,"sha256":"841c5717092d962aef013e6f5bb72e8682820c223c46ff284c648d143f4b1127"},
+    {"file":"releases/android/Machado-Profissional-v1.3.19.apk","versionCode":27,"bytes":5886032,"sha256":"da916717175a5c2b30e20825e6ce457f8ad628de0be0dcc820471bd7a067259a"}
+  ],
+  "signingCertificateSha256":"2d1fb76948ff838499c639defeaaebc4ee3834792f7bec11581066640ebf3094",
+  "changes":["Renovação de plano como nova venda, preservando sessões anteriores","Uso manual do plano registra profissional, agenda e comanda","Comissão dos novos usos calculada pelo valor pago dividido pelo total de sessões","Identificação de plano e previsão da cobrança coberta nos dois apps","Reabertura com estorno auditado, preservando caixa e repasses já pagos","Agenda e comandas: neon enquanto pendentes, verde escuro quando pagas","Navegação da agenda conjunta no iPhone sem rolagem vertical aninhada","Produtos com fotos menores e metas quinzenais","Publicação financeira para a planilha apenas no fechamento manual de caixa"],
+  "verification":{"build":"passed","lint":"passed","database":"rollback tests passed","webkitIphone":"three-professional navigation passed","spreadsheetConnector":"unit tests passed; live Google execution pending confirmation","physicalDevice":"not tested"}
+}

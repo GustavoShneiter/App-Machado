@@ -6,7 +6,7 @@ import { Modal } from '../ManagementPages'
 import { useOperations } from '../OperationsStore'
 import { money } from '../operations'
 import type { Preferences, ProfessionalCashData, ProfessionalEntry } from './types'
-import { shortDate, weekRange } from './periods'
+import { shortDate, fortnightRange } from './periods'
 import { indicators, PreferencesModal } from './ProfessionalPreferences'
 import { GoalDetails, ProfessionalGoals } from './ProfessionalGoals'
 import { ProfessionalFeedback } from './ProfessionalFeedback'
@@ -41,18 +41,18 @@ function CommissionList({ entries, loading, choose }: { entries: ProfessionalEnt
 export function ProfessionalCash({ professionalId, reportOnly = false }: { professionalId: string; reportOnly?: boolean }) {
   const { data, refreshed, refreshVersion } = useOperations()
   const pendingPayments=data.commands.filter(command=>command.status==='awaiting_payment')
-  const [period, setPeriod] = useState('current'), [custom, setCustom] = useState(weekRange())
+  const [period, setPeriod] = useState('current'), [custom, setCustom] = useState(fortnightRange())
   const [selected, setSelected] = useState<ProfessionalCashData | null>(null), [weeks, setWeeks] = useState<ProfessionalCashData[]>([])
   const [error, setError] = useState(''), [loading, setLoading] = useState(true), [reload, setReload] = useState(0)
   const [popup, setPopup] = useState<'period' | 'settings' | 'progress' | 'balance' | 'ledger' | 'report' | 'report-period' | null>(null)
   const [entry, setEntry] = useState<ProfessionalEntry | null>(null), [entryFilter, setEntryFilter] = useState('all'), [message, setMessage] = useState('')
   const closeMessage = useCallback(() => setMessage(''), [])
-  const request = useRef(0), range = period === 'custom' ? custom : weekRange(period === 'previous' ? -1 : period === 'older' ? -2 : 0)
+  const request = useRef(0), range = period === 'custom' ? custom : fortnightRange(period === 'previous' ? -1 : period === 'older' ? -2 : 0)
   useEffect(() => {
     const version = ++request.current
     setError(''); setLoading(true)
     const load = (from: string, to: string) => apiRequest<{ data: ProfessionalCashData }>('/professional/cash?' + new URLSearchParams({ professional_id: professionalId, from, to }))
-    const ranges = [range, ...[0, -1, -2].map(offset => weekRange(offset))], requests = new Map<string, ReturnType<typeof load>>()
+    const ranges = [range, ...[0, -1, -2].map(offset => fortnightRange(offset))], requests = new Map<string, ReturnType<typeof load>>()
     for (const value of ranges) { const key = value.from + ':' + value.to; if (!requests.has(key)) requests.set(key, load(value.from, value.to)) }
     void Promise.all(ranges.map(value => requests.get(value.from + ':' + value.to)!)).then(values => {
       if (version !== request.current) return
@@ -100,8 +100,8 @@ export function ProfessionalCash({ professionalId, reportOnly = false }: { profe
         </div>
       </section>
 
-        <section className="pro-week-history" aria-label="Histórico semanal">
-          <div className="pro-section-heading"><h2>Evolução semanal</h2></div>
+        <section className="pro-week-history" aria-label="Histórico quinzenal">
+          <div className="pro-section-heading"><h2>Evolução quinzenal</h2></div>
           <div className="pro-week-comparison-list">{weeks.map((week, index) => <button aria-label={'Ver ' + periods[index].label.toLowerCase()} aria-pressed={period === periods[index].id} className={period === periods[index].id ? 'active' : ''} onClick={() => setPeriod(periods[index].id)} key={week.from}>
             <span className="pro-week-name"><strong>{periods[index].label}</strong></span>
             <span className="pro-week-result"><strong>{money(week.earned)}</strong></span>

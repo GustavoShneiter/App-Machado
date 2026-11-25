@@ -24,6 +24,21 @@ export const dateTime = (value: string) => new Date(value).toLocaleString('pt-BR
 export const labels: Record<string, string> = { scheduled: 'Agendado', confirmed: 'Confirmado', arrived: 'Cliente chegou', in_service: 'Em atendimento', completed: 'Concluído', cancelled: 'Cancelado', no_show: 'Não compareceu', open: 'Em aberto', awaiting_payment: 'Aguardando pagamento', closed: 'Paga', voided: 'Cancelada', refunded: 'Estornada' }
 export const methods: Record<string, string> = { cash: 'Dinheiro', pix: 'Pix', debit: 'Débito', credit: 'Crédito', other: 'Outro' }
 export const commandTotal = (state: Operations, command: Command) => state.items.filter(i => i.command_id === command.id).reduce((s, i) => s + i.unit_price_cents * i.quantity, 0) - command.discount_cents + command.surcharge_cents
+export function appointmentPlan(state: Operations, appointment: Appointment) {
+  return state.packageSales.find(sale=>sale.customer_id===appointment.customer_id&&sale.status==='active'&&sale.balances.some(b=>b.service_id===appointment.service_id&&b.remaining>0));
+}
+export function projectedCommandTotal(state: Operations,command:Command){
+  if(command.status!=='open')return commandTotal(state,command);
+  const balances=new Map<string,number>();
+  for(const sale of state.packageSales.filter(s=>s.customer_id===command.customer_id&&s.status==='active'))
+    for(const b of sale.balances)balances.set(b.service_id,(balances.get(b.service_id)??0)+b.remaining);
+  let covered=0;
+  for(const item of state.items.filter(i=>i.command_id===command.id&&i.service_id&&!state.packageRedemptions.some(r=>r.command_item_id===i.id))){
+    const available=balances.get(item.service_id!)??0,quantity=Math.min(available,item.quantity);
+    covered+=quantity*item.unit_price_cents;balances.set(item.service_id!,available-quantity);
+  }
+  return Math.max(0,commandTotal(state,command)-covered);
+}
 export function commissionPeriodDate(state: Operations, commission: Commission) {
   if (commission.status === 'paid' && commission.paid_at) return dayKey(commission.paid_at)
   const item = state.items.find(value => value.id === commission.command_item_id)

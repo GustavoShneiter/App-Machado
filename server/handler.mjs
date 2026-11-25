@@ -11,12 +11,13 @@ import { registerOfficeAccount } from './registration.mjs'
 import { adminProfessionalGoals } from './professional-goals.mjs'
 import { externalAgent } from './agent.mjs'
 import { administrativeAgent } from './agent-settings.mjs'
-import {spreadsheetAdmin,spreadsheetExternal} from './spreadsheets.mjs'
+import {spreadsheetAdmin,spreadsheetExternal,captureCashPublication} from './spreadsheets.mjs'
 import {automationAdmin,automationExternal,ensureAnnualWorkbook} from './spreadsheet-automation.mjs'
 import {businessHours,readBusinessHours} from './business-hours.mjs'
 
 const publicRpcs = new Set(['public_booking_slots','public_available_slots','create_public_appointment'])
 const rpcArguments = {
+  record_package_visit:['payload'],reopen_command:['command_id'],
   public_booking_slots: ['chosen_service','booking_day','preferred_professional'], public_available_slots: ['chosen_service','booking_day','preferred_professional'],
   create_public_appointment: ['customer_name','customer_phone','chosen_service','chosen_professional','start_time','terms_accepted'],
   office_action: ['action','payload'], office_snapshot: [], can_access_admin: [],
@@ -237,6 +238,7 @@ export default async function handler(req,res) {
         const tableResult=name==='public_booking_slots'||name==='public_available_slots'
         const statement=tableResult?`select coalesce(jsonb_agg(to_jsonb(x)),'[]'::jsonb) as value from public."${name}"(${args}) x`:`select public."${name}"(${args}) as value`
         let result=(await client.query(statement,keys.map(key=>params[key]))).rows[0]?.value
+        if(name==='office_action'&&params.action==='close_cash')await captureCashPublication(client)
         if(name==='office_snapshot')result={...result,businessHours:await readBusinessHours(client),slotIntervalMinutes:(await client.query('select slot_interval_minutes from business_settings where id=true')).rows[0]?.slot_interval_minutes??15}
         if(result?.id&&(name==='save_professional_profile'||(name==='office_action'&&params.action==='save_professional'))) {
           const credentials=params.payload?.access

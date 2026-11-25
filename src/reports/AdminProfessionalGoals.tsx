@@ -3,7 +3,7 @@ import { Target } from 'lucide-react'
 import { apiRequest } from '../dataClient'
 import { Modal } from '../ManagementPages'
 import { money } from '../operations'
-import { weekRange, shortDate } from '../professional/periods'
+import { fortnightRange, shortDate } from '../professional/periods'
 import './reports.css'
 
 export type ManagedProfessionalGoals = {
@@ -27,11 +27,11 @@ export function AdminProfessionalGoals({ professionalId }: { professionalId: str
   const { value, error, loading } = useGoals(professionalId, reload)
   const configured = value && (value.weekly_commission_goal_cents > 0 || value.weekly_service_goal > 0 || value.weekly_customer_goal > 0)
   return <section className="admin-professional-goals" aria-label="Metas do profissional">
-    <div><h3><Target size={17} />Metas da semana</h3><button type="button" aria-haspopup="dialog" onClick={() => { setMessage(''); setOpen(true) }}>{configured ? 'Editar metas' : 'Definir metas'}</button></div>
+    <div><h3><Target size={17} />Metas da quinzena</h3><button type="button" aria-haspopup="dialog" onClick={() => { setMessage(''); setOpen(true) }}>{configured ? 'Editar metas' : 'Definir metas'}</button></div>
     <p>A administração define os objetivos. O profissional acompanha os resultados no próprio painel.</p>
     {loading ? <p role="status">Carregando metas…</p> : error ? <p className="report-editor-error" role="alert">{error} <button type="button" onClick={() => setReload(value => value + 1)}>Tentar novamente</button></p> : configured ? <div className="admin-goal-summary">
-      <div><small>Comissão</small><strong>{value.weekly_commission_goal_cents > 0 ? money(value.weekly_commission_goal_cents) : 'Sem meta'}</strong><span>por semana</span></div>
-      <div><small>Serviços</small><strong>{value.weekly_service_goal > 0 ? value.weekly_service_goal : 'Sem meta'}</strong><span>por semana</span></div>
+      <div><small>Comissão</small><strong>{value.weekly_commission_goal_cents > 0 ? money(value.weekly_commission_goal_cents) : 'Sem meta'}</strong><span>por quinzena</span></div>
+      <div><small>Serviços</small><strong>{value.weekly_service_goal > 0 ? value.weekly_service_goal : 'Sem meta'}</strong><span>por quinzena</span></div>
       <div><small>Clientes</small><strong>{value.weekly_customer_goal > 0 ? value.weekly_customer_goal : 'Sem meta'}</strong><span>pessoas distintas</span></div>
     </div> : <p>Nenhuma meta definida para este profissional.</p>}
     {message && <p className="admin-goal-success" role="status">{message}</p>}
@@ -51,7 +51,7 @@ export function ProfessionalGoalEditor({ professionalId, close, saved }: { profe
 function GoalForm({ value, close, saved }: { value: ManagedProfessionalGoals; close: () => void; saved?: (value: ManagedProfessionalGoals) => void }) {
   const [commission, setCommission] = useState(String(value.weekly_commission_goal_cents / 100)), [services, setServices] = useState(String(value.weekly_service_goal)), [customers, setCustomers] = useState(String(value.weekly_customer_goal))
   const [busy, setBusy] = useState(false), [error, setError] = useState('')
-  const range = weekRange()
+  const range = fortnightRange()
   async function save() {
     if (busy) return
     const payload = { professional_id: value.professional_id, weekly_commission_goal_cents: Math.round(Number(commission) * 100), weekly_service_goal: Number(services), weekly_customer_goal: Number(customers) }
@@ -66,11 +66,11 @@ function GoalForm({ value, close, saved }: { value: ManagedProfessionalGoals; cl
   }
   return <form onSubmit={event => { event.preventDefault(); event.stopPropagation(); void save() }}>
     <p className="report-editor-description"><strong>{value.professional_name}</strong> verá estes objetivos no próprio painel. Só a administração pode alterar os valores.</p>
-    <p className="report-goal-week">Semana atual: {shortDate(range.from)} a {shortDate(range.to)}. As metas valem a cada semana, de segunda a domingo.</p>
+    <p className="report-goal-week">Quinzena atual: {shortDate(range.from)} a {shortDate(range.to)}. As metas valem a cada quinzena: dias 1 a 15 e 16 até o fim do mês.</p>
     <div className="report-goal-fields">
-      <label className="field"><span>Meta de comissão por semana (R$)</span><input aria-label="Meta de comissão por semana (R$)" type="number" inputMode="decimal" min="0" max="1000000" step="0.01" required disabled={busy} value={commission} onChange={event => setCommission(event.target.value)} /><small>É a comissão do profissional, não o faturamento da barbearia.</small></label>
-      <label className="field"><span>Meta de serviços por semana</span><input aria-label="Meta de serviços por semana" type="number" inputMode="numeric" min="0" max="10000" step="1" required disabled={busy} value={services} onChange={event => setServices(event.target.value)} /></label>
-      <label className="field"><span>Meta de clientes por semana</span><input aria-label="Meta de clientes por semana" type="number" inputMode="numeric" min="0" max="10000" step="1" required disabled={busy} value={customers} onChange={event => setCustomers(event.target.value)} /><small>Cada cliente conta uma vez na semana, mesmo com vários atendimentos.</small></label>
+      <label className="field"><span>Meta de comissão por quinzena (R$)</span><input aria-label="Meta de comissão por quinzena (R$)" type="number" inputMode="decimal" min="0" max="1000000" step="0.01" required disabled={busy} value={commission} onChange={event => setCommission(event.target.value)} /><small>É a comissão do profissional, não o faturamento da barbearia.</small></label>
+      <label className="field"><span>Meta de serviços por quinzena</span><input aria-label="Meta de serviços por quinzena" type="number" inputMode="numeric" min="0" max="10000" step="1" required disabled={busy} value={services} onChange={event => setServices(event.target.value)} /></label>
+      <label className="field"><span>Meta de clientes por quinzena</span><input aria-label="Meta de clientes por quinzena" type="number" inputMode="numeric" min="0" max="10000" step="1" required disabled={busy} value={customers} onChange={event => setCustomers(event.target.value)} /><small>Cada cliente conta uma vez na quinzena, mesmo com vários atendimentos.</small></label>
     </div>
     <p className="report-editor-description" style={{ marginTop: 17, marginBottom: 0 }}>Use zero para retirar uma meta. Isso não apaga atendimentos ou comissões.</p>
     {error && <p className="report-editor-error" role="alert">{error}</p>}

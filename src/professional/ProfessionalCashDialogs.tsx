@@ -6,9 +6,9 @@ import { DonutChart } from '../reports/ReportCharts'
 import type { ProfessionalCashData, ProfessionalEntry } from './types'
 import { shortDate } from './periods'
 
-export const periods = [{ id: 'current', label: 'Esta semana' }, { id: 'previous', label: 'Semana passada' }, { id: 'older', label: 'Semana retrasada' }, { id: 'custom', label: 'Escolher período' }]
+export const periods = [{ id: 'current', label: 'Esta quinzena' }, { id: 'previous', label: 'Quinzena passada' }, { id: 'older', label: 'Quinzena retrasada' }, { id: 'custom', label: 'Escolher período' }]
 export function BalanceDialog({ close }: { close: () => void }) {
-  return <Modal title="Meu saldo a receber" close={close}><div className="pro-info-dialog"><span className="pro-dialog-symbol"><WalletCards size={25} /></span><h3>Comissões pendentes</h3><p>O valor mostra apenas os atendimentos do período escolhido. Use o filtro de datas para consultar outras semanas.</p><button className="primary pro-dialog-save" onClick={close}>Entendi</button></div></Modal>
+  return <Modal title="Meu saldo a receber" close={close}><div className="pro-info-dialog"><span className="pro-dialog-symbol"><WalletCards size={25} /></span><h3>Comissões pendentes</h3><p>O valor mostra apenas os atendimentos do período escolhido. Use o filtro de datas para consultar outras quinzenas.</p><button className="primary pro-dialog-save" onClick={close}>Entendi</button></div></Modal>
 }
 export function ProfessionalReportDialog({ selected, weeks, loading, close, period, inline = false }: { selected: ProfessionalCashData; weeks: ProfessionalCashData[]; loading: boolean; close: () => void; period: () => void; inline?: boolean }) {
   const composition = [
@@ -20,7 +20,7 @@ export function ProfessionalReportDialog({ selected, weeks, loading, close, peri
     <div className="pro-report-range"><p>Suas comissões · {shortDate(selected.from)} a {shortDate(selected.to)}</p><button className="outline" onClick={period}><CalendarDays size={16} />Período</button></div>
     {loading && <p className="pro-updating" role="status">Atualizando relatório…</p>}
     <section className="pro-report-section"><h3>Origem das comissões</h3><DonutChart segments={composition} label="Distribuição das suas comissões entre serviços e produtos" totalLabel="Comissões" formatValue={money} compact /></section>
-    <section className="pro-report-section"><h3>Evolução semanal</h3><div className="pro-report-weeks">{weeks.map((week, index) => <div key={week.from}><div><span>{periods[index].label}<small>{shortDate(week.from)} a {shortDate(week.to)}</small></span><strong>{money(week.earned)}</strong></div><div className="pro-report-week-track" aria-hidden="true"><span style={{ width: `${week.earned / highest * 100}%` }} /></div></div>)}</div></section>
+    <section className="pro-report-section"><h3>Evolução quinzenal</h3><div className="pro-report-weeks">{weeks.map((week, index) => <div key={week.from}><div><span>{periods[index].label}<small>{shortDate(week.from)} a {shortDate(week.to)}</small></span><strong>{money(week.earned)}</strong></div><div className="pro-report-week-track" aria-hidden="true"><span style={{ width: `${week.earned / highest * 100}%` }} /></div></div>)}</div></section>
     <dl className="pro-report-activity"><div><dt>Serviços no período</dt><dd>{selected.services}</dd></div><div><dt>Clientes atendidos</dt><dd>{selected.customers}</dd></div></dl>
 
   </div>

@@ -11,6 +11,7 @@ import { useCatalog } from "./CatalogStore";
 import {
   cashBalance,
   commandTotal,
+  projectedCommandTotal,
   dateTime,
   dayKey,
   exportCsv,
@@ -199,6 +200,7 @@ function commandPackage(state: Operations, command: Command) {
           ?.description ?? "Serviço",
       remaining: null as number | null,
       redeemed: true,
+      sessionValue: (()=>{const sale=state.packageSales.find(s=>s.id===redemption.sale_id);return sale?Math.round(sale.amount_cents/sale.balances.reduce((sum,b)=>sum+b.total,0)):null})(),
     };
   for (const sale of state.packageSales.filter(
     (entry) =>
@@ -215,6 +217,7 @@ function commandPackage(state: Operations, command: Command) {
         service: balance.service_name,
         remaining: balance.remaining,
         redeemed: false,
+        sessionValue:Math.round(sale.amount_cents/sale.balances.reduce((sum,b)=>sum+b.total,0)),
       };
   }
   return null;
@@ -536,10 +539,10 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
       {multi&&<div className="agenda-team-toolbar"><span>{selectedIds.length} {selectedIds.length===1?'profissional selecionado':'profissionais selecionados'}</span><button className="text-action" onClick={()=>setChoosingProfessionals(true)}>Selecionar profissionais</button></div>}
       {closed&&<p className="form-note" role="status">Barbearia fechada neste dia. Os agendamentos existentes continuam disponíveis para consulta.</p>}
       <div className="agenda-list-toolbar"><span>{rows.length} agendamentos</span><div role="group" aria-label="Visualização da agenda"><button aria-label="Lista" aria-pressed={view==='list'} onClick={()=>setView('list')}><List size={18}/></button><button aria-label="Grade de horários" aria-pressed={view==='grid'} onClick={()=>setView('grid')}><CalendarRange size={18}/></button></div></div>
-      {view==='list'&&<div className="approved-agenda-list">{rows.map(a=><button className="agenda-list-row" key={a.id} onClick={()=>setFocused(a)}><span className="agenda-list-time"><b>{new Date(a.starts_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'})}</b><small>{Math.round((Date.parse(a.ends_at)-Date.parse(a.starts_at))/60000)} min</small></span><span className="agenda-list-person"><strong>{a.customer_name}</strong><small><b>{a.professional_name}</b> · {a.service_name}</small><span className={'status-tag '+a.status}>{labels[a.status]??a.status}{a.is_fit_in?' · Encaixe':''}</span></span><ChevronRight size={17}/></button>)}{!rows.length&&<div className="approved-empty"><CalendarDays size={24}/><strong>Nenhum agendamento neste dia</strong><p>{closed?'A barbearia não abre neste dia. Consulte outra data.':'Crie um horário ou consulte outra data.'}</p>{!closed&&<button className="primary" onClick={()=>setSlotChoice('new')}>Novo agendamento</button>}</div>}{dayBlocks.length>0&&<details className="agenda-block-summary"><summary>{dayBlocks.length} bloqueios neste dia</summary>{dayBlocks.map(block=><button className="outline" key={block.id} onClick={()=>setFocusedBlock(block)}>{block.reason||'Agenda bloqueada'} · {dateTime(block.starts_at)}</button>)}</details>}</div>}
+      {view==='list'&&<div className="approved-agenda-list">{rows.map(a=><button className="agenda-list-row" key={a.id} onClick={()=>setFocused(a)}><span className="agenda-list-time"><b>{new Date(a.starts_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'})}</b><small>{Math.round((Date.parse(a.ends_at)-Date.parse(a.starts_at))/60000)} min</small></span><span className="agenda-list-person"><strong>{a.customer_name}</strong><small><b>{a.professional_name}</b> · {a.service_name}</small>{data.packageSales.some(s=>s.customer_id===a.customer_id&&s.status==='active'&&s.balances.some(b=>b.service_id===a.service_id&&b.remaining>0))&&<span className="status-tag"><Gift size={12}/> Plano</span>}<span className={'status-tag '+a.status}>{labels[a.status]??a.status}{a.is_fit_in?' · Encaixe':''}</span></span><ChevronRight size={17}/></button>)}{!rows.length&&<div className="approved-empty"><CalendarDays size={24}/><strong>Nenhum agendamento neste dia</strong><p>{closed?'A barbearia não abre neste dia. Consulte outra data.':'Crie um horário ou consulte outra data.'}</p>{!closed&&<button className="primary" onClick={()=>setSlotChoice('new')}>Novo agendamento</button>}</div>}{dayBlocks.length>0&&<details className="agenda-block-summary"><summary>{dayBlocks.length} bloqueios neste dia</summary>{dayBlocks.map(block=><button className="outline" key={block.id} onClick={()=>setFocusedBlock(block)}>{block.reason||'Agenda bloqueada'} · {dateTime(block.starts_at)}</button>)}</details>}</div>}
       {filtersOpen&&<Modal title="Filtro da agenda" close={()=>setFiltersOpen(false)}><label className="field"><span>Data</span><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label>{multi?<button className="outline" onClick={()=>{setFiltersOpen(false);setChoosingProfessionals(true)}}>Profissionais · {selectedIds.length} selecionados</button>:!professionalOnly&&<label className="field"><span>Profissional</span><select value={professional} onChange={e=>setProfessional(e.target.value)}>{activeProfessionals.map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}</select></label>}<label className="field"><span>Buscar cliente ou serviço</span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Nome do cliente ou serviço"/></label><button className="outline" onClick={()=>{setFiltersOpen(false);setBlocksOpen(true)}}>Gerenciar bloqueios</button><button className="primary" onClick={()=>setFiltersOpen(false)}>Aplicar filtros</button></Modal>}
       {choosingProfessionals&&<Modal title="Selecionar profissionais" close={()=>setChoosingProfessionals(false)}><p className="form-note">Escolha as agendas que deseja visualizar juntas. Mantenha pelo menos um profissional selecionado.</p><button className="outline" disabled={!activeProfessionals.length} onClick={()=>{setSelected(activeProfessionals.map(p=>p.id));if(activeProfessionals.length>1)setView('grid')}}>Selecionar todos</button><div className="agenda-team-options">{activeProfessionals.map(p=><label key={p.id}><input type="checkbox" checked={selectedIds.includes(p.id)} disabled={selectedIds.length===1&&selectedIds.includes(p.id)} onChange={()=>toggleProfessional(p.id)}/><span>{p.nome}</span></label>)}</div><button className="primary" onClick={()=>setChoosingProfessionals(false)}>Ver agendas</button></Modal>}
-      {view==='grid'&&<AgendaSchedule date={date} businessHours={data.businessHours} slotIntervalMinutes={data.slotIntervalMinutes} columns={selectedProfessionals.map(p=>({id:p.id,name:p.nome,photo:p.foto_url}))} appointments={rows} busyAppointments={calendarRows} blocks={dayBlocks} split={multi} compact={professionalOnly} chooseTime={(time,id)=>{setSlotProfessional(id);setSlotChoice(time)}} chooseBlock={setFocusedBlock} chooseAppointment={setFocused}/>}
+      {view==='grid'&&<AgendaSchedule date={date} businessHours={data.businessHours} slotIntervalMinutes={data.slotIntervalMinutes} columns={selectedProfessionals.map(p=>({id:p.id,name:p.nome,photo:p.foto_url}))} appointments={rows.map(a=>({...a,commandPaid:data.commands.some(c=>c.appointment_id===a.id&&c.status==='closed'),hasPlan:data.packageSales.some(s=>s.customer_id===a.customer_id&&s.status==='active'&&s.balances.some(b=>b.service_id===a.service_id&&b.remaining>0))||data.packageRedemptions.some(r=>data.items.some(i=>i.id===r.command_item_id&&data.commands.some(c=>c.id===i.command_id&&c.appointment_id===a.id)))}))} busyAppointments={calendarRows} blocks={dayBlocks} split={multi} compact={professionalOnly} chooseTime={(time,id)=>{setSlotProfessional(id);setSlotChoice(time)}} chooseBlock={setFocusedBlock} chooseAppointment={setFocused}/>}
       {calendarOpen && <AgendaDatePicker date={date} choose={setDate} close={() => setCalendarOpen(false)} />}
       {slotChoice && <AgendaCreateModal initialDate={date} initialTime={slotChoice==='new'?'':slotChoice} initialProfessional={slotProfessional||selectedIds[0]||professional} close={()=>setSlotChoice('')} manageBlocks={()=>{setSlotChoice('');setBlocksOpen(true)}} />}
       {blocksOpen && <Modal title="Bloqueios da agenda" close={()=>setBlocksOpen(false)}><div className="schedule-block-list">
@@ -1079,7 +1082,7 @@ export function Orders({
             .filter((item) => item.command_id === c.id)
             .reduce((sum, item) => sum + item.quantity, 0);
           const packageInfo = commandPackage(data, c);
-          const total = commandTotal(data, c);
+          const total = projectedCommandTotal(data, c);
           return (
             <article className={`command-card ${c.status}`} key={c.id}>
               <button
@@ -1255,9 +1258,10 @@ export function Orders({
             (item) => item.command_id === command.id,
           );
           const packageInfo = commandPackage(data, command);
-          const total = commandTotal(data, command);
+          const total = projectedCommandTotal(data, command);
           return (
             <Modal title="Comanda" close={() => setDetails("")}>
+              {command.status==='closed'&&<button className="outline" disabled={busy} onClick={async()=>{if(window.confirm('Reabrir para editar? O recebimento anterior será estornado no caixa aberto, preservando o histórico. Após editar, registre novamente o pagamento.'))await run('reopen_command',{id:command.id})}}>Reabrir comanda</button>}
               {serviceNotice && <p className="sheet-notice" role="status">{serviceNotice}</p>}
               <div className="command-detail-head">
                 <div>
@@ -1287,6 +1291,7 @@ export function Orders({
                     </strong>
                     <small>
                       {packageInfo.name} · {packageInfo.service}
+                      {packageInfo.sessionValue!==null?` · ${money(packageInfo.sessionValue)} por sessão`:''}
                       {packageInfo.remaining !== null
                         ? ` · ${packageInfo.remaining} restante${packageInfo.remaining === 1 ? "" : "s"}`
                         : ""}
