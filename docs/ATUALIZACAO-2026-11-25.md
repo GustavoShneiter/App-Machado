@@ -22,7 +22,7 @@ As bases antigas embutidas nas fórmulas de novembro e dezembro foram substituí
 
 “Ajustes do app” concilia o preço fixo do modelo com o valor efetivamente cobrado e gorjetas. Remover a coluna causaria divergência nos totais.
 
-A execução Google estava com um erro anterior de fórmula em dezembro. As exportações posteriores às correções não apresentaram erros. A confirmação de uma nova execução bem-sucedida ainda depende do editor Google, que retornou 404 neste navegador. Não considerar a sincronização ao vivo validada até verificar o próximo reconhecimento do conector.
+A execução Google estava bloqueada por divisões por zero em dezembro (T38 e X38), propagadas para V42, U44 e X44. Foram aplicadas as guardas `IF(S39=0;0;S38/S39)` e `IF(S39=0;0;W39/S39)` para o mês sem movimento. O editor ativo foi localizado pelo projeto “Machado — Integração do Caixa” e executado com a autorização existente. A execução concluiu e as conexões de 2026 e 2027 reconheceram sincronização em 25/11 às 19:20, sem erro e sem células manuais pendentes. Dezembro ficou zerado; novembro passou a refletir a publicação reconstruída dos caixas fechados. As versões anteriores continuam recuperáveis no histórico da planilha.
 
 ## Verificação
 
