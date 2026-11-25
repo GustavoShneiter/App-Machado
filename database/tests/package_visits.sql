@@ -13,14 +13,15 @@ BEGIN
  SELECT id INTO cmd FROM commands WHERE appointment_id=booking;
  IF (SELECT unit_price_cents FROM command_items WHERE command_id=cmd AND service_id=service)<>3400 THEN RAISE EXCEPTION 'QA booking quote: expected R$ 34,00 before redemption';END IF;
  IF (SELECT remaining FROM package_sale_balances WHERE sale_id=sale AND service_id=service)<>2 THEN RAISE EXCEPTION 'QA quote must not reserve or consume package balance';END IF;
- cmd:=(record_package_visit(jsonb_build_object('sale_id',sale,'service_id',service,'professional_id',pro,'starts_at','2026-11-24T10:00:00-03:00'))->>'id')::uuid;
+ PERFORM office_action('set_status',jsonb_build_object('id',booking,'status','completed'));
  IF (SELECT remaining FROM package_sale_balances WHERE sale_id=sale AND service_id=service)<>1 THEN RAISE EXCEPTION 'QA balance'; END IF;
  IF (SELECT sum(unit_price_cents*quantity) FROM command_items WHERE command_id=cmd)<>3400 THEN RAISE EXCEPTION 'QA package service value: expected R$ 34,00';END IF;
+ IF NOT EXISTS(SELECT FROM package_redemptions r JOIN command_items i ON i.id=r.command_item_id WHERE i.command_id=cmd AND r.sale_id=sale) THEN RAISE EXCEPTION 'QA completion must link the package session';END IF;
  IF (SELECT sum(i.unit_price_cents*i.quantity) FROM command_items i WHERE i.command_id=cmd AND NOT EXISTS(SELECT 1 FROM package_redemptions r WHERE r.command_item_id=i.id))<>0 THEN RAISE EXCEPTION 'QA package must not create a second charge';END IF;
  FOR entry IN SELECT e.* FROM commission_entries e JOIN command_items i ON i.id=e.command_item_id WHERE i.command_id=cmd LOOP
   IF entry.gross_cents<>3400 THEN RAISE EXCEPTION 'QA commission basis: %',entry.gross_cents; END IF;
  END LOOP;
- PERFORM record_package_visit(jsonb_build_object('sale_id',sale,'service_id',service,'professional_id',pro,'starts_at','2026-11-24T10:00:00-03:00'));
+ PERFORM office_action('set_status',jsonb_build_object('id',booking,'status','completed'));
  IF (SELECT remaining FROM package_sale_balances WHERE sale_id=sale AND service_id=service)<>1 THEN RAISE EXCEPTION 'QA duplicate use';END IF;
  SELECT appointment_id INTO booking FROM commands WHERE id=cmd;
  IF EXISTS(SELECT FROM agent_outbox WHERE appointment_id=booking AND status='pending') THEN RAISE EXCEPTION 'QA retroactive notification';END IF;
