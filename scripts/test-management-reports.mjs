@@ -36,6 +36,9 @@ history.packageRedemptions.push({id:'redemption',sale_id:'sale1',service_id:'s1'
 assert.equal(commandServiceValue(history,history.commands.at(-1)),3500,'Show the per-session value in the command')
 assert.equal(commandTotal(history,history.commands.at(-1)),0,'Do not charge a package-covered service twice')
 assert.equal(projectedCommandTotal(history,history.commands.at(-1)),0,'Closed package command has nothing else to receive')
+const upcomingPackage=structuredClone(fixture);upcomingPackage.commands[1].status='open';upcomingPackage.packageSales[0].customer_id='c2';upcomingPackage.packageSales[0].amount_cents=6800;upcomingPackage.packageSales[0].balances[0].remaining=1;upcomingPackage.items[1].unit_price_cents=3400
+assert.equal(commandServiceValue(upcomingPackage,upcomingPackage.commands[1]),3400,'Upcoming booking displays the R$34 session value')
+assert.equal(projectedCommandTotal(upcomingPackage,upcomingPackage.commands[1]),0,'Upcoming booking with a valid package balance has nothing extra to receive')
 const withPackage=buildManagementReport(history,people,'2026-09-18','2026-09-18')
 assert.equal(withPackage.gross,15000,'Package counted only at sale, not again at redemption')
 assert.equal(withPackage.received,11000)

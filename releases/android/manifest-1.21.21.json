@@ -1,0 +1,36 @@
+{
+  "signingCertificateSha256": "2d1fb76948ff838499c639defeaaebc4ee3834792f7bec11581066640ebf3094",
+  "changes": [
+    "Comandas agendadas com sessão ativa mostram R$ 34 por corte, sem cobrar até o atendimento.",
+    "Novas reservas usam automaticamente o valor proporcional e a comissão do plano.",
+    "Histórico anterior à venda do plano preservado; painel destaca valor do atendimento e valor a receber."
+  ],
+  "artifacts": [
+    {
+      "file": "releases/android/Machado-Gestao-v1.21.21.apk",
+      "bytes": 5977965,
+      "versionCode": 54,
+      "sha256": "c08acc75a99bdae97b6960e380dd860a5a9d009655176c0f5fcdaeaa6e8a5776"
+    },
+    {
+      "file": "releases/android/Machado-Profissional-v1.3.21.apk",
+      "bytes": 5886476,
+      "versionCode": 29,
+      "sha256": "8b02a9397609e9d632ea8461676c9e824a5dd0c9ddaeea1ea3dab68d3323d612"
+    }
+  ],
+  "backend": "contabo",
+  "admin": "1.21.21",
+  "date": "2026-11-25",
+  "verification": {
+    "apkSignature": "both signed and certificate matches previous releases",
+    "build": "passed",
+    "lint": "passed",
+    "physicalDevice": "not tested",
+    "database": "production booking quote migration applied; package session rollback test passed",
+    "reports": "passed",
+    "iosPackage": "passed",
+    "webkitIphone": "passed"
+  },
+  "professional": "1.3.21"
+}

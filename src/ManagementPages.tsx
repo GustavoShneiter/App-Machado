@@ -1125,8 +1125,8 @@ export function Orders({
               </button>
               <div className="command-card-footer">
                 <div className="command-card-value">
-                  <strong>{money(packageInfo?.redeemed ? commandServiceValue(data,c) : total)}</strong>
-                  {packageInfo?.redeemed&&<small>Inclui plano</small>}
+                  <strong>{money(packageInfo ? commandServiceValue(data,c) : total)}</strong>
+                  {packageInfo&&<small>{packageInfo.redeemed?'Sessão do plano':'Plano disponível'} · {money(total)} a receber</small>}
                 </div>
                 <div>
                   {c.status === "open" && a && (
@@ -1281,7 +1281,7 @@ export function Orders({
                       : [command.attendee_name??data.customers.find(c=>c.id===command.customer_id)?.name,commandTeam.find(p=>p.id===command.professional_id)?.name].filter(Boolean).join(" · ")}
                   </p>
                 </div>
-                <div className="command-detail-total"><strong>{money(packageInfo?.redeemed?serviceValue:total)}</strong><small>{packageInfo?.redeemed?`Valor do atendimento · ${money(total)} a receber`:'A receber'}</small></div>
+                <div className="command-detail-total"><strong>{money(packageInfo?serviceValue:total)}</strong><small>{packageInfo?`Valor do atendimento · ${money(total)} a receber`:'A receber'}</small></div>
               </div>
               {packageInfo && (
                 <div

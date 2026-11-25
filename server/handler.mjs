@@ -90,7 +90,7 @@ export default async function handler(req,res) {
       const cookies=response.headers.getSetCookie(); if(cookies.length)res.setHeader('Set-Cookie',cookies)
       res.statusCode=response.status; res.end(Buffer.from(await response.arrayBuffer())); return
     }
-    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.21.20',professionalVersion:'1.3.20',backend:process.env.HOSTING_PLATFORM||'local',database:'postgresql',mode:process.env.APP_MODE||'production'}); return }
+    if(path==='/api/health' && req.method==='GET') { await pool.query('select 1'); send(res,200,{status:'ok',version:'1.21.21',professionalVersion:'1.3.21',backend:process.env.HOSTING_PLATFORM||'local',database:'postgresql',mode:process.env.APP_MODE||'production'}); return }
     if(path.startsWith('/api/sheets/automatic/')){
       const route=path.slice('/api/sheets/automatic/'.length)
       if(['claim','jobs','complete'].includes(route)){
@@ -291,7 +291,7 @@ export default async function handler(req,res) {
     }
     if(path==='/api/system-status' && req.method==='GET') {
       const session=await officeSession(req)
-      send(res,200,{version:'1.21.20',professionalVersion:'1.3.20',backend:process.env.HOSTING_PLATFORM==='contabo'?'Contabo':'Local',database:'PostgreSQL',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs where tenant_id=$1 order by created_at desc limit 1',[session.profile.tenant_id])).rows[0]??null});return
+      send(res,200,{version:'1.21.21',professionalVersion:'1.3.21',backend:process.env.HOSTING_PLATFORM==='contabo'?'Contabo':'Local',database:'PostgreSQL',lastBackup:(await pool.query('select created_at,bytes,sha256 from backup_runs where tenant_id=$1 order by created_at desc limit 1',[session.profile.tenant_id])).rows[0]??null});return
     }
     throw fail('Página não encontrada.',404)
   } catch(error) {

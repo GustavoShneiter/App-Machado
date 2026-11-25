@@ -35,3 +35,11 @@ Após a conferência das três telas, a causa era o item do serviço ser gravado
 Os 12 usos já registrados na unidade foram corrigidos para R$ 34 por sessão; comissões pendentes associadas passaram a usar R$ 34 como base. Nenhuma comissão já paga seria reescrita. O recebimento administrativo, profissional e o fechamento de comanda coberta ignoram o valor informativo da sessão para não cobrar duas vezes. Descontos também consideram apenas itens realmente cobrados.
 
 O indicador de plano foi movido para o canto superior direito do bloco na agenda, no mesmo padrão visual do ícone da comanda. Testes cobriram posição do ícone, valor por sessão, zero adicional a receber, relatórios sem duplicidade e fechamento de comando coberto. Gestão 1.21.20 (53) e Profissional 1.3.20 (28); certificados de assinatura conferidos.
+
+## Reserva de cortes com plano
+
+As sete comandas futuras elegíveis da unidade foram corrigidas para R$ 34 por sessão (plano de R$ 68 por dois cortes). A reserva apenas exibe e calcula o valor proporcional; o saldo do plano só é consumido quando o atendimento é concluído. Se não houver mais uma sessão ativa no momento do atendimento, o sistema usa o preço normal do serviço. Novos agendamentos de clientes com sessão ativa passam a gravar o valor proporcional e recalcular a comissão na mesma base. A tela de comandas destaca R$ 34 como valor do atendimento e R$ 0 a receber enquanto o pacote estiver disponível.
+
+Os registros de 5/11 e 23/11 do Gabriel ocorreram antes da venda do plano em 23/11 às 19:10 (horário local); mantidos no histórico sem baixa retroativa. A reserva de 5/11 segue R$ 0 porque não foi vinculada a plano e não há pagamento registrado; a de 23/11 mantém R$ 34 já gravados. Teste SQL transacional com rollback verificou preço antes do uso, saldo intacto, consumo único ao concluir, comissão proporcional, não duplicação de cobrança, envio sem mensagem retroativa e reabertura. Build, lint e testes de relatórios verificados nesta versão.
+
+Gestão 1.21.21 (54) e Profissional 1.3.21 (29).

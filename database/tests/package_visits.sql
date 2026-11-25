@@ -9,6 +9,10 @@ BEGIN
  customer:=(save_customer_profile('{"name":"QA Plano integrado","phone":"11987659001"}')->>'id')::uuid;
  package:=(save_service_package(jsonb_build_object('name','QA Duas sessões','price',6800,'active',true,'items',jsonb_build_array(jsonb_build_object('service_id',service,'quantity',2))))->>'id')::uuid;
  sale:=(sell_service_package(package,customer,'pix')->>'id')::uuid;
+ booking:=(create_office_appointment(jsonb_build_object('customer_id',customer,'professional_id',pro,'service_id',service,'starts_at','2026-11-24T10:00:00-03:00','fit_in',true))->>'id')::uuid;
+ SELECT id INTO cmd FROM commands WHERE appointment_id=booking;
+ IF (SELECT unit_price_cents FROM command_items WHERE command_id=cmd AND service_id=service)<>3400 THEN RAISE EXCEPTION 'QA booking quote: expected R$ 34,00 before redemption';END IF;
+ IF (SELECT remaining FROM package_sale_balances WHERE sale_id=sale AND service_id=service)<>2 THEN RAISE EXCEPTION 'QA quote must not reserve or consume package balance';END IF;
  cmd:=(record_package_visit(jsonb_build_object('sale_id',sale,'service_id',service,'professional_id',pro,'starts_at','2026-11-24T10:00:00-03:00'))->>'id')::uuid;
  IF (SELECT remaining FROM package_sale_balances WHERE sale_id=sale AND service_id=service)<>1 THEN RAISE EXCEPTION 'QA balance'; END IF;
  IF (SELECT sum(unit_price_cents*quantity) FROM command_items WHERE command_id=cmd)<>3400 THEN RAISE EXCEPTION 'QA package service value: expected R$ 34,00';END IF;
