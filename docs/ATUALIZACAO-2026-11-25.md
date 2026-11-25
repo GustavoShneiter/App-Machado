@@ -27,3 +27,11 @@ A execução Google estava bloqueada por divisões por zero em dezembro (T38 e X
 ## Verificação
 
 Build, lint, teste unitário do conector, limites das quinzenas e teste WebKit passaram. Testes SQL com rollback verificaram uso único, cobrança zero, base de comissão por sessão, ausência de mensagens retroativas e reabertura. APKs assinados com o certificado já utilizado. Sem teste em aparelho físico nesta etapa.
+
+## Correção das comandas de plano
+
+Após a conferência das três telas, a causa era o item do serviço ser gravado como R$ 0 para impedir nova cobrança. O valor da sessão ficava apenas na comissão; por isso a linha do corte aparecia zerada e as comissões antigas podiam continuar com base de R$ 40. Agora o item mostra o valor proporcional da sessão, enquanto Caixa e relatórios excluem a sessão coberta do valor adicional a receber e da receita de serviço (o pacote já foi contabilizado na venda). O cálculo é estável pelo valor da venda dividido pelo número total de sessões do pacote.
+
+Os 12 usos já registrados na unidade foram corrigidos para R$ 34 por sessão; comissões pendentes associadas passaram a usar R$ 34 como base. Nenhuma comissão já paga seria reescrita. O recebimento administrativo, profissional e o fechamento de comanda coberta ignoram o valor informativo da sessão para não cobrar duas vezes. Descontos também consideram apenas itens realmente cobrados.
+
+O indicador de plano foi movido para o canto superior direito do bloco na agenda, no mesmo padrão visual do ícone da comanda. Testes cobriram posição do ícone, valor por sessão, zero adicional a receber, relatórios sem duplicidade e fechamento de comando coberto. Gestão 1.21.20 (53) e Profissional 1.3.20 (28); certificados de assinatura conferidos.

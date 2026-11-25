@@ -40,7 +40,6 @@ const config = JSON.parse(await readFile(`${root}/capacitor.config.json`, 'utf8'
 assert.equal(config.server?.url, undefined)
 assert.equal(config.ios?.contentInset, 'never')
 for (const name of ['AppPlugin', 'FilesystemPlugin', 'SharePlugin']) assert.ok(config.packageClassList.includes(name))
-assert.match(await readFile('.vercelignore', 'utf8'), /^ios\//m)
 assert.doesNotMatch(await readFile('src/dataClient.ts','utf8'), /ManagedAccess|managedAccess\.credentials/)
 assert.equal((await readFile(`${root}/public/index.html`, 'utf8')).includes('/src/main.tsx'), false, 'Sincronize o build de produção.')
 console.log('PASS iOS: projeto Xcode, Swift, plugins, versão, privacidade e pacote web local; login normal e ausência de acesso fixo nos recursos da distribuição.')

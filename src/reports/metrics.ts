@@ -52,15 +52,17 @@ export function buildManagementReport(state: Operations, professionals: ReportPr
   const commandsById = new Map(state.commands.map(row => [row.id, row]))
   const itemsByCommand = new Map<string, typeof state.items>()
   for (const item of state.items) { const list = itemsByCommand.get(item.command_id) ?? []; list.push(item); itemsByCommand.set(item.command_id, list) }
+  const planCoveredItems = new Set(state.packageRedemptions.map(row => row.command_item_id))
   const eligible = new Map<string, { day: string; items: typeof state.items; weights: { id: string; weight: number }[] }>()
   for (const command of state.commands) {
     if (!['awaiting_payment', 'closed'].includes(command.status)) continue
     const appointment = command.appointment_id ? appointmentsById.get(command.appointment_id) : undefined
     const day = dayKey(appointment?.starts_at ?? command.closed_at ?? command.created_at), items = itemsByCommand.get(command.id) ?? []
-    const weights = items.map(item => ({ id: item.professional_id ?? counter, weight: cents(item.unit_price_cents) * item.quantity }))
+    const payableItems = items.filter(item=>!planCoveredItems.has(item.id))
+    const weights = payableItems.map(item => ({ id: item.professional_id ?? counter, weight: cents(item.unit_price_cents) * item.quantity }))
     eligible.set(command.id, { day, items, weights })
     if (!inRange(day, from, to)) continue
-    const total = items.reduce((sum, item) => sum + cents(item.unit_price_cents) * item.quantity, 0) - cents(command.discount_cents) + cents(command.surcharge_cents)
+    const total = payableItems.reduce((sum, item) => sum + cents(item.unit_price_cents) * item.quantity, 0) - cents(command.discount_cents) + cents(command.surcharge_cents)
     for (const [id, value] of allocateCents(total, weights)) addRevenue(id, value, day)
     for (const item of items) {
       if (professional && item.professional_id !== professional) continue

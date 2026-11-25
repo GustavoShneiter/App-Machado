@@ -50,7 +50,7 @@ async function removeItems(client, command, itemId) {
   await client.query('delete from commands where id=$1',[command.id])
   await client.query('delete from appointments where id=$1',[command.appointment_id])
  }else if(command.discount_cents>0){
-  const {subtotal}=(await client.query('select coalesce(sum(unit_price_cents::bigint*quantity),0) subtotal from command_items where command_id=$1',[command.id])).rows[0]
+  const {subtotal}=(await client.query('select coalesce(sum(i.unit_price_cents::bigint*i.quantity) filter(where not exists(select 1 from package_redemptions r where r.command_item_id=i.id)),0) subtotal from command_items i where i.command_id=$1',[command.id])).rows[0]
   if(Number(subtotal)+command.surcharge_cents<=command.discount_cents)throw fail('Reduza o desconto antes de remover este item.')
  }
  return {id:itemId??command.id}
@@ -125,14 +125,14 @@ export async function professionalCommandAction(client,id,action,payload) {
   const discount=payload.discount===undefined?command.discount_cents:payload.discount
   const tip=payload.surcharge===undefined?command.surcharge_cents:payload.surcharge
   if(![discount,tip].every(value=>Number.isSafeInteger(value)&&value>=0&&value<=2147483647))throw fail('Informe valores válidos para desconto e gorjeta.')
-  const {subtotal}=(await client.query('select coalesce(sum(unit_price_cents::bigint*quantity),0) subtotal from command_items where command_id=$1',[commandId])).rows[0]
+  const {subtotal}=(await client.query('select coalesce(sum(i.unit_price_cents::bigint*i.quantity) filter(where not exists(select 1 from package_redemptions r where r.command_item_id=i.id)),0) subtotal from command_items i where i.command_id=$1',[commandId])).rows[0]
   const total=Number(subtotal)-discount+tip
   if(total<=0||total>2147483647)throw fail('O total da comanda precisa ser positivo e estar dentro do limite.')
   await client.query('update commands set discount_cents=$2,surcharge_cents=$3 where id=$1',[commandId,discount,tip])
   return {id:commandId}
  }
  if(receiving||action==='close_package_command') {
-  const total=Number((await client.query('select coalesce(sum(unit_price_cents*quantity),0)-$2::integer+$3::integer amount from command_items where command_id=$1',[commandId,command.discount_cents,command.surcharge_cents])).rows[0].amount)
+  const total=Number((await client.query('select coalesce(sum(i.unit_price_cents*i.quantity) filter(where not exists(select 1 from package_redemptions r where r.command_item_id=i.id)),0)-$2::integer+$3::integer amount from command_items i where i.command_id=$1',[commandId,command.discount_cents,command.surcharge_cents])).rows[0].amount)
   if(action==='close_package_command') {
    const covered=(await client.query('select 1 from package_redemptions r join command_items i on i.id=r.command_item_id where i.command_id=$1',[commandId])).rowCount
    if(total!==0||!covered)throw fail('Este atendimento não está integralmente coberto pelo plano.')

@@ -10,6 +10,7 @@ import { useOperations } from "./OperationsStore";
 import { useCatalog } from "./CatalogStore";
 import {
   cashBalance,
+  commandServiceValue,
   commandTotal,
   projectedCommandTotal,
   dateTime,
@@ -1123,7 +1124,10 @@ export function Orders({
                 </p>
               </button>
               <div className="command-card-footer">
-                <strong>{money(total)}</strong>
+                <div className="command-card-value">
+                  <strong>{money(packageInfo?.redeemed ? commandServiceValue(data,c) : total)}</strong>
+                  {packageInfo?.redeemed&&<small>Inclui plano</small>}
+                </div>
                 <div>
                   {c.status === "open" && a && (
                     <Link className="outline small" to={professionalOnly?'/profissional/agenda':'/admin/agenda'}>
@@ -1259,6 +1263,7 @@ export function Orders({
           );
           const packageInfo = commandPackage(data, command);
           const total = projectedCommandTotal(data, command);
+          const serviceValue = commandServiceValue(data,command);
           return (
             <Modal title="Comanda" close={() => setDetails("")}>
               {command.status==='closed'&&<button className="outline" disabled={busy} onClick={async()=>{if(window.confirm('Reabrir para editar? O recebimento anterior será estornado no caixa aberto, preservando o histórico. Após editar, registre novamente o pagamento.'))await run('reopen_command',{id:command.id})}}>Reabrir comanda</button>}
@@ -1276,7 +1281,7 @@ export function Orders({
                       : [command.attendee_name??data.customers.find(c=>c.id===command.customer_id)?.name,commandTeam.find(p=>p.id===command.professional_id)?.name].filter(Boolean).join(" · ")}
                   </p>
                 </div>
-                <strong>{money(total)}</strong>
+                <div className="command-detail-total"><strong>{money(packageInfo?.redeemed?serviceValue:total)}</strong><small>{packageInfo?.redeemed?`Valor do atendimento · ${money(total)} a receber`:'A receber'}</small></div>
               </div>
               {packageInfo && (
                 <div

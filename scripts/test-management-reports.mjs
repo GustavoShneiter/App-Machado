@@ -4,7 +4,7 @@ import { createRequire } from 'node:module'
 const result = await build({
   stdin: { contents: `
 import assert from 'node:assert/strict'
-import {emptyOperations} from './src/operations'
+import {emptyOperations,commandTotal,commandServiceValue,projectedCommandTotal} from './src/operations'
 import {buildManagementReport,allocateCents,validReportRange} from './src/reports/metrics'
 import {fixture} from './scripts/operations-fixture.mjs'
 const people=[{id:'p1',nome:'Araújo'},{id:'p2',nome:'Machado'}]
@@ -30,8 +30,12 @@ assert.equal(selected.expenses,0);assert.equal(selected.result,2400,'Overhead ha
 assert.ok(selected.appointments.every(a=>a.professional_id==='p1'))
 const history=structuredClone(fixture)
 history.packageSales[0].sold_at='2026-09-18T12:00:00Z'
-history.commands.push({id:'redeemed',appointment_id:null,customer_id:'c1',status:'closed',discount_cents:4000,surcharge_cents:0,created_at:'2026-09-18T12:00:00Z',closed_at:'2026-09-18T12:00:00Z'})
-history.items.push({...history.items[0],id:'redemption-item',command_id:'redeemed',commission_cents:0})
+history.commands.push({id:'redeemed',appointment_id:null,customer_id:'c1',status:'closed',discount_cents:0,surcharge_cents:0,created_at:'2026-09-18T12:00:00Z',closed_at:'2026-09-18T12:00:00Z'})
+history.items.push({...history.items[0],id:'redemption-item',command_id:'redeemed',commission_cents:0,unit_price_cents:3500})
+history.packageRedemptions.push({id:'redemption',sale_id:'sale1',service_id:'s1',command_item_id:'redemption-item',package_name:'Plano 2 cabelos',redeemed_at:'2026-09-18T12:00:00Z'})
+assert.equal(commandServiceValue(history,history.commands.at(-1)),3500,'Show the per-session value in the command')
+assert.equal(commandTotal(history,history.commands.at(-1)),0,'Do not charge a package-covered service twice')
+assert.equal(projectedCommandTotal(history,history.commands.at(-1)),0,'Closed package command has nothing else to receive')
 const withPackage=buildManagementReport(history,people,'2026-09-18','2026-09-18')
 assert.equal(withPackage.gross,15000,'Package counted only at sale, not again at redemption')
 assert.equal(withPackage.received,11000)

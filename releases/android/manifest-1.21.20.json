@@ -1,0 +1,37 @@
+{
+  "signingCertificateSha256": "2d1fb76948ff838499c639defeaaebc4ee3834792f7bec11581066640ebf3094",
+  "admin": "1.21.20",
+  "professional": "1.3.20",
+  "backend": "contabo",
+  "artifacts": [
+    {
+      "sha256": "636a517ffd3ad92ebbfe9e2f8b47091a8586ba83d3ba9b9b89c4d7c058881250",
+      "versionCode": 53,
+      "bytes": 5977925,
+      "file": "releases/android/Machado-Gestao-v1.21.20.apk"
+    },
+    {
+      "sha256": "eead0c37e5ded20231beb0fe0995662470786eaeedad6367cf6a2c9890d73087",
+      "versionCode": 28,
+      "bytes": 5886460,
+      "file": "releases/android/Machado-Profissional-v1.3.20.apk"
+    }
+  ],
+  "changes": [
+    "Valor de cada sessão coberta aparece na comanda e segue base de comissão; R$ 68 / 2 = R$ 34",
+    "Sessões incluídas em plano permanecem sem cobrança duplicada no Caixa e nos relatórios",
+    "Comandas passadas recalculadas com o valor por sessão e comissões pendentes reconciliadas",
+    "Ícone de plano no canto superior direito do atendimento na agenda"
+  ],
+  "date": "2026-11-25",
+  "verification": {
+    "build": "passed",
+    "reports": "passed",
+    "webkitIphone": "three-professional agenda and plan badge position passed",
+    "lint": "passed",
+    "apkSignature": "both signed and certificate matches previous releases",
+    "database": "package-session rollback test passed",
+    "iosPackage": "passed",
+    "physicalDevice": "not tested"
+  }
+}

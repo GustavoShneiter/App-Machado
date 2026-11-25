@@ -11,7 +11,8 @@ BEGIN
  sale:=(sell_service_package(package,customer,'pix')->>'id')::uuid;
  cmd:=(record_package_visit(jsonb_build_object('sale_id',sale,'service_id',service,'professional_id',pro,'starts_at','2026-11-24T10:00:00-03:00'))->>'id')::uuid;
  IF (SELECT remaining FROM package_sale_balances WHERE sale_id=sale AND service_id=service)<>1 THEN RAISE EXCEPTION 'QA balance'; END IF;
- IF (SELECT sum(unit_price_cents*quantity) FROM command_items WHERE command_id=cmd)<>0 THEN RAISE EXCEPTION 'QA covered total';END IF;
+ IF (SELECT sum(unit_price_cents*quantity) FROM command_items WHERE command_id=cmd)<>3000 THEN RAISE EXCEPTION 'QA package service value';END IF;
+ IF (SELECT sum(i.unit_price_cents*i.quantity) FROM command_items i WHERE i.command_id=cmd AND NOT EXISTS(SELECT 1 FROM package_redemptions r WHERE r.command_item_id=i.id))<>0 THEN RAISE EXCEPTION 'QA package must not create a second charge';END IF;
  FOR entry IN SELECT e.* FROM commission_entries e JOIN command_items i ON i.id=e.command_item_id WHERE i.command_id=cmd LOOP
   IF entry.gross_cents<>3000 THEN RAISE EXCEPTION 'QA commission basis: %',entry.gross_cents; END IF;
  END LOOP;
@@ -22,6 +23,6 @@ BEGIN
  PERFORM close_package_command(cmd);
  PERFORM reopen_command(cmd);
  IF (SELECT status FROM commands WHERE id=cmd)<>'awaiting_payment' THEN RAISE EXCEPTION 'QA reopen';END IF;
- RAISE NOTICE 'PASS plan visit, session commission, zero charge, idempotence, agent and reopening';
+ RAISE NOTICE 'PASS package session value, zero extra charge, commission base, idempotence, agent and reopening';
 END $$;
 ROLLBACK;

@@ -23,21 +23,28 @@ export const dayKey = (value: string | Date = new Date()) => new Date(value).toL
 export const dateTime = (value: string) => new Date(value).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' })
 export const labels: Record<string, string> = { scheduled: 'Agendado', confirmed: 'Confirmado', arrived: 'Cliente chegou', in_service: 'Em atendimento', completed: 'Concluído', cancelled: 'Cancelado', no_show: 'Não compareceu', open: 'Em aberto', awaiting_payment: 'Aguardando pagamento', closed: 'Paga', voided: 'Cancelada', refunded: 'Estornada' }
 export const methods: Record<string, string> = { cash: 'Dinheiro', pix: 'Pix', debit: 'Débito', credit: 'Crédito', other: 'Outro' }
-export const commandTotal = (state: Operations, command: Command) => state.items.filter(i => i.command_id === command.id).reduce((s, i) => s + i.unit_price_cents * i.quantity, 0) - command.discount_cents + command.surcharge_cents
+const redeemedItems = (state: Operations, command: Command) => new Set(state.packageRedemptions.filter(row => state.items.some(item => item.id === row.command_item_id && item.command_id === command.id)).map(row => row.command_item_id))
+export const commandTotal = (state: Operations, command: Command) => {
+  const redeemed=redeemedItems(state,command)
+  return Math.max(0,state.items.filter(i => i.command_id === command.id && !redeemed.has(i.id)).reduce((s, i) => s + i.unit_price_cents * i.quantity, 0) - command.discount_cents + command.surcharge_cents)
+}
+export const commandServiceValue = (state: Operations, command: Command) => state.items.filter(i => i.command_id === command.id).reduce((s, i) => s + i.unit_price_cents * i.quantity, 0) - command.discount_cents + command.surcharge_cents
 export function appointmentPlan(state: Operations, appointment: Appointment) {
   return state.packageSales.find(sale=>sale.customer_id===appointment.customer_id&&sale.status==='active'&&sale.balances.some(b=>b.service_id===appointment.service_id&&b.remaining>0));
 }
 export function projectedCommandTotal(state: Operations,command:Command){
-  if(command.status!=='open')return commandTotal(state,command);
+  const redeemed=redeemedItems(state,command);
+  const due=state.items.filter(item=>item.command_id===command.id&&!redeemed.has(item.id)).reduce((sum,item)=>sum+item.unit_price_cents*item.quantity,0)-command.discount_cents+command.surcharge_cents;
+  if(command.status!=='open')return Math.max(0,due);
   const balances=new Map<string,number>();
   for(const sale of state.packageSales.filter(s=>s.customer_id===command.customer_id&&s.status==='active'))
     for(const b of sale.balances)balances.set(b.service_id,(balances.get(b.service_id)??0)+b.remaining);
   let covered=0;
-  for(const item of state.items.filter(i=>i.command_id===command.id&&i.service_id&&!state.packageRedemptions.some(r=>r.command_item_id===i.id))){
+  for(const item of state.items.filter(i=>i.command_id===command.id&&i.service_id&&!redeemed.has(i.id))){
     const available=balances.get(item.service_id!)??0,quantity=Math.min(available,item.quantity);
     covered+=quantity*item.unit_price_cents;balances.set(item.service_id!,available-quantity);
   }
-  return Math.max(0,commandTotal(state,command)-covered);
+  return Math.max(0,due-covered);
 }
 export function commissionPeriodDate(state: Operations, commission: Commission) {
   if (commission.status === 'paid' && commission.paid_at) return dayKey(commission.paid_at)
