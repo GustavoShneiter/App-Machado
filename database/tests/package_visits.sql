@@ -7,14 +7,14 @@ DECLARE customer uuid;pro uuid;service uuid;package uuid;sale uuid;cmd uuid;book
 BEGIN
  SELECT ps.professional_id,ps.service_id INTO pro,service FROM professional_services ps JOIN services s ON s.id=ps.service_id WHERE s.active LIMIT 1;
  customer:=(save_customer_profile('{"name":"QA Plano integrado","phone":"11987659001"}')->>'id')::uuid;
- package:=(save_service_package(jsonb_build_object('name','QA Duas sessões','price',6000,'active',true,'items',jsonb_build_array(jsonb_build_object('service_id',service,'quantity',2))))->>'id')::uuid;
+ package:=(save_service_package(jsonb_build_object('name','QA Duas sessões','price',6800,'active',true,'items',jsonb_build_array(jsonb_build_object('service_id',service,'quantity',2))))->>'id')::uuid;
  sale:=(sell_service_package(package,customer,'pix')->>'id')::uuid;
  cmd:=(record_package_visit(jsonb_build_object('sale_id',sale,'service_id',service,'professional_id',pro,'starts_at','2026-11-24T10:00:00-03:00'))->>'id')::uuid;
  IF (SELECT remaining FROM package_sale_balances WHERE sale_id=sale AND service_id=service)<>1 THEN RAISE EXCEPTION 'QA balance'; END IF;
- IF (SELECT sum(unit_price_cents*quantity) FROM command_items WHERE command_id=cmd)<>3000 THEN RAISE EXCEPTION 'QA package service value';END IF;
+ IF (SELECT sum(unit_price_cents*quantity) FROM command_items WHERE command_id=cmd)<>3400 THEN RAISE EXCEPTION 'QA package service value: expected R$ 34,00';END IF;
  IF (SELECT sum(i.unit_price_cents*i.quantity) FROM command_items i WHERE i.command_id=cmd AND NOT EXISTS(SELECT 1 FROM package_redemptions r WHERE r.command_item_id=i.id))<>0 THEN RAISE EXCEPTION 'QA package must not create a second charge';END IF;
  FOR entry IN SELECT e.* FROM commission_entries e JOIN command_items i ON i.id=e.command_item_id WHERE i.command_id=cmd LOOP
-  IF entry.gross_cents<>3000 THEN RAISE EXCEPTION 'QA commission basis: %',entry.gross_cents; END IF;
+  IF entry.gross_cents<>3400 THEN RAISE EXCEPTION 'QA commission basis: %',entry.gross_cents; END IF;
  END LOOP;
  PERFORM record_package_visit(jsonb_build_object('sale_id',sale,'service_id',service,'professional_id',pro,'starts_at','2026-11-24T10:00:00-03:00'));
  IF (SELECT remaining FROM package_sale_balances WHERE sale_id=sale AND service_id=service)<>1 THEN RAISE EXCEPTION 'QA duplicate use';END IF;
