@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-26",
+  "admin": "1.21.22",
+  "professional": "1.3.21",
+  "backend": "contabo",
+  "changes": [
+    "Envio coletivo no Agente WhatsApp com prévia, consentimento e confirmação.",
+    "Atendimento contextual sem resposta repetida de cadastro ao tentar agendar."
+  ],
+  "artifacts": [
+    {
+      "file": "releases/android/Machado-Gestao-v1.21.22.apk",
+      "bytes": 5978869,
+      "versionCode": 55,
+      "sha256": "4ae083b501fb7fe6457c2c334e9617c79c39cccc8068ac873f5ae289eba4142a"
+    }
+  ],
+  "verification": {
+    "build": "passed",
+    "ui": "passed",
+    "broadcastQueue": "transaction rolled back without sending",
+    "apkSignature": "matches prior production certificate",
+    "physicalDevice": "not tested"
+  }
+}

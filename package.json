@@ -1,7 +1,7 @@
 {
   "name": "barbearia-machado",
   "private": true,
-  "version": "1.21.21",
+  "version": "1.21.22",
   "type": "module",
   "scripts": {
     "dev": "vite",
