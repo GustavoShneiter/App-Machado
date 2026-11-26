@@ -1,4 +1,4 @@
-import { randomBytes,createHash } from 'node:crypto'
+import { randomBytes,createHash,randomUUID } from 'node:crypto'
 import { defaultConfig,validateConfig,cleanPhone,actions,fail } from '../shared/agent-config.mjs'
 
 export async function settings(client,lock=false) {
@@ -9,6 +9,23 @@ export async function settings(client,lock=false) {
 export const effectiveSettings=row=>({...row.config,assistant_enabled:process.env.AGENT_ENABLED==='true'&&row.config.assistant_enabled,confirmations_enabled:process.env.AGENT_ENABLED==='true'&&row.config.confirmations_enabled,reminders_enabled:process.env.AGENT_ENABLED==='true'&&row.config.reminders_enabled,birthday_enabled:process.env.AGENT_ENABLED==='true'&&row.config.birthday_enabled,reactivation_enabled:process.env.AGENT_ENABLED==='true'&&row.config.reactivation_enabled,revision:row.revision,updated_at:row.updated_at})
 export async function administrativeAgent(client,path,method,body,user) {
  const write=method==='POST';
+ if(path==='broadcast') {
+  if(user.role!=='owner')throw fail('Somente o proprietário pode enviar mensagens coletivas.',403)
+  const countSql=`select count(*)::integer total from (select distinct c.phone from customers c join agent_contacts ac on ac.tenant_id=c.tenant_id and ac.phone=c.phone where ac.marketing_opt_in and not ac.opted_out and c.phone ~ '^[1-9][0-9]{9,10}$') eligible`
+  const eligible=(await client.query(countSql)).rows[0].total
+  if(!write)return {eligible}
+  const text=String(body.message||'').trim()
+  if(text.length<3||text.length>1800||/[\u0000-\u001f\u007f]/.test(text))throw fail('Escreva uma mensagem de 3 a 1.800 caracteres, sem caracteres de controle.')
+  if(body.expected_recipients!==eligible)throw fail('A lista de clientes mudou. Confira a quantidade antes de enviar.',409)
+  if(!eligible)throw fail('Nenhum cliente autorizou mensagens coletivas.',409)
+  if(process.env.AGENT_ENABLED!=='true')throw fail('A integração do WhatsApp está pausada.',409)
+  const campaign=randomUUID(),snapshot=text+'\n\nSe não quiser receber estas mensagens, responda SAIR.'
+  const result=await client.query(`insert into agent_outbox(kind,event_key,customer_id,due_at,available_at,expires_at,message_text,settings_revision,template_revision)
+   select 'broadcast','broadcast:'||$1::text||':'||chosen.id,chosen.id,now(),now(),now()+interval '30 days',$2,1,1
+   from (select distinct on(c.phone) c.id,c.phone from customers c join agent_contacts ac on ac.tenant_id=c.tenant_id and ac.phone=c.phone
+    where ac.marketing_opt_in and not ac.opted_out and c.phone ~ '^[1-9][0-9]{9,10}$' order by c.phone,c.id) chosen`,[campaign,snapshot])
+  return {queued:result.rowCount,campaign}
+ }
  if(path==='settings') {
   const row=await settings(client,write)
   if(!write)return {...row.config,revision:row.revision,updated_at:row.updated_at}

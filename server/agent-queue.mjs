@@ -40,7 +40,7 @@ export async function claimNotification(client,cfg,integration) {
  await client.query("update agent_outbox set status='uncertain',last_error_code='claim_expired' where status='sending' and claimed_at<now()-interval '10 minutes'")
  await client.query("update agent_outbox set status='suppressed',last_error_code='expired' where status='pending' and expires_at<=now()")
  const row=(await client.query(`select * from agent_outbox where status='pending' and available_at<=now()
-  and ((kind='confirmation' and $1) or (kind='reminder' and $2) or (kind='birthday' and $3) or (kind='reactivation' and $4))
+  and ((kind='confirmation' and $1) or (kind='reminder' and $2) or (kind='birthday' and $3) or (kind='reactivation' and $4) or kind='broadcast')
   and (kind in('confirmation','reminder') or (extract(hour from now() at time zone 'America/Sao_Paulo') >= $5 and extract(hour from now() at time zone 'America/Sao_Paulo')<$6))
   order by (kind='confirmation') desc,available_at,id for update skip locked limit 1`,[cfg.confirmations_enabled,cfg.reminders_enabled,cfg.birthday_enabled,cfg.reactivation_enabled,cfg.campaign_start_hour,cfg.campaign_end_hour])).rows[0]
  if(!row)return null
@@ -64,10 +64,10 @@ export async function claimNotification(client,cfg,integration) {
  }
  if(suppress){await client.query("update agent_outbox set status='suppressed',last_error_code='ineligible' where id=$1",[row.id]);return {suppressed:true}}
  const key=row.kind==='reminder'?`reminder_${row.reminder_index}`:row.kind
- const template=cfg.message_templates[key],business=(await client.query('select name from business_settings where id=true')).rows[0]
+ const template=row.kind==='broadcast'?{text:row.message_text,revision:1}:cfg.message_templates[key],business=(await client.query('select name from business_settings where id=true')).rows[0]
  const date=a?new Date(a.starts_at):null
  const offset=cfg.reminder_offsets_minutes[row.reminder_index-1]
- const text=renderMessage(key,template.text,{cliente:customer.name,barbearia:business?.name||'Machado',servico:a?.service_name,profissional:a?.professional_name,data:date?.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}),hora:date?.toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}),antecedencia:offset%60===0?`${offset/60} horas`:`${offset} minutos`})
+ const text=row.kind==='broadcast'?row.message_text:renderMessage(key,template.text,{cliente:customer.name,barbearia:business?.name||'Machado',servico:a?.service_name,profissional:a?.professional_name,data:date?.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}),hora:date?.toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}),antecedencia:offset%60===0?`${offset/60} horas`:`${offset} minutos`})
  const claim=randomUUID()
  await client.query("update agent_outbox set status='sending',claim_token=$2,integration_id=$3,claimed_at=now(),attempts=attempts+1,message_text=$4,settings_revision=$5,template_revision=$6 where id=$1",[row.id,claim,integration.id,text,cfg.revision,template.revision])
  return {id:row.id,claim_token:claim,kind:row.kind,event_key:row.event_key,reminder_index:row.reminder_index,customer:{name:customer.name,phone:customer.phone},appointment:a?{id:a.id,starts_at:a.starts_at,service_name:a.service_name,professional_name:a.professional_name,status:a.status,revision:a.revision}:null,message_text:text,settings_revision:cfg.revision,template_revision:template.revision}

@@ -120,7 +120,7 @@ export default async function handler(req,res) {
     if(path==='/api/agent') return await externalAgent(req,res,{readBody,send,pool,transaction})
     if(path.startsWith('/api/agent/')) {
       const route=path.slice('/api/agent/'.length)
-      const methods={settings:['GET','POST'],status:['GET'],activity:['GET'],'contact-consent':['GET','POST'],'credentials/rotate':['POST'],'credentials/revoke':['POST']}
+      const methods={settings:['GET','POST'],status:['GET'],activity:['GET'],broadcast:['GET','POST'],'contact-consent':['GET','POST'],'credentials/rotate':['POST'],'credentials/revoke':['POST']}
       if(!methods[route]?.includes(req.method))throw fail('Operação inválida.',405)
       const session=await officeSession(req,route.startsWith('credentials/'))
       if(req.method==='POST')await rateLimit(req,'agent-settings',30)

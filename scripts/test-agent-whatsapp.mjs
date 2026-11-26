@@ -119,6 +119,26 @@ try {
   await assert.rejects(call('customer_context',{phone:'45999990000'}),e=>e.status===403)
   await scoped(0,c=>c.query('update agent_integrations set permissions=$2 where id=$1',[integration.id,actions]))
   await scoped(0,async c=>{
+   const owner={id:user,role:'owner'}
+   const first=await administrativeAgent(c,'broadcast','GET',{},owner)
+   assert.equal(first.eligible,0)
+   await c.query("insert into customers(name,phone) values('Campanha QA','45999992222')")
+   await c.query("insert into agent_contacts(phone,marketing_opt_in,consent_note) values('45999992222',true,'Autorizado no atendimento')")
+   const ready=await administrativeAgent(c,'broadcast','GET',{},owner)
+   assert.equal(ready.eligible,1)
+   await assert.rejects(administrativeAgent(c,'broadcast','POST',{message:'Aviso de teste',expected_recipients:0},owner),e=>e.status===409)
+   await assert.rejects(administrativeAgent(c,'broadcast','POST',{message:'Aviso de teste',expected_recipients:1},{id:user,role:'admin'}),e=>e.status===403)
+   const batch=await administrativeAgent(c,'broadcast','POST',{message:'Aviso de teste',expected_recipients:1},owner)
+   assert.equal(batch.queued,1)
+   const queued=(await c.query("select kind,message_text,status from agent_outbox where event_key like 'broadcast:%'")).rows
+   assert.equal(queued.length,1)
+   assert.match(queued[0].message_text,/Aviso de teste/)
+   assert.match(queued[0].message_text,/responda SAIR/)
+   assert.equal(queued[0].status,'pending')
+   await agentAction(c,'opt_out',{phone:'45999992222'},integration)
+   assert.equal((await c.query("select status from agent_outbox where event_key like 'broadcast:%'")).rows[0].status,'suppressed')
+  })
+  await scoped(0,async c=>{
    const duplicate=(await c.query("insert into customers(name,phone) values('Cadastro duplicado','5545999990000') returning id")).rows[0].id
    const ambiguous=await customerContext(c,{phone:'45999990000'})
    assert.equal(ambiguous.ambiguous,true);assert.equal(ambiguous.found,false);assert.equal(ambiguous.customer,null)

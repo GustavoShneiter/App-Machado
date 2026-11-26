@@ -17,7 +17,7 @@ export async function agentAction(client,action,p,integration) {
  if(action==='opt_out') {
   const phone=cleanPhone(p.phone)
   await client.query('insert into agent_contacts(phone,opted_out) values($1,true) on conflict(tenant_id,phone) do update set opted_out=true,updated_at=now()',[phone])
-  await client.query("update agent_outbox set status='suppressed',last_error_code='opt_out' where status='pending' and kind in('birthday','reactivation') and customer_id in(select id from customers where phone=$1)",[phone]);return {opted_out:true}
+  await client.query("update agent_outbox set status='suppressed',last_error_code='opt_out' where status='pending' and kind in('birthday','reactivation','broadcast') and customer_id in(select id from customers where phone=$1)",[phone]);return {opted_out:true}
  }
  if(action==='enqueue_campaigns')return enqueueCampaigns(client,cfg)
  if(action==='enqueue_reminders')return enqueueReminders(client,cfg)
