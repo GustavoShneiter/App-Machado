@@ -237,8 +237,9 @@ export default async function handler(req,res) {
         const args=keys.map((key,index)=>`"${key}" => $${index+1}`).join(',')
         const tableResult=name==='public_booking_slots'||name==='public_available_slots'
         const statement=tableResult?`select coalesce(jsonb_agg(to_jsonb(x)),'[]'::jsonb) as value from public."${name}"(${args}) x`:`select public."${name}"(${args}) as value`
+        const closingPreviousCash=name==='office_action'&&params.action==='open_cash'&&(await client.query('select exists(select 1 from cash_sessions where tenant_id=current_business_id() and closed_at is null) as value')).rows[0].value
         let result=(await client.query(statement,keys.map(key=>params[key]))).rows[0]?.value
-        if(name==='office_action'&&params.action==='close_cash')await captureCashPublication(client)
+        if(name==='office_action'&&(params.action==='close_cash'||closingPreviousCash))await captureCashPublication(client)
         if(name==='office_snapshot')result={...result,businessHours:await readBusinessHours(client),slotIntervalMinutes:(await client.query('select slot_interval_minutes from business_settings where id=true')).rows[0]?.slot_interval_minutes??15}
         if(result?.id&&(name==='save_professional_profile'||(name==='office_action'&&params.action==='save_professional'))) {
           const credentials=params.payload?.access

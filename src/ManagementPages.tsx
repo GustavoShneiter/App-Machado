@@ -1607,7 +1607,7 @@ export function CashManagement({
     if (
       await run(action, {
         id: dialog === "pay" ? professionalId : active?.id,
-        amount: Math.round(Number(amount) * 100),
+        amount: dialog === "open" ? 0 : Math.round(Number(amount) * 100),
         method,
         type,
         notes,
@@ -1642,12 +1642,12 @@ export function CashManagement({
                 )}{" "}
                 ao profissional?
               </p>
+            ) : dialog === "open" ? (
+              <p>O novo caixa começa zerado. Se houver um caixa aberto, ele será encerrado automaticamente sem contagem física.</p>
             ) : (
               <label className="field">
                 <span>
-                  {dialog === "open"
-                    ? "Dinheiro inicial (R$)"
-                    : dialog === "close"
+                  {dialog === "close"
                       ? "Dinheiro contado no fechamento (R$)"
                       : "Valor (R$)"}
                 </span>
