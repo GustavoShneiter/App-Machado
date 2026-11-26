@@ -61,7 +61,7 @@ export function ApprovedCashView({ receive, pay, open }: { receive:(id:string)=>
       {payoutDateScope!=='all'&&<div className="payout-date-range"><label className="field"><span>De</span><input type="date" value={payoutRange.from} onChange={e=>{setPayoutRange({...payoutRange,from:e.target.value});setPayoutDateScope('custom')}} /></label><label className="field"><span>Até</span><input type="date" value={payoutRange.to} onChange={e=>{setPayoutRange({...payoutRange,to:e.target.value});setPayoutDateScope('custom')}} /></label></div>}
       {payoutDateScope!=='all'&&payoutRange.from>payoutRange.to&&<p className="form-error" role="alert">A data final deve ser igual ou posterior à inicial.</p>}
     </>}
-    {shown&&tab!=='payouts'&&(tab!=='ledger'||!monthly)&&<p className="form-note">Saldo físico: {money(cashBalance(data,shown))}{shown.closed_at?` · Contado: ${money(shown.declared_balance_cents??0)} · Diferença: ${money((shown.declared_balance_cents??0)-cashBalance(data,shown))}`:''}</p>}
+    {shown&&tab!=='payouts'&&(tab!=='ledger'||!monthly)&&<p className="form-note">Saldo físico esperado: {money(cashBalance(data,shown))}{shown.closed_at&&shown.declared_balance_cents!==null?` · Contado: ${money(shown.declared_balance_cents)} · Diferença: ${money(shown.declared_balance_cents-cashBalance(data,shown))}`:shown.closed_at?' · Fechado sem contagem física registrada':''}</p>}
     <button className="primary" disabled={tab==='payouts'&&payoutDateScope!=='all'&&(!payoutRange.from||!payoutRange.to||payoutRange.from>payoutRange.to)} onClick={()=>setFilters(false)}>Aplicar filtros</button>
   </div></Modal>}
   {pendingOpen&&<Modal title="Receber de clientes" close={()=>setPendingOpen(false)}>{pendingList}</Modal>}
