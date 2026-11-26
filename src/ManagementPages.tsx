@@ -233,8 +233,12 @@ export function EmptyState({
 const Empty = EmptyState;
 export function AppointmentIdentity({
   appointment: a,
+  priceCents,
+  serviceName,
 }: {
   appointment: Appointment;
+  priceCents?: number;
+  serviceName?: string;
 }) {
   return (
     <div className="appointment-identity">
@@ -243,7 +247,7 @@ export function AppointmentIdentity({
         <span className="professional-label">· {a.professional_name}</span>
       </strong>
       <span>
-        {a.service_name} · {money(a.expected_price_cents)}
+        {serviceName ?? a.service_name} · {money(priceCents ?? a.expected_price_cents)}
       </span>
       <small>
         {dateTime(a.starts_at)} · {labels[a.status] ?? a.status}{a.source==='whatsapp_agent'?' · WhatsApp':''}
@@ -515,6 +519,15 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
     year: "numeric",
   });
   const workHours=hoursForDay(data.businessHours,date),closed=!workHours.length;
+  const agendaCommandSummary=(appointment:Appointment)=>{
+    const command=data.commands.find(item=>item.appointment_id===appointment.id);
+    if(!command||!['awaiting_payment','closed'].includes(command.status))return null;
+    const items=data.items.filter(item=>item.command_id===command.id);
+    return {
+      priceCents:commandServiceValue(data,command),
+      serviceName:items.map(item=>`${item.description}${item.quantity>1?` ×${item.quantity}`:''}`).join(' + ')||appointment.service_name,
+    };
+  };
   return (
     <section className="page agenda-page">
       <header className="approved-agenda-heading"><h1>{professionalOnly?'Minha Agenda':'Agenda'}</h1><button className="text-action" onClick={()=>setFiltersOpen(true)}><SlidersHorizontal size={17}/>Filtro</button></header>
@@ -567,7 +580,7 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
       )}
       {focused && (
         <Modal title="Agendamento" close={() => setFocused(null)}>
-          <AppointmentIdentity appointment={focused} />
+          <AppointmentIdentity appointment={focused} {...(agendaCommandSummary(focused)??{})} />
           <div className="row-actions agenda-detail-actions">
             {data.commands.some(c=>c.appointment_id===focused.id)&&<button className="primary agenda-payment-action" onClick={()=>navigate((professionalOnly?'/profissional/atendimentos':'/admin/comandas')+'?comanda='+data.commands.find(c=>c.appointment_id===focused.id)?.id)}>Ver atendimento e pagamento</button>}
             {!["arrived", "in_service", "completed", "cancelled", "no_show"].includes(focused.status) && <button className="outline" disabled={busy} onClick={() => { setFocused(null); setConfirmation(focused); }}>Faltou</button>}
