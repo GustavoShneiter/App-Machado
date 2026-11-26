@@ -61,6 +61,12 @@ export function commissionsInPeriod(state: Operations, filters: { status: string
     && (!filters.to || commissionPeriodDate(state, commission) <= filters.to))
 }
 export const cashBalance = (state: Operations, session: CashSession) => session.opening_balance_cents + state.movements.filter(m => m.session_id === session.id && m.payment_method === 'cash').reduce((s, m) => s + m.amount_cents, 0)
+export function receivedInSession(state: Operations, session: CashSession, method = 'all') {
+  const matches = (value: string) => method === 'all' || (method === 'cards' ? ['debit', 'credit'].includes(value) : value === method)
+  return state.movements
+    .filter(m => m.session_id === session.id && m.type === 'sale' && m.amount_cents > 0 && matches(m.payment_method))
+    .reduce((sum, movement) => sum + movement.amount_cents, 0)
+}
 export function cashLedger(state: Operations, filters: { sessionId?: string; month?: string; method?: string; direction?: string; professional?: string; search?: string }) {
   const { sessionId, month, method = 'all', direction = 'all', professional = '', search = '' } = filters
   const query = search.trim().toLocaleLowerCase('pt-BR')

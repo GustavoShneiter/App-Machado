@@ -235,6 +235,24 @@ body:has(.machado-ui){background:#f7f8fa;color:#1c2925;overscroll-behavior-y:aut
 .machado-ui .cash-balance-visibility{display:flex;justify-content:center;margin:8px 0 0}
 .machado-ui .cash-today-layout .finance-main-amount{text-align:center}
 .machado-ui .cash-today-layout .finance-main-amount h2{text-align:center;justify-content:center}
+.machado-ui .cash-today-layout{display:grid;grid-template-columns:minmax(0,620px);justify-content:center;gap:30px;max-width:720px;margin:0 auto}
+.machado-ui .cash-today-layout>div:last-child{padding-top:0}
+.machado-ui .cash-today-primary{display:flex;flex-direction:column;align-items:center;width:100%}
+.machado-ui .cash-today-primary>.finance-main-amount{width:100%;padding:8px 0 22px}
+.machado-ui .cash-today-layout .finance-main-amount>strong{font-size:clamp(46px,7vw,62px);line-height:1.15}
+.machado-ui .cash-method-filters{justify-content:center;width:100%;margin:0 0 12px}
+.machado-ui .cash-today-primary .bank-actions{width:min(100%,460px);margin:14px auto 4px;justify-items:center}
+.machado-ui .cash-today-primary .bank-actions button{width:100%;max-width:136px;min-height:92px;justify-content:center;border:1px solid var(--line);border-radius:16px;background:var(--surface,#fff)}
+.machado-ui .cash-today-secondary{width:100%;border-top:1px solid var(--line);padding-top:22px}
+.machado-ui .cash-today-secondary>.section-title{text-align:center;margin:0 0 12px}
+.machado-ui .cash-today-secondary .drawer-summary{padding:18px 4px;min-height:84px}
+.machado-ui .cash-today-secondary .drawer-summary>b{font-size:22px}
+.machado-ui .agenda-detail-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.machado-ui .agenda-detail-actions>button{min-width:0;min-height:48px;justify-content:center;margin:0}
+.machado-ui .agenda-detail-actions>.agenda-payment-action,.machado-ui .agenda-detail-actions>.agenda-fit-action{grid-column:1/-1}
+.machado-ui .agenda-detail-actions>.agenda-payment-action{min-height:54px;font-weight:700}
+.machado-ui .agenda-detail-actions>.agenda-remove-action{width:100%}
+@media(max-width:600px){.machado-ui .cash-today-layout{gap:22px}.machado-ui .cash-today-primary .bank-actions{gap:6px}.machado-ui .cash-today-primary .bank-actions button{max-width:110px;min-height:82px;font-size:11px}.machado-ui .cash-today-layout .finance-main-amount>strong{font-size:44px}.machado-ui .agenda-detail-actions{gap:8px}}
 .machado-ui .page-head .package-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .machado-ui .package-actions :is(button.primary,button.outline){min-height:48px;width:100%;min-width:132px;padding:12px 16px;font-size:14px;line-height:20px;text-align:center;justify-content:center}
 .machado-ui .package-tabs{justify-content:center}

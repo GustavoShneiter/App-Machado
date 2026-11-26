@@ -460,12 +460,8 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [view, setView] = useState('list'), [filtersOpen, setFiltersOpen] = useState(false), [search, setSearch] = useState('');
   useEffect(() => { const open = () => {setSlotProfessional('');setSlotChoice('new')}; window.addEventListener('agenda:create',open); return () => window.removeEventListener('agenda:create',open); }, []);
-  const [confirmation, setConfirmation] = useState<{
-    appointment: Appointment;
-    status: string;
-  } | null>(null);
+  const [confirmation, setConfirmation] = useState<Appointment | null>(null);
   const [removing, setRemoving] = useState<Appointment | null>(null);
-  const [actualPrice, setActualPrice] = useState("");
   const activeProfessionals = professionals.filter((item) => item.ativo);
   useEffect(() => {
     if (
@@ -519,18 +515,6 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
     year: "numeric",
   });
   const workHours=hoursForDay(data.businessHours,date),closed=!workHours.length;
-  const nextStatus = (status: string) =>
-    status === "arrived"
-      ? "in_service"
-      : status === "in_service"
-        ? "completed"
-        : "arrived";
-  const nextLabel = (status: string) =>
-    status === "arrived"
-      ? "Iniciar"
-      : status === "in_service"
-        ? "Pronto"
-        : "Chegou";
   return (
     <section className="page agenda-page">
       <header className="approved-agenda-heading"><h1>{professionalOnly?'Minha Agenda':'Agenda'}</h1><button className="text-action" onClick={()=>setFiltersOpen(true)}><SlidersHorizontal size={17}/>Filtro</button></header>
@@ -585,126 +569,21 @@ export function Agenda({ professionalOnly = false }: { professionalOnly?: boolea
         <Modal title="Agendamento" close={() => setFocused(null)}>
           <AppointmentIdentity appointment={focused} />
           <div className="row-actions agenda-detail-actions">
-            {data.commands.some(c=>c.appointment_id===focused.id)&&<button className="approved-secondary" onClick={()=>navigate((professionalOnly?'/profissional/atendimentos':'/admin/comandas')+'?comanda='+data.commands.find(c=>c.appointment_id===focused.id)?.id)}>Ver atendimento e pagamento</button>}
-            <button className="outline" onClick={()=>{setSlotProfessional(focused.professional_id);setSlotChoice(new Date(focused.starts_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}));setFocused(null)}}>Criar encaixe neste horário</button>
-            {!["completed", "cancelled", "no_show"].includes(
-              focused.status,
-            ) && (
-              <button
-                className="primary"
-                disabled={busy}
-                onClick={() => {
-                  setActualPrice(String(focused.expected_price_cents / 100));
-                  setFocused(null);
-                  setConfirmation({
-                    appointment: focused,
-                    status: nextStatus(focused.status),
-                  });
-                }}
-              >
-                {nextLabel(focused.status)}
-              </button>
-            )}
-            {![
-              "arrived",
-              "in_service",
-              "completed",
-              "cancelled",
-              "no_show",
-            ].includes(focused.status) && (
-              <button
-                className="outline"
-                disabled={busy}
-                onClick={() => {
-                  setFocused(null);
-                  setConfirmation({ appointment: focused, status: "no_show" });
-                }}
-              >
-                Faltou
-              </button>
-            )}
-            {(!professionalOnly || !['completed','cancelled','no_show'].includes(focused.status)) && <button
-              className="danger-button"
-              disabled={busy}
-              onClick={() => {
-                setFocused(null);
-                setRemoving(focused);
-              }}
-            >
-              {professionalOnly ? 'Cancelar agendamento' : 'Remover'}
-            </button>}
+            {data.commands.some(c=>c.appointment_id===focused.id)&&<button className="primary agenda-payment-action" onClick={()=>navigate((professionalOnly?'/profissional/atendimentos':'/admin/comandas')+'?comanda='+data.commands.find(c=>c.appointment_id===focused.id)?.id)}>Ver atendimento e pagamento</button>}
+            {!["arrived", "in_service", "completed", "cancelled", "no_show"].includes(focused.status) && <button className="outline" disabled={busy} onClick={() => { setFocused(null); setConfirmation(focused); }}>Faltou</button>}
+            {(!professionalOnly || !['completed','cancelled','no_show'].includes(focused.status)) && <button className="danger-button agenda-remove-action" disabled={busy} onClick={() => { setFocused(null); setRemoving(focused); }}>{professionalOnly ? 'Cancelar agendamento' : 'Remover'}</button>}
+            <button className="outline agenda-fit-action" onClick={()=>{setSlotProfessional(focused.professional_id);setSlotChoice(new Date(focused.starts_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}));setFocused(null)}}>Criar encaixe neste horário</button>
           </div>
         </Modal>
       )}
       {confirmation && (
-        <Modal
-          title={
-            confirmation.status === "completed"
-              ? "Enviar para receber?"
-              : confirmation.status === "no_show"
-                ? "Marcar falta?"
-                : confirmation.status === "in_service"
-                  ? "Iniciar atendimento?"
-                  : "Confirmar chegada?"
-          }
-          close={() => setConfirmation(null)}
-        >
-          <AppointmentIdentity appointment={confirmation.appointment} />
-          <p>
-            {confirmation.status === "completed"
-              ? "A comanda ficará pronta no Caixa."
-              : confirmation.status === "no_show"
-                ? "Este horário será liberado."
-                : confirmation.status === "in_service"
-                  ? "O atendimento ficará em andamento."
-                  : "O cliente ficará marcado como presente."}
-          </p>
-          {confirmation.status === "completed" &&
-            confirmation.appointment.expected_price_cents <= 0 && (
-              <label className="field">
-                <span>Valor (R$)</span>
-                <input
-                  autoFocus
-                  required
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={actualPrice}
-                  onChange={(e) => setActualPrice(e.target.value)}
-                />
-              </label>
-            )}
+        <Modal title="Marcar falta?" close={() => setConfirmation(null)}>
+          <AppointmentIdentity appointment={confirmation} />
+          <p>Este horário será liberado e o cliente ficará marcado como não compareceu.</p>
           {error && <p className="form-error">{error}</p>}
-          <button
-            className="primary"
-            disabled={busy}
-            onClick={async () => {
-              if (
-                confirmation.status === "completed" &&
-                confirmation.appointment.expected_price_cents <= 0 &&
-                !(await run("set_price", {
-                  id: confirmation.appointment.id,
-                  amount: Math.round(Number(actualPrice) * 100),
-                }))
-              )
-                return;
-              if (
-                await run("set_status", {
-                  id: confirmation.appointment.id,
-                  status: confirmation.status,
-                })
-              )
-                setConfirmation(null);
-            }}
-          >
-            {confirmation.status === "completed"
-              ? "Enviar para Caixa"
-              : confirmation.status === "no_show"
-                ? "Confirmar falta"
-                : confirmation.status === "in_service"
-                  ? "Iniciar atendimento"
-                  : "Confirmar chegada"}
-          </button>
+          <button className="primary" disabled={busy} onClick={async () => {
+            if (await run("set_status", { id: confirmation.id, status: "no_show" })) setConfirmation(null);
+          }}>Confirmar falta</button>
         </Modal>
       )}
       {removing && (

@@ -13,7 +13,7 @@ const result = await build({
     import {AppointmentModal} from './src/ManagementPages'
     import {CatalogProvider} from './src/CatalogStore'
     import {TestContext} from './src/OperationsStore'
-    import {emptyOperations,summarize,cashBalance,cashLedger,commandTotal,dayKey,csvCell,receivedOnDay,commissionsInPeriod} from './src/operations'
+    import {emptyOperations,summarize,cashBalance,cashLedger,commandTotal,dayKey,csvCell,receivedOnDay,receivedInSession,commissionsInPeriod} from './src/operations'
     import {fixture} from './scripts/operations-fixture.mjs'
     import {addDays,addMonths,agendaTimes,agendaTimesForDay,hoursForDay,recurringForDay} from './src/schedule'
     import {matchingCustomers} from './src/customerSearch'
@@ -27,7 +27,7 @@ const result = await build({
         const html=renderToString(h(MemoryRouter,{initialEntries:[path]},h(CatalogProvider,null,h(TestContext.Provider,{value},h(Routes,null,h(Route,{path:'/admin/*',element:h(AdminLayout)}))))))
         assert.ok(html.includes('class="page'),'Missing content '+path)
         if(data===fixture&&page==='clientes') assert.ok(html.includes('Cliente integrado'),'Missing real customer '+path)
-        if(data===fixture&&page==='caixa') { assert.ok(html.includes('Recebido hoje'));assert.ok(html.includes('A receber de clientes'));assert.ok(html.includes('Dinheiro na gaveta'));assert.ok(html.includes('A repassar à equipe'));assert.ok(html.includes('Extrato')) }
+        if(data===fixture&&page==='caixa') { assert.ok(html.includes('Recebido no caixa'));assert.ok(html.includes('A receber de clientes'));assert.ok(html.includes('Dinheiro na gaveta'));assert.ok(html.includes('A repassar à equipe'));assert.ok(html.includes('Extrato')) }
         if(data===fixture&&page==='comandas') assert.ok(html.includes('Comandas'))
         console.log('PASS '+path+' '+(data===fixture?'with records':'empty'))
       }
@@ -44,6 +44,9 @@ const result = await build({
     assert.equal(receivedOnDay(fixture,'2026-09-18'),4000)
     assert.equal(receivedOnDay(fixture,'2026-09-17'),7000)
     assert.equal(receivedOnDay(fixture,'2026-09-18','cash'),0)
+    assert.equal(receivedInSession(fixture,fixture.sessions[0]),4000)
+    assert.equal(receivedInSession(fixture,fixture.sessions[0],'pix'),4000)
+    assert.equal(receivedInSession(fixture,fixture.sessions[0],'cash'),0)
     assert.equal(dayKey('2026-09-19T01:00:00Z'),'2026-09-18')
     const ledgerData=structuredClone(fixture)
     const movement=fixture.movements[0]
