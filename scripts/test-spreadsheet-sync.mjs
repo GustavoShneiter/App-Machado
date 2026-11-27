@@ -55,6 +55,12 @@ let locale='en_US'
 const book={getSpreadsheetTimeZone:()=>'UTC',getSpreadsheetLocale:()=>locale,getId:()=> 'test-book',getSheets:()=>sheets,getSheetByName:name=>sheets.find(s=>s.name===name),insertSheet:name=>{const next=new Sheet(name);sheets.push(next);return next}}
 function evaluate(value){
  if(typeof value!=='string'||!value.startsWith('='))return value
+ const wrapped=value.match(/^=\((.+)\)\+SUMIF\('[^']+'!\$A\$2:\$A\$20000[,;]"([^"]+)"[,;]'[^']+'!\$B\$2:\$B\$20000\)$/)
+ if(wrapped){
+  const data=book.getSheetByName('_Machado Dados')
+  const delta=[...data.cells.keys()].filter(key=>key.endsWith(',1')&&data.cells.get(key)===wrapped[2]).reduce((sum,key)=>sum+Number(data.cells.get(key.replace(',1',',2'))),0)
+  return evaluate('='+wrapped[1])+delta
+ }
  const match=value.match(/^=(-?[\d.]+|\(-?[\d]+\/[\d]+\))\+SUMIF\('[^']+'!\$A\$2:\$A\$20000[,;]"([^"]+)"[,;]'[^']+'!\$B\$2:\$B\$20000\)$/)
  if(!match)throw new Error('Unexpected mock formula '+value)
  const data=book.getSheetByName('_Machado Dados')
@@ -94,6 +100,18 @@ assert.equal(sheet.getRange('T22').getValue(),5)
 assert.equal(sheet.getRange('U22').getValue(),7,'Actual charge correction 5 reais plus 2 reais tip')
 assert.equal(sheet.getRange('Z21').getValue(),116,'Paid repasses are added once')
 assert.equal(ack.manual_cells.length,0,'Formula metadata must be stored as text, not executed')
+const singleLinked=sheet.getRange('E22').getFormula()
+const doubleLinked=vm.runInContext(`vinculoFormula(${JSON.stringify(singleLinked)},'2026-11-19|CORTE',',')`,sandbox)
+const controlSheet=book.getSheetByName('_Machado Controle')
+const controlRow=[...controlSheet.cells.entries()].find(([key,value])=>key.endsWith(',2')&&value==='E22')[0].split(',')[0]
+controlSheet.getRange(Number(controlRow),4).setValue(JSON.stringify(singleLinked))
+controlSheet.getRange(Number(controlRow),5).setValue(JSON.stringify(doubleLinked))
+sheet.getRange('E22').setFormula(doubleLinked)
+assert.equal(sheet.getRange('E22').getValue(),9,'A duplicated link reproduces the inflated count')
+sync()
+assert.equal(sheet.getRange('E22').getValue(),8,'Sync removes the repeated contribution')
+assert.equal(sheet.getRange('E22').getFormula(),singleLinked,'Sync restores exactly one linked sum')
+assert.equal(ack.manual_cells.length,0,'A repaired formula is still managed by the connector')
 sheet.getRange('E22').setValue(99)
 feed.rows[0].quantity=2;feed.rows[0].amount=9000
 sync()

@@ -46,6 +46,18 @@ function vinculoFormula(base, key, separator) {
   }
   return '=' + start + '+SUMIF(\'' + DATA_SHEET + '\'!$A$2:$A$20000' + separator + '"' + key.replace(/"/g, '""') + '"' + separator + '\'' + DATA_SHEET + '\'!$B$2:$B$20000)';
 }
+function baseSemVinculoDuplicado(base, key) {
+  let clean = base;
+  while (typeof clean === 'string' && clean.startsWith('=')) {
+    const suffix = [',',';'].map(separator => vinculoFormula(0, key, separator).slice(2))
+      .find(part => clean.endsWith(part));
+    if (!suffix) break;
+    let expression = clean.slice(1, -suffix.length);
+    if (expression.startsWith('(') && expression.endsWith(')')) expression = expression.slice(1, -1);
+    clean = /^-?(?:\d+\.?\d*|\.\d+)$/.test(expression) ? Number(expression) : '=' + expression;
+  }
+  return clean;
+}
 function destinoPadrao(name, headers) {
   const normalized = normalizar(name);
   const aliases = {
@@ -231,7 +243,7 @@ function sincronizarPlanilha(connection) {
         const originalValue = values[target.row - 1]?.[target.col - 1] ?? '';
         if (!originalFormula && originalValue !== '' && typeof originalValue !== 'number')
           continue; // A note or custom text is a manual field.
-        const base = originalFormula || numero(originalValue);
+        const base = baseSemVinculoDuplicado(originalFormula || numero(originalValue), target.key);
         const expected = vinculoFormula(base, target.key, separator);
         const control = [sheet.getSheetId(), a1, target.key, JSON.stringify(base), expected];
         controls.push(control); controlsByCell.set(cellKey, control);
@@ -264,11 +276,14 @@ function sincronizarPlanilha(connection) {
       const columnIndex = coordinates[1].split('').reduce((value,letter) => value * 26 + letter.charCodeAt(0) - 64, 0) - 1;
       const matrix = formulaMatrices.get(sheet.getSheetId());
       if (matrix[Number(coordinates[2]) - 1]?.[columnIndex] === control[4]) {
-        const localizedFormula = vinculoFormula(JSON.parse(control[3]), control[2], separator);
+        const originalBase = JSON.parse(control[3]);
+        const cleanBase = baseSemVinculoDuplicado(originalBase, control[2]);
+        const localizedFormula = vinculoFormula(cleanBase, control[2], separator);
         if (localizedFormula !== control[4]) {
           const repairCell = sheet.getRange(control[1]);
           if (repairCell.getFormula() === control[4]) {
-            repairCell.setFormula(localizedFormula); control[4] = localizedFormula;controlsDirty=true;
+            repairCell.setFormula(localizedFormula);
+            control[3] = JSON.stringify(cleanBase); control[4] = localizedFormula; controlsDirty=true;
           }
         }
         continue;
