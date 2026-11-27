@@ -92,9 +92,13 @@ export async function externalAgent(req,res,{readBody,send,pool,transaction}) {
  const {action,payload={}}=await readBody(req,24000)
  if(!actions.includes(action)||!integration.permissions.includes(action))throw fail('Ação não permitida.',403)
  if(!payload||typeof payload!=='object'||Array.isArray(payload)||['tenant_id','tenant','unit','slug'].some(k=>Object.hasOwn(payload,k)))throw fail('Dados inválidos.')
- const key='agent:'+integration.id,bucket=new Date(Math.floor(Date.now()/60000)*60000)
+ // Delivery receipts can arrive in bursts after a campaign or a reconnect.
+ // Keep them bounded without using the capacity reserved for customer chats.
+ const receipt=action==='delivery_update'
+ const key=(receipt?'agent:delivery:':'agent:')+integration.id,bucket=new Date(Math.floor(Date.now()/60000)*60000)
  const count=(await pool.query('insert into request_limits(key,bucket,requests) values($1,$2,1) on conflict(key) do update set requests=case when request_limits.bucket=excluded.bucket then request_limits.requests+1 else 1 end,bucket=excluded.bucket returning requests',[key,bucket])).rows[0].requests
- if(count>integration.rate_limit_per_minute)throw fail('Limite da integração atingido.',429)
+ const limit=receipt?Math.max(120,integration.rate_limit_per_minute*4):integration.rate_limit_per_minute
+ if(count>limit)throw fail('Limite da integração atingido.',429)
  const data=await transaction(null,async client=>{
   if(!(await client.query('select id from agent_integrations where id=$1 and active for share',[integration.id])).rows.length)throw fail('Credencial revogada.',401)
   const result=await agentAction(client,action,payload,integration)
