@@ -35,6 +35,8 @@ try {
   await scoped(0,async c=>{
    financeBefore=(await c.query('select count(*)::int n from commission_entries where status in(\'pending\',\'paid\')')).rows[0].n
    await c.query("insert into business_settings(id,name) values(true,'Machado teste')")
+   await c.query('delete from business_hours')
+   await c.query("insert into business_hours(weekday,opens_at,closes_at) select n,'06:00','23:00' from generate_series(1,7)n")
    integration=(await c.query("insert into agent_integrations(name,token_hash,permissions) values('Teste',$1,$2) returning *",[createHash('sha256').update(token).digest('hex'),actions])).rows[0]
    customer=(await c.query("insert into customers(name,phone,birth_date) values('Cliente Teste','45999990000',current_date) returning id")).rows[0].id
    pro=(await c.query("insert into professionals(name) values('Barbeiro') returning id")).rows[0].id
@@ -64,7 +66,6 @@ try {
    assert.equal((await c.query("select count(*)::int n from agent_outbox where kind='birthday' and status='pending'")).rows[0].n,0)
    assert.equal((await c.query("select count(*)::int n from commission_entries where status in('pending','paid')")).rows[0].n,financeBefore)
    await c.query('insert into professional_services(professional_id,service_id) values($1,$2)',[pro,service])
-   await c.query("insert into business_hours(weekday,opens_at,closes_at) select n,'06:00','23:00' from generate_series(1,7)n")
    const slot=(await c.query("select ((current_date+5+s.slot_time) at time zone 'America/Sao_Paulo') starts_at from public_available_slots($1,current_date+5,$2)s limit 1",[service,pro])).rows[0]
    assert(slot)
    const payload={phone:'45999990000',customer_name:'Cliente Teste',service_id:service,professional_id:pro,starts_at:slot.starts_at.toISOString(),message_id:'origin1'}
@@ -109,6 +110,33 @@ try {
   assert(known.upcoming_appointments.length<=5);assert(!JSON.stringify(known).includes('price_cents'))
   assert.equal((await call('customer_context',{phone:'45999990000'})).customer.id,customer)
   assert.equal((await call('customer_context',{phone:'45999991111'})).found,false)
+  // Move an existing reservation without creating a second appointment or
+  // changing its customer, barber, service, price or duration.
+  const moveDay=(await scoped(0,c=>c.query("select to_char(current_date+9,'YYYY-MM-DD') as booking_day"))).rows[0].booking_day
+  const oldStart=(await scoped(0,c=>c.query("select ($1::date+time '10:00') at time zone 'America/Sao_Paulo' starts_at",[moveDay]))).rows[0].starts_at.toISOString()
+  const newStart=(await scoped(0,c=>c.query("select ($1::date+time '10:15') at time zone 'America/Sao_Paulo' starts_at",[moveDay]))).rows[0].starts_at.toISOString()
+  const movedId=(await scoped(0,c=>c.query("insert into appointments(customer_id,professional_id,service_id,starts_at,ends_at,expected_price_cents) values($1,$2,$3,$4,$4::timestamptz+interval '40 minutes',4000) returning id",[customer,pro,service,oldStart]))).rows[0].id
+  const choices=await call('reschedule_options',{phone:'45999990000',appointment_id:movedId,day:moveDay,preferred_time:'10:15'})
+  assert.equal(choices.exact_available,true);assert.equal(choices.slots[0].slot_time,'10:15:00')
+  assert(choices.slots.every(s=>new Date(s.starts_at).toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'})===moveDay))
+  const change={phone:'45999990000',appointment_id:movedId,expected_starts_at:oldStart,new_starts_at:newStart,source_message_id:'confirmed-move-1'}
+  assert.equal((await call('reschedule_appointment',change)).already_applied,false)
+  assert.equal((await call('reschedule_appointment',change)).already_applied,true)
+  const changed=(await scoped(0,c=>c.query('select a.*,count(r.id)::int replay_rows from appointments a left join agent_reschedule_requests r on r.appointment_id=a.id where a.id=$1 group by a.id',[movedId]))).rows[0]
+  assert.equal(changed.starts_at.toISOString(),newStart)
+  assert.equal(changed.ends_at.getTime()-changed.starts_at.getTime(),40*60_000)
+  assert.equal(changed.customer_id,customer);assert.equal(changed.professional_id,pro);assert.equal(changed.service_id,service)
+  assert.equal(changed.expected_price_cents,4000);assert.equal(changed.replay_rows,1)
+  assert.equal(changed.appointment_notification_revision,2)
+  assert.equal((await scoped(0,c=>c.query("select count(*)::int n from agent_outbox where appointment_id=$1 and kind='confirmation' and status='pending'",[movedId]))).rows[0].n,1)
+  assert.equal((await scoped(1,c=>c.query('select count(*)::int n from agent_reschedule_requests'))).rows[0].n,0)
+  await assert.rejects(call('reschedule_appointment',{...change,new_starts_at:oldStart}),e=>e.status===409)
+  await assert.rejects(call('reschedule_appointment',{...change,phone:'45999991111',source_message_id:'wrong-phone'}),e=>e.status===404)
+  await assert.rejects(call('reschedule_appointment',{...change,source_message_id:'stale-move',new_starts_at:oldStart}),e=>e.status===409)
+  const occupiedStart=(await scoped(0,c=>c.query("select ($1::date+time '12:00') at time zone 'America/Sao_Paulo' starts_at",[moveDay]))).rows[0].starts_at.toISOString()
+  await scoped(0,c=>c.query("insert into appointments(customer_id,professional_id,service_id,starts_at,ends_at,expected_price_cents) values($1,$2,$3,$4,$4::timestamptz+interval '40 minutes',4000)",[customer,pro,service,occupiedStart]))
+  await assert.rejects(call('reschedule_appointment',{...change,expected_starts_at:newStart,new_starts_at:occupiedStart,source_message_id:'occupied-move'}),e=>e.status===409)
+  assert.equal((await call('reschedule_options',{phone:'45999990000',appointment_id:movedId,day:moveDay,preferred_time:'12:00'})).exact_available,false)
   await assert.rejects(call('customer_context',{phone:'invalido'}),e=>e.status===400)
   await assert.rejects(call('customer_context',{phone:'45999990000',tenant_id:units[1].id}),e=>e.status===400)
   await scoped(1,async c=>{

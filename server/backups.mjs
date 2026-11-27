@@ -5,7 +5,7 @@ import { transaction, pool } from './db.mjs'
 export const businessTables = ['profiles','services','professionals','professional_services','professional_products','business_settings','business_hours','customers','appointments','schedule_blocks','commands','command_items','payments','commission_entries','cash_sessions','cash_movements','products','stock_movements','service_packages','service_package_items','package_sales','package_sale_balances','package_redemptions','notifications','audit_logs']
 businessTables.push('recurring_schedule_blocks','professional_preferences')
 businessTables.push('spreadsheet_connections','spreadsheet_installations','spreadsheet_authorizations','spreadsheet_creation_jobs')
-businessTables.push('agent_integrations','agent_settings','agent_contacts','agent_booking_drafts','agent_outbox','agent_runtime_status','agent_delivery_events')
+businessTables.push('agent_integrations','agent_settings','agent_contacts','agent_booking_drafts','agent_reschedule_requests','agent_outbox','agent_runtime_status','agent_delivery_events')
 export const identityTables = ['auth_user','auth_account','recovery_codes']
 
 export async function createBackup(userId) {

@@ -6,7 +6,7 @@ export const templateDefaults = {
  reactivation:'Olá, {cliente}! Sentimos sua falta na {barbearia}. Quando quiser, fale conosco para escolher seu próximo horário.',
 };
 export const defaultConfig = () => ({assistant_enabled:false,confirmations_enabled:false,reminders_enabled:false,birthday_enabled:false,reactivation_enabled:false,confirmation_delay_minutes:0,reminder_offsets_minutes:[1440],campaign_start_hour:9,campaign_end_hour:19,birthday_send_hour:10,reactivation_days:40,message_templates:Object.fromEntries(Object.entries(templateDefaults).map(([key,text])=>[key,{text,revision:1}]))});
-export const actions=['capabilities','settings','catalog','customer_context','availability','prepare_booking','pending_booking','confirm_booking','opt_out','enqueue_campaigns','enqueue_reminders','claim_notification','ack_notification','delivery_update','heartbeat'];
+export const actions=['capabilities','settings','catalog','customer_context','availability','prepare_booking','pending_booking','confirm_booking','reschedule_options','reschedule_appointment','opt_out','enqueue_campaigns','enqueue_reminders','claim_notification','ack_notification','delivery_update','heartbeat'];
 export const deliveryStates=['pending','sending','sent','delivered','read','failed','uncertain','suppressed'];
 export const fail=(message,status=400)=>Object.assign(new Error(message),{status});
 export function cleanPhone(value) { let s=String(value||'').replace(/\D/g,''); if(/^55\d{10,11}$/.test(s))s=s.slice(2); if(!/^[1-9]\d{9,10}$/.test(s))throw fail('Informe telefone com DDD.'); return s; }

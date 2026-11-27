@@ -3,6 +3,7 @@ import { actions,deliveryStates,cleanPhone,fail } from '../shared/agent-config.m
 import { settings,effectiveSettings } from './agent-settings.mjs'
 import { enqueueReminders,enqueueCampaigns,claimNotification,acknowledge,reconcileDelivery } from './agent-queue.mjs'
 import { customerContext } from './agent-customer.mjs'
+import { rescheduleOptions,rescheduleAppointment } from './agent-reschedule.mjs'
 const uuid=value=>{if(typeof value!=='string'||! /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value))throw fail('Identificador inválido.');return value}
 const instant=value=>{if(typeof value!=='string'||!/(?:Z|[+-]\d{2}:\d{2})$/.test(value)||!Number.isFinite(Date.parse(value)))throw fail('Data e horário inválidos.');return new Date(value).toISOString()}
 export async function agentAction(client,action,p,integration) {
@@ -56,6 +57,8 @@ export async function agentAction(client,action,p,integration) {
   return {requested_day:p.day,search_days:14,slots:rows,preferred_time:preferredTime,period}
  }
  if(action==='pending_booking')return (await client.query('select id,customer_name,service_id,professional_id,starts_at,appointment_id,expires_at from agent_booking_drafts where phone=$1 and expires_at>now() order by created_at desc limit 1',[cleanPhone(p.phone)])).rows[0]??null
+ if(action==='reschedule_options')return rescheduleOptions(client,p)
+ if(action==='reschedule_appointment')return rescheduleAppointment(client,p)
  if(action==='prepare_booking') {
   const phone=cleanPhone(p.phone),name=String(p.customer_name||'').trim(),service=uuid(p.service_id),pro=uuid(p.professional_id),start=instant(p.starts_at),message=String(p.message_id||'')
   if(name.length<3||name.length>100||!message||message.length>255)throw fail('Confira nome e mensagem de origem.')
@@ -102,7 +105,7 @@ export async function externalAgent(req,res,{readBody,send,pool,transaction}) {
  const data=await transaction(null,async client=>{
   if(!(await client.query('select id from agent_integrations where id=$1 and active for share',[integration.id])).rows.length)throw fail('Credencial revogada.',401)
   const result=await agentAction(client,action,payload,integration)
-  if(!['settings','capabilities','heartbeat','claim_notification','catalog','availability','pending_booking'].includes(action))await client.query("insert into audit_logs(integration_id,operation,entity_type,result) values($1,$2,'agent','success')",[integration.id,'agent:'+action])
+  if(!['settings','capabilities','heartbeat','claim_notification','catalog','availability','pending_booking','reschedule_options'].includes(action))await client.query("insert into audit_logs(integration_id,operation,entity_type,result) values($1,$2,'agent','success')",[integration.id,'agent:'+action])
   return result
  },{businessSlug:integration.slug})
  send(res,200,{data})
