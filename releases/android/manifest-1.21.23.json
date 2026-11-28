@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-27",
+  "admin": "1.21.23",
+  "professional": "1.3.22",
+  "backend": "contabo",
+  "changes": [
+    "Finalizar atendimento abre imediatamente o recebimento da mesma comanda.",
+    "Fechar a tela de recebimento sem pagar retorna aos detalhes da comanda."
+  ],
+  "artifacts": [
+    {
+      "file": "releases/android/Machado-Gestao-v1.21.23.apk",
+      "bytes": 5978997,
+      "versionCode": 56,
+      "sha256": "a21773c7932c7604628fef6e2973fba3dc6e982d28ad90973d24225c03aea037"
+    },
+    {
+      "file": "releases/android/Machado-Profissional-v1.3.22.apk",
+      "bytes": 5886668,
+      "versionCode": 30,
+      "sha256": "6c205516a8e8fc2a428460c4231afa6dec77d33f88261753a101fc4b741963ba"
+    }
+  ],
+  "verification": {
+    "build": "passed",
+    "typescript": "passed",
+    "lint": "passed",
+    "apkSignature": "matches prior production certificate for both apps",
+    "windowsDefenderCustomScan": "no detections for both new APKs",
+    "physicalDevice": "not tested"
+  }
+}

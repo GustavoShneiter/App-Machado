@@ -876,6 +876,7 @@ export function Orders({
   const [searchParams] = useSearchParams();
   const [filter, setFilter] = useState("");
   const [receive, setReceive] = useState("");
+  const [returnToDetailsAfterReceive, setReturnToDetailsAfterReceive] = useState(false);
   const [method, setMethod] = useState("pix");
   const [details, setDetails] = useState("");
   const [commandAction, setCommandAction] = useState("");
@@ -1029,7 +1030,7 @@ export function Orders({
                   {c.status === "awaiting_payment" && (
                     <button
                       className="primary small"
-                      onClick={() => setReceive(c.id)}
+                      onClick={() => { setReturnToDetailsAfterReceive(false); setReceive(c.id); }}
                     >
                       {packageInfo?.redeemed && total === 0
                         ? "Concluir"
@@ -1106,8 +1107,13 @@ export function Orders({
           return (
             <Modal
               title={planOnly ? "Concluir pelo plano" : "Registrar recebimento"}
-              close={() => setReceive("")}
+              close={() => {
+                setReceive("");
+                if (returnToDetailsAfterReceive) setDetails(selected.id);
+                setReturnToDetailsAfterReceive(false);
+              }}
             >
+              <p><strong>{selected.attendee_name ?? data.appointments.find(a => a.id === selected.appointment_id)?.customer_name ?? data.customers.find(c => c.id === selected.customer_id)?.name ?? "Cliente"}</strong></p>
               <p>
                 Total: <strong>{money(total)}</strong>
               </p>
@@ -1130,8 +1136,10 @@ export function Orders({
                 disabled={busy}
                 onClick={async () => {
                   const action = planOnly ? "close_package_command" : "receive";
-                  if (await run(action, { id: receive, method, ...(professionalOnly ? { expected_total: total } : {}) }))
+                  if (await run(action, { id: receive, method, ...(professionalOnly ? { expected_total: total } : {}) })) {
                     setReceive("");
+                    setReturnToDetailsAfterReceive(false);
+                  }
                 }}
               >
                 {planOnly ? "Concluir sem cobrança" : "Confirmar pagamento"}
@@ -1517,8 +1525,11 @@ export function Orders({
                       await run("mark_command_ready", {
                         command_id: command.id,
                       })
-                    )
+                    ) {
                       setDetails("");
+                      setReturnToDetailsAfterReceive(true);
+                      setReceive(command.id);
+                    }
                   }}
                 >
                   Pronta para receber
@@ -1529,13 +1540,14 @@ export function Orders({
                   className="primary command-finalize"
                   disabled={busy}
                   onClick={async () => {
-                    if (
-                      await run("set_status", {
-                        id: appointment.id,
-                        status: "completed",
-                      }) && !professionalOnly
-                    )
+                    if (await run("set_status", {
+                      id: appointment.id,
+                      status: "completed",
+                    })) {
                       setDetails("");
+                      setReturnToDetailsAfterReceive(true);
+                      setReceive(command.id);
+                    }
                   }}
                 >
                   Finalizar atendimento
@@ -1547,6 +1559,7 @@ export function Orders({
                   disabled={busy}
                   onClick={() => {
                     setDetails("");
+                    setReturnToDetailsAfterReceive(true);
                     setReceive(command.id);
                   }}
                 >
